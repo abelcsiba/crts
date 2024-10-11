@@ -219,7 +219,7 @@ void lex(lexer_t* lexer, const char* source)
             printf("|        |");
         }
 
-        printf(" 0x%02d | %-18s |", token.type, token_ty2label(token.type));
+        printf(" 0x%02d | %-20s |", token.type, token_ty2label(token.type));
         printf(" %-17.*s|\n", (int)token.length, token.start);
 
         if (token.type == TOKEN_EOF) break;

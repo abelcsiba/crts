@@ -85,14 +85,18 @@ void run(vm_t *vm)
 
 void display_init_message(vm_t* vm)
 {
-    printf("=========== Launching CIAM VM ===========\n");
-    printf("|------------------|\n");
+    printf("\n\n");
+    printf("=========== Launching CIAM VM ===============\n");
+    printf("|------------------|------------------------|\n");
     printf("| Date/time        | ");
-    print_time(vm->memory.module->time_stamp);
+    char buffer[100] = {0};
+    print_time(buffer, vm->memory.module->time_stamp);
+    printf("%-22s |", buffer);
     printf("\n");
-    printf("|------------------|\n");
-    printf("| Const value size | %ld\n", vm->memory.module->constants.count);
-    printf("|------------------|\n");
-    printf("| File name:       | %s\n", vm->memory.module->file_name);
-    printf("|------------------|\n");
+    printf("|------------------|------------------------|\n");
+    printf("| Const value size | %-22ld |\n", vm->memory.module->constants.count);
+    printf("|------------------|------------------------|\n");
+    printf("| File name:       | %-22s |\n", vm->memory.module->file_name);
+    printf("|------------------|------------------------|\n");
+    printf("\n\n");
 }

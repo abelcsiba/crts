@@ -25,15 +25,15 @@ int main(void)
   module.time_stamp = localtime(&raw_time);
   init_vm(&vm, &module);
   run(&vm);
-  printf("Exiting VM...\n");
+  printf("Exiting VM...\n\n\n");
 
-  printf("=============== Launching CIAM Assembler ================\n");
-  printf("|-------------------------------------------------------|\n");
-  printf("| LineNo |  ID  | TokenName          | Token Lit. Value |\n");
-  printf("|-------------------------------------------------------|\n");
+  printf("================ Launching CIAM Assembler =================\n");
+  printf("|---------------------------------------------------------|\n");
+  printf("| LineNo |  ID  | TokenName            | Token Lit. Value |\n");
+  printf("|---------------------------------------------------------|\n");
   lexer_t lexer;
-  const char* buff = "  3 + 42 . ; ( 53 + ident ) var";
+  const char* buff = "  3 + 42 . ; ( 53 + ident ) var - .. >= 32.1";
   lex(&lexer, buff);
-  printf("|-------------------------------------------------------|\n");
+  printf("|---------------------------------------------------------|\n");
   return EXIT_SUCCESS;
 }

@@ -4,6 +4,6 @@
 
 #include <time.h>
 
-void print_time(struct tm* time);
+void print_time(char* buff, struct tm* time);
 
 #endif // CIAM_UTIL_H_
