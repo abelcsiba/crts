@@ -27,8 +27,13 @@ int main(void)
   run(&vm);
   printf("Exiting VM...\n");
 
+  printf("=============== Launching CIAM Assembler ================\n");
+  printf("|-------------------------------------------------------|\n");
+  printf("| LineNo |  ID  | TokenName          | Token Lit. Value |\n");
+  printf("|-------------------------------------------------------|\n");
   lexer_t lexer;
-  const char* buff = "  3 + 42 . ; ( 53 + ident )";
+  const char* buff = "  3 + 42 . ; ( 53 + ident ) var";
   lex(&lexer, buff);
+  printf("|-------------------------------------------------------|\n");
   return EXIT_SUCCESS;
 }

@@ -211,16 +211,16 @@ void lex(lexer_t* lexer, const char* source)
         token_t token = lex_token(lexer);
         if (token.line_no != line)
         {
-            printf("0x%04ld |", token.line_no);
+            printf("| 0x%04ld |", token.line_no);
             line = token.line_no;
         }
         else
         {
-            printf("       |");
+            printf("|        |");
         }
 
-        printf(" 0x%02d | %s |", token.type, token_ty2label(token.type));
-        printf("'%.*s'\n", (int)token.length, token.start);
+        printf(" 0x%02d | %-18s |", token.type, token_ty2label(token.type));
+        printf(" %-17.*s|\n", (int)token.length, token.start);
 
         if (token.type == TOKEN_EOF) break;
     }

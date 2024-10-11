@@ -17,6 +17,7 @@ typedef struct {                                                                
 } type##_array_t;                                                                           \
                                                                                             \
 void add_##type(type##_array_t* da, type val);                                              \
+void init_##type##_array_t(type##_array_t* da);                                                       \
 
 
 #define DEF_DA(type)                                                                        \
@@ -29,6 +30,12 @@ void add_##type(type##_array_t* da, type val)                                   
         da->capacity = new_cap;                                                             \
     }                                                                                       \
     da->data[da->count++] = val;                                                            \
+}                                                                                           \
+                                                                                            \
+void init_##type##_array_t(type##_array_t* da)                                                 \
+{                                                                                           \
+    da->count = da->capacity = 0;                                                           \
+    da->data = NULL;                                                                        \
 }                                                                                           \
 
 

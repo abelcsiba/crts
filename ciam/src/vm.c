@@ -9,6 +9,7 @@
 void init_vm(vm_t* vm, module_t* module)
 {
     vm->memory.module = module;
+    init_value_t_array_t(&vm->memory.module->constants);
     vm->pc = 0x00;
     init_stack(&vm->memory.stack);    
 }
