@@ -2,10 +2,10 @@
 
 CC=gcc
 CFLAGS=-Wall -Wextra
-INCLUDES=-Iciam/include 
-LDFLAGS=-Lciam/lib/ 
+INCLUDES=-Iciam/include -Icias/include
+LDFLAGS=-Lciam/lib/ -Lcias/lib/
 
-LIBS=-lciam
+LIBS=-lciam -lcias
 
 SRC=main.c
 
@@ -17,10 +17,13 @@ EXEC=irtn
 
 .PHONY: all clean
 
-all: ciam/lib/libciam.so $(EXEC)
+all: ciam/lib/libciam.so cias/lib/libcias.so $(EXEC)
 
 ciam/lib/libciam.so:
 	$(MAKE) -C ciam
+
+cias/lib/libcias.so:
+	$(MAKE) -C cias
 
 $(EXEC): $(OBJ)
 	$(CC) $(OBJ) $(LDFLAGS) $(INCLUDES) $(LIBS) -o $@
@@ -31,6 +34,7 @@ $(OBJ): *.c
 
 clean:
 	$(MAKE) -C ciam clean
+	$(MAKE) -C cias clean
 	rm -f $(OBJ) $(EXEC)
 	rm -rf $(OBJ_DIR)
 

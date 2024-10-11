@@ -4,6 +4,7 @@
 #include "common.h"
 #include "reader.h"
 #include "code.h"
+#include "lexer.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,6 +25,10 @@ int main(void)
   module.time_stamp = localtime(&raw_time);
   init_vm(&vm, &module);
   run(&vm);
-  printf("Exiting...\n");
+  printf("Exiting VM...\n");
+
+  lexer_t lexer;
+  const char* buff = "  3 + 42 . ; ( 53 + ident )";
+  lex(&lexer, buff);
   return EXIT_SUCCESS;
 }
