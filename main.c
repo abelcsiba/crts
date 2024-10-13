@@ -49,8 +49,8 @@ int main(void)
   print_footer();
 
   parser_t parser;
-  init_parser(&parser);
-  parse(&parser, &lexer.tokens);
+  init_parser(&parser, &lexer.tokens);
+  parse(&parser);
 
   return EXIT_SUCCESS;
 }
