@@ -3,11 +3,15 @@
 #ifndef CIAS_LEXER_H_
 #define CIAS_LEXER_H_
 
+#include "common.h"
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 typedef uint64_t pos_t;
+typedef int Errno;
 
 #define TOKEN_LIST \
     X(TOKEN_LPAREN, "(", "TOKEN_LPAREN") \
@@ -54,14 +58,19 @@ typedef struct {
     pos_t line_no;
 } token_t;
 
+DECL_DA(token_t);
+
+typedef token_t_array_t token_list_t;
+
 typedef struct {
     const char* start;
     const char* curr;
     size_t line_no;
+    token_list_t tokens;
 } lexer_t;
 
 void init_lexer(lexer_t* lexer, const char* source);
 token_t lex_token(lexer_t* lexer);
-void lex(lexer_t* lexer, const char* source);
+Errno lex(lexer_t* lexer, const char* source);
 
 #endif // CIAS_LEXER_H_

@@ -52,4 +52,5 @@ struct ast_node_t {
 
 ast_node_t* new_node(ast_node_t node);
 
+
 #endif // CIAS_AST_H

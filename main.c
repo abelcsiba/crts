@@ -6,9 +6,24 @@
 #include "code.h"
 #include "lexer.h"
 
+#include "parser.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+
+void print_header()
+{
+  printf("================ Launching CIAM Assembler =================\n");
+  printf("|---------------------------------------------------------|\n");
+  printf("| LineNo |  ID  | TokenName            | Token Lit. Value |\n");
+  printf("|---------------------------------------------------------|\n");
+}
+
+void print_footer()
+{
+  printf("|---------------------------------------------------------|\n");
+}
 
 int main(void)
 {
@@ -27,13 +42,15 @@ int main(void)
   run(&vm);
   printf("Exiting VM...\n\n\n");
 
-  printf("================ Launching CIAM Assembler =================\n");
-  printf("|---------------------------------------------------------|\n");
-  printf("| LineNo |  ID  | TokenName            | Token Lit. Value |\n");
-  printf("|---------------------------------------------------------|\n");
+  print_header();
   lexer_t lexer;
   const char* buff = "  3 + 42 . ; ( 53 + ident ) var - .. >= 32.1";
   lex(&lexer, buff);
-  printf("|---------------------------------------------------------|\n");
+  print_footer();
+
+  parser_t parser;
+  init_parser(&parser);
+  parse(&parser, &lexer.tokens);
+
   return EXIT_SUCCESS;
 }

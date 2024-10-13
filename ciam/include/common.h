@@ -39,4 +39,21 @@ void init_##type##_array_t(type##_array_t* da)                                  
 }                                                                                           \
 
 
+#define CIAM_MAGIC_NUM 0x6c6562c1
+#define CIAM_VER_MAJOR 0x0
+#define CIAM_VER_MINOR 0x1
+#define CIAM_VER_PATCH 0x0
+
+#define PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))
+
+PACK(struct ciam_header_t {
+    uint32_t magic;
+    uint32_t version;
+    uint64_t code_size;
+    uint64_t main_addr;
+    uint64_t const_size;
+});
+
+typedef struct ciam_header_t ciam_header_t;
+
 #endif // CIAM_COMMON_H_
