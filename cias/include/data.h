@@ -25,7 +25,6 @@ block_t* create_block(size_t capacity);
 void destroy_block(block_t* block);
 
 void init_arena(arena_t* arena, size_t size);
-arena_t* create_arena(size_t block_size);
 void reset_arena(arena_t* arena);
 void destroy_arena(arena_t* arena);
 

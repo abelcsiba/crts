@@ -40,18 +40,6 @@ void init_arena(arena_t* arena, size_t block_size)
     arena->end = arena->head;
 }
 
-arena_t* create_arena(size_t block_size)
-{
-    arena_t* arena = (arena_t*)malloc(sizeof(arena_t));
-    if (NULL == arena)
-    {
-        fprintf(stderr, "failed to allocate arena\n");
-        exit(EXIT_FAILURE);
-    }
-    init_arena(arena, block_size);
-    return arena;
-}
-
 void* arena_alloc(arena_t* arena, size_t size)
 {
     if (size > arena->block_size)

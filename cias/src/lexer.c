@@ -62,29 +62,33 @@ static void skip_whitesace(lexer_t* lexer)
     for(;;)
     {
         char c = peek(lexer);
-        switch (c)
-        {
-            case ' ':
-            case '\r':
-            case '\t':
-                advance(lexer);
-                break;
-            case '\n':
-                lexer->line_no++;
-                advance(lexer);
-                break;
-            case '/':
-                if (peek_next(lexer) == '/')
-                {
-                    while (peek(lexer) != '\n' && is_at_end(lexer)) advance(lexer);
-                }
-                else
-                {
-                    return;
-                }
-            default:
-                return;
-        }
+        if ( ( c == ' ' ) || ( c == '\r' ) || ( c == '\t' ) ) advance(lexer);
+        else if ( c == '\n' ) { lexer->line_no++; advance(lexer); }
+        else if ( ( c == '/' ) && (peek_next(lexer) == '/' )) while (peek(lexer) != '\n' && is_at_end(lexer)) advance(lexer);
+        else return;
+        // switch (c)
+        // {
+        //     case ' ':
+        //     case '\r':
+        //     case '\t':
+        //         advance(lexer);
+        //         break;
+        //     case '\n':
+        //         lexer->line_no++;
+        //         advance(lexer);
+        //         break;
+        //     case '/':
+        //         if (peek_next(lexer) == '/')
+        //         {
+        //             while (peek(lexer) != '\n' && is_at_end(lexer)) advance(lexer);
+        //         }
+        //         else
+        //         {
+        //             return;
+        //         }
+        //     default:
+        //         return;
+        // }
     }
 }
 

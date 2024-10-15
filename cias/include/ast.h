@@ -56,7 +56,5 @@ struct ast_node_t {
 
 ast_node_t* new_node(ast_node_t node);
 
-size_t token_length(struct token_t *token);
-
 
 #endif // CIAS_AST_H

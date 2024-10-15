@@ -7,9 +7,7 @@
 #include <stddef.h>
 #include <assert.h>
 
-#ifndef STACK_MAX_SIZE
 #define STACK_MAX_SIZE 10 * 1000 * 1000 // TODO: Change hardcoded stack size to dynamic realloc
-#endif // STACK_MAX_SIZE
 
 DEF_DA(value_t)
 
