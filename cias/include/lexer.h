@@ -40,6 +40,12 @@ typedef int Errno;
     X(TOKEN_STRING, "str", "TOKEN_STRING") \
     X(TOKEN_CHAR, "char", "TOKEN_CHAR") \
     X(TOKEN_VAR, "var", "TOKEN_VAR") \
+    X(TOKEN_ENTRY, "entry", "TOKEN_ENTRY") \
+    X(TOKEN_MODULE, "module", "TOKEN_MODULE") \
+    X(TOKEN_IMPORT, "import", "TOKEN_IMPORT") \
+    X(TOKEN_PURE, "pure", "TOKEN_PURE") \
+    X(TOKEN_RECORD, "record", "TOKEN_RECORD") \
+    X(TOKEN_ENTITY, "entity", "TOKEN_ENTITY") \
     X(TOKEN_RETURN, "return", "TOKEN_RETURN") \
     X(TOKEN_EOF, "eof", "TOKEN_EOF") \
     X(TOKEN_ERROR, "error", "TOKEN_ERROR") \

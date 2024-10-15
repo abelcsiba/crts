@@ -85,6 +85,29 @@ void parse(parser_t* parser)
     do
     {
         token = advance(parser);
+        switch (token.type)
+        {
+            case TOKEN_MODULE:
+                printf("Module declaration\n");
+                break;
+            case TOKEN_RECORD:
+                printf("Record declaration\n");
+                break;
+            case TOKEN_ENTRY:
+                printf("Entry declaration\n");
+                break;
+            case TOKEN_PURE:
+                printf("Pure declaration\n");
+                break;
+            case TOKEN_ENTITY:
+                printf("Entity declaration\n");
+                break;
+            case TOKEN_VAR:
+                printf("Var declaration\n");
+                break;
+            default:
+                printf("Invalid statement\n");
+        }
         printf(" %-17.*s|\n", (int)token.length, token.start);
     } while (token.type != TOKEN_EOF);
 }

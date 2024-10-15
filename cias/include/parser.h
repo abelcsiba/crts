@@ -33,9 +33,9 @@ typedef enum {
 } precedence_t;
 
 typedef struct {
+    precedence_t prec;
     prefix_t prefix;
     infix_t infix;
-    precedence_t prec;
 } parse_table_t;
 
 ast_node_t* group(parser_t* parser, token_t token);
