@@ -20,7 +20,9 @@ void run(vm_t *vm)
 #define PUSH(X) do { push_stack(&vm->memory.stack, X); } while (false)
 #define POP() pop_stack(&vm->memory.stack)
 #define POP_TOP pop_top_stack(&vm->memory.stack)
-
+#define DISPATCH() do { if(vm->pc >= vm->memory.module->code_size) return; goto *jump_table[vm->memory.module->code[PC].op]; } while (false)
+#define CODE() vm->memory.module->code[PC]
+    
     static void* jump_table[] = { 
             &&op_load_const,
             &&op_nop, 
@@ -30,53 +32,68 @@ void run(vm_t *vm)
             &&op_add,
             &&op_sub,
             &&op_mul,
-            &&op_div 
+            &&op_div,
+            &&op_hlt
     };
 
     display_init_message(vm);
-
-    while (PC < vm->memory.module->code_size)
-    {
-        code_t code = vm->memory.module->code[PC++];
-        opcode_t op = code.op;
-        goto *jump_table[op];
+    code_t code;
+    DISPATCH();
 
     op_load_const:
+        code = CODE();
         PUSH(DOUBLE_VAL(code.opnd1));
         printf("LOAD_CONST %f\n", AS_DOUBLE(POP()));
-        continue;
+        vm->pc++;
+        DISPATCH();
     op_nop:
-        continue;
-
+        DISPATCH();
     op_push:
+        code = CODE();
         PUSH(DOUBLE_VAL(code.opnd1));
         printf("OP_PUSH %f\n", AS_DOUBLE(POP()));
-        continue;
+        vm->pc++;
+        DISPATCH();
     op_pop_top:
+        code = CODE();
         POP();
         printf("OP_POP %ld\n", code.opnd1);
-        continue;
+        vm->pc++;
+        DISPATCH();
     op_tos:
+        code = CODE();
         printf("OP_TOS %ld\n", code.opnd1);
-        continue;
+        vm->pc++;
+        DISPATCH();
     op_add:
+        code = CODE();
         printf("OP_ADD %ld\n", code.opnd1);
-        continue;
+        vm->pc++;
+        DISPATCH();
     op_sub:
+        code = CODE();
         printf("OP_SUB %ld\n", code.opnd1);
-        continue;
+        vm->pc++;
+        DISPATCH();
     op_mul:
+        code = CODE();
         printf("OP_MUL %ld\n", code.opnd1);
-        continue;
+        vm->pc++;
+        DISPATCH();
     op_div:
+        code = CODE();
         printf("OP_DIV %ld\n", code.opnd1);
-        continue;
+        vm->pc++;
+        DISPATCH();
+    op_hlt:
+        return;
 
-    /* We encountered an unknown opcode, so we abort here. */
-        printf("We shouldn't reach this point. Aborting...\n");
-        exit(1);
-    }
+    /* We shouldn't reach here, so better abort now. */
+    printf("We shouldn't reach this point. Aborting...\n");
+    exit(1);
 
+#undef CODE
+#undef DISPATCH
 #undef POP_TOP
 #undef POP
 #undef PUSH

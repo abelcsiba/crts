@@ -4,6 +4,7 @@
 
 
 #include <stdint.h>
+#include <stddef.h>
 
 typedef enum {
     NUM_LITERAL,
@@ -28,29 +29,34 @@ typedef enum {
 
 typedef struct ast_node_t ast_node_t;
 
+struct token_t;
+
 struct ast_node_t {
     node_type_t kind;
     expr_type_t type_info;
+    struct token_t *token;
 
     union data {
         struct ast_number {
             int64_t num;
-        } ast_number;
+        } as_num;
 
         struct ast_binary {
             ast_node_t* left;
             ast_node_t* right;
             const char* op;
-        } ast_binary;
+        } as_bin;
 
         struct ast_unary {
             ast_node_t* expr;
             const char* op;
-        } ast_unary;
+        } as_un;
     } data;
 };
 
 ast_node_t* new_node(ast_node_t node);
+
+size_t token_length(struct token_t *token);
 
 
 #endif // CIAS_AST_H

@@ -5,7 +5,7 @@ CFLAGS=-Wall -Wextra
 INCLUDES=-Iciam/include -Icias/include
 LDFLAGS=-Lciam/lib/ -Lcias/lib/
 
-LIBS=-lciam -lcias
+LIBS=-lciam -lcias -lm
 
 SRC=main.c
 

@@ -2,6 +2,31 @@
 #include "parser.h"
 
 
+ast_node_t* group(parser_t* /*parser*/, token_t /*token*/)
+{
+    return NULL;
+}
+
+ast_node_t* unary(parser_t* /*parser*/, token_t /*token*/)
+{
+    return NULL;
+}
+
+ast_node_t* call(parser_t* /*parser*/, ast_node_t* /*left*/, bool /*can_assign*/)
+{
+    return NULL;
+}
+
+ast_node_t* invoke(parser_t* /*parser*/, ast_node_t* /*left*/, bool /*can_assign*/)
+{
+    return NULL;
+}
+
+ast_node_t* binary(parser_t* /*parser*/, ast_node_t* /*left*/, bool /*can_assign*/)
+{
+    return NULL;
+}
+
 static token_t advance(parser_t* parser)
 {
     return parser->tokens->data[parser->curr++];
@@ -62,4 +87,24 @@ void parse(parser_t* parser)
         token = advance(parser);
         printf(" %-17.*s|\n", (int)token.length, token.start);
     } while (token.type != TOKEN_EOF);
+}
+
+void print_ast_node(FILE* out, ast_node_t *node)
+{
+    switch (node->kind)
+    {
+        case NUM_LITERAL:
+            fprintf(out, "%ld", node->data.as_num.num);
+            break;
+        case BINARY_OP:
+            fprintf(out, "(");
+            print_ast_node(out, node->data.as_bin.left);
+            fprintf(out, " %c ", *node->data.as_bin.op);
+            print_ast_node(out, node->data.as_bin.right);
+            fprintf(out, ")");
+            break;
+        default:
+            fprintf(out, "UNKNOWN");
+            break;
+    }
 }

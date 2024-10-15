@@ -12,5 +12,6 @@
 #define OP_SUB              6
 #define OP_MUL              7
 #define OP_DIV              8
+#define OP_HLT              9
 
 #endif // CIAM_OPCODE_H_

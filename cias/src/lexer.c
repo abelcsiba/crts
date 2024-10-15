@@ -126,9 +126,9 @@ static token_t make_number(lexer_t* lexer)
 {
     while (is_digit(peek(lexer))) advance(lexer);
 
-    if (peek(lexer) == '.' && is_digit(peek_next(lexer)))
+    if ((peek(lexer) == '.' || peek(lexer) == '#') && is_digit(peek_next(lexer)))
     {
-        advance(lexer); // eat the dot
+        advance(lexer); // eat the dot/pound
         while (is_digit(peek(lexer))) advance(lexer);
     }
 
@@ -232,4 +232,9 @@ Errno lex(lexer_t* lexer, const char* source)
     }
 
     return -1;
+}
+
+size_t token_length(token_t *token)
+{
+    return token->length;
 }
