@@ -62,7 +62,10 @@ int main(void)
   init_parser(&parser, &lexer.tokens);
   parse(&parser);
 
-  ast_node_t* node = new_node(
+  arena_t arena = {0};
+  init_arena(&arena, ARENA_DEFAULT_BLOCK_SIZE);
+
+  ast_node_t* node = new_node(&arena,
             (ast_node_t) 
             { 
               .kind = BINARY_OP, 
@@ -70,8 +73,8 @@ int main(void)
               .data.as_bin = (struct ast_binary)
                             { 
                               .op = "+", 
-                              .left = new_node((ast_node_t){ .kind = NUM_LITERAL, .type_info = I8, .data.as_num = (struct ast_number){ .num = 23 }}), 
-                              .right = new_node(
+                              .left = new_node(&arena,(ast_node_t){ .kind = NUM_LITERAL, .type_info = I8, .data.as_num = (struct ast_number){ .num = 23 }}), 
+                              .right = new_node(&arena,
             (ast_node_t) 
             { 
               .kind = BINARY_OP, 
@@ -79,8 +82,8 @@ int main(void)
               .data.as_bin = (struct ast_binary)
                             { 
                               .op = "-", 
-                              .left = new_node((ast_node_t){ .kind = NUM_LITERAL, .type_info = I8, .data.as_num = (struct ast_number){ .num = 23 }}), 
-                              .right = new_node((ast_node_t){ .kind = NUM_LITERAL, .type_info = I8, .data.as_num = (struct ast_number){ .num = 32 }})
+                              .left = new_node(&arena, (ast_node_t){ .kind = NUM_LITERAL, .type_info = I8, .data.as_num = (struct ast_number){ .num = 23 }}), 
+                              .right = new_node(&arena, (ast_node_t){ .kind = NUM_LITERAL, .type_info = I8, .data.as_num = (struct ast_number){ .num = 32 }})
                             }
             }
   )

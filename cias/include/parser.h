@@ -4,6 +4,7 @@
 
 #include "lexer.h"
 #include "ast.h"
+#include "data.h"
 
 #include <stdint.h>
 #include <stdio.h>

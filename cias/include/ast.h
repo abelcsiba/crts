@@ -2,6 +2,7 @@
 #ifndef CIAS_AST_H_
 #define CIAS_AST_H_
 
+#include "data.h"
 
 #include <stdint.h>
 #include <stddef.h>
@@ -54,7 +55,7 @@ struct ast_node_t {
     } data;
 };
 
-ast_node_t* new_node(ast_node_t node);
+ast_node_t* new_node(arena_t* arena, ast_node_t node);
 
 
 #endif // CIAS_AST_H
