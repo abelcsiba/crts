@@ -112,9 +112,9 @@ static token_t error_token(lexer_t* lexer, const char* message)
     return token;
 }
 
-static token_t make_string(lexer_t* lexer)
+static token_t make_string(lexer_t* lexer, const char delimiter)
 {
-    while (peek(lexer) != '"' && is_at_end(lexer))
+    while (peek(lexer) != delimiter && !is_at_end(lexer))
     {
         if (peek(lexer) == '\n') lexer->line_no++;
         advance(lexer);
@@ -123,7 +123,7 @@ static token_t make_string(lexer_t* lexer)
     if (is_at_end(lexer)) return error_token(lexer, "Unterminated string.");
 
     advance(lexer);
-    return make_token(lexer, TOKEN_STRING);
+    return make_token(lexer, (delimiter == '"') ? TOKEN_STRING : TOKEN_CHAR);
 }
 
 static token_t make_number(lexer_t* lexer)
@@ -201,7 +201,8 @@ token_t lex_token(lexer_t* lexer)
     else if ( c == '=' ) return make_token(lexer, (match(lexer, '=') ? TOKEN_EQUAL_EQUAL : TOKEN_EQUAL));
     else if ( c == '<' ) return make_token(lexer, (match(lexer, '=') ? TOKEN_LESS_EQUAL : TOKEN_LESS));
     else if ( c == '>' ) return make_token(lexer, (match(lexer, '=') ? TOKEN_GREATER_EQUAL : TOKEN_GREATER));
-    else if ( c == '"' ) return make_string(lexer);
+    else if ( c == '"' ) return make_string(lexer, '"');
+    else if ( c == '\'' ) return make_string(lexer, '\''); 
     else if ( is_digit(c) ) return make_number(lexer);
     else if ( is_alpha(c) ) return make_identifier(lexer);
     

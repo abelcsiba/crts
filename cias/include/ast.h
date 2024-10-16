@@ -12,6 +12,7 @@ typedef enum {
     STRING_LITERAL,
     CHAR_LITERAL,
     BOOL_LITERAL,
+    VARIABLE,
     BINARY_OP,
     UNARY_OP
 } node_type_t;
@@ -25,6 +26,7 @@ typedef enum {
     DOUBLE,
     BOOL,
     CHAR,
+    STRING,
     UNKNOWN
 } expr_type_t;
 
@@ -41,6 +43,18 @@ struct ast_node_t {
         struct ast_number {
             int64_t num;
         } as_num;
+
+        struct ast_string {
+            char* cstr;
+        } as_str;
+
+        struct ast_char {
+            char c;
+        } as_char;
+
+        struct ast_var {
+            char* name;
+        } as_var;
 
         struct ast_binary {
             ast_node_t* left;

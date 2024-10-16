@@ -1,15 +1,87 @@
 
 #include "parser.h"
 
+#include <string.h>
 
-ast_node_t* group(parser_t* /*parser*/, token_t /*token*/)
+static parse_rule_t parse_table[] = {
+    [TOKEN_LPAREN]          = { .prec = PREC_NONE,          .prefix = group,    .infix = call },
+    [TOKEN_RPAREN]          = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL },
+    [TOKEN_LBRACE]          = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL },
+    [TOKEN_RBRACE]          = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL },
+    [TOKEN_COMMA]           = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL },
+    [TOKEN_DOT]             = { .prec = PREC_CALL,          .prefix = NULL,     .infix = invoke },
+    [TOKEN_MINUS]           = { .prec = PREC_TERM,          .prefix = unary,    .infix = binary },
+    [TOKEN_PLUS]            = { .prec = PREC_TERM,          .prefix = NULL,     .infix = binary },
+    [TOKEN_SEMI]            = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL },
+    [TOKEN_SLASH]           = { .prec = PREC_FACTOR,        .prefix = NULL,     .infix = binary },
+    [TOKEN_ASTERISK]        = { .prec = PREC_FACTOR,        .prefix = NULL,     .infix = binary },
+    [TOKEN_BANG]            = { .prec = PREC_NONE,          .prefix = unary,    .infix = NULL },
+    [TOKEN_BANG_EQUAL]      = { .prec = PREC_EQUALITY,      .prefix = NULL,     .infix = binary },
+    [TOKEN_NUMBER]          = { .prec = PREC_NONE,          .prefix = number,   .infix = NULL },
+    [TOKEN_EOF]             = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL },
+    [TOKEN_STRING]          = { .prec = PREC_NONE,          .prefix = str_,     .infix = NULL },
+    [TOKEN_CHAR]            = { .prec = PREC_NONE,          .prefix = chr_,     .infix = NULL },
+    [TOKEN_IDENTIFIER]      = { .prec = PREC_NONE,          .prefix = variable, .infix = NULL },
+};
+
+static void consume(parser_t* parser, token_ty_t type, const char* message);
+static token_t previous(parser_t* parser);
+
+ast_node_t* variable(parser_t* parser, token_t token)
 {
-    return NULL;
+    char* tmp = (char*)arena_alloc(parser->arena, sizeof(char) * token.length + 1);
+    sprintf(tmp, "%.*s", (int)token.length, token.start);
+    return new_node(parser->arena, (ast_node_t){ .kind = VARIABLE, .type_info = UNKNOWN, .data.as_var = (struct ast_var){ .name = tmp }});
 }
 
-ast_node_t* unary(parser_t* /*parser*/, token_t /*token*/)
+ast_node_t* str_(parser_t* parser, token_t token)
 {
-    return NULL;
+    size_t length = (token.length > 2) ? token.length : 1;
+    char* tmp = (char*)arena_alloc(parser->arena, sizeof(char) * length);
+    if (length > 2) sprintf(tmp, "%.*s", (int)length - 2, &token.start[1]);
+    else sprintf(tmp, "%s", "");
+
+    ast_node_t* expr = new_node(parser->arena, (ast_node_t){ .kind = STRING_LITERAL, .type_info = STRING, .data.as_str = (struct ast_string){ .cstr = tmp }});
+    return expr;
+}
+
+ast_node_t* chr_(parser_t* parser, token_t token)
+{
+    return new_node(parser->arena, (ast_node_t){ .kind = CHAR_LITERAL, .type_info = CHAR, .data.as_char = (struct ast_char){ .c = token.start[1] }});
+}
+
+ast_node_t* group(parser_t* parser, token_t /*token*/)
+{
+    ast_node_t* exp = parse_expression(parser, PREC_NONE);
+    consume(parser, TOKEN_RPAREN, "Missing ')' symbol");
+    return exp;
+}
+
+ast_node_t* number(parser_t* parser, token_t token)
+{
+    // This is killing me. There has to be an easier way.
+    char* tmp = (char*)malloc(sizeof(char) * token.length + 1);
+    sprintf(tmp, "%.*s", (int)token.length, token.start);
+    ast_node_t* expr = new_node(parser->arena, (ast_node_t){ .kind = NUM_LITERAL, .type_info = I8, .data.as_num = (struct ast_number){ .num = strtof(tmp, NULL) }});
+    free(tmp);
+    return expr;
+}
+
+ast_node_t* unary(parser_t* parser, token_t token)
+{
+    char* op = (char*)arena_alloc(parser->arena, token.length + 1);
+    sprintf(op, "%.*s", (int)token.length, token.start);
+    ast_node_t* expr = parse_expression(parser, parse_table[token.type].prec);
+    return new_node(parser->arena, (ast_node_t) 
+            { 
+              .kind = UNARY_OP, 
+              .type_info = UNKNOWN, 
+              .data.as_un = (struct ast_unary)
+                            { 
+                              .op = op, 
+                              .expr = expr
+                            }
+            });
 }
 
 ast_node_t* call(parser_t* /*parser*/, ast_node_t* /*left*/, bool /*can_assign*/)
@@ -22,14 +94,34 @@ ast_node_t* invoke(parser_t* /*parser*/, ast_node_t* /*left*/, bool /*can_assign
     return NULL;
 }
 
-ast_node_t* binary(parser_t* /*parser*/, ast_node_t* /*left*/, bool /*can_assign*/)
+ast_node_t* binary(parser_t* parser, ast_node_t* left, bool /*can_assign*/)
 {
-    return NULL;
+    token_t token = previous(parser);
+    char* op = (char*)arena_alloc(parser->arena, token.length + 1);
+    sprintf(op, "%.*s", (int)token.length, token.start);
+    ast_node_t* right = parse_expression(parser, parse_table[token.type].prec);
+
+    return new_node(parser->arena, (ast_node_t) 
+            { 
+              .kind = BINARY_OP, 
+              .type_info = UNKNOWN, 
+              .data.as_bin = (struct ast_binary)
+                            { 
+                              .op = op, 
+                              .left = left, 
+                              .right = right
+                            }
+            });
 }
 
 static token_t advance(parser_t* parser)
 {
     return parser->tokens->data[parser->curr++];
+}
+
+static token_t previous(parser_t* parser)
+{
+    return parser->tokens->data[parser->curr - 1];
 }
 
 static token_t peek(parser_t* parser)
@@ -73,43 +165,75 @@ static void consume(parser_t* parser, token_ty_t type, const char* message)
     error(parser, message);
 }
 
-void init_parser(parser_t* parser, token_list_t *tokens)
+void init_parser(parser_t* parser, arena_t* arena, token_list_t *tokens)
 {
+    parser->arena = arena;
     parser->tokens = tokens;
     parser->curr = 0;
 }
 
-void parse(parser_t* parser)
+ast_node_t* parse_expression(parser_t* parser, precedence_t precedence)
 {
-    token_t token;
-    do
+    token_t token = advance(parser);
+    parse_rule_t rule = parse_table[token.type];
+
+    if (NULL == rule.prefix)
+    {
+        error(parser, "Unexpected token");
+        return NULL;
+    }
+
+    prefix_t prefix = rule.prefix;
+    ast_node_t* left = prefix(parser, token);
+    while (precedence < parse_table[peek(parser).type].prec)
     {
         token = advance(parser);
-        switch (token.type)
-        {
-            case TOKEN_MODULE:
-                printf("Module declaration\n");
-                break;
-            case TOKEN_RECORD:
-                printf("Record declaration\n");
-                break;
-            case TOKEN_ENTRY:
-                printf("Entry declaration\n");
-                break;
-            case TOKEN_PURE:
-                printf("Pure declaration\n");
-                break;
-            case TOKEN_ENTITY:
-                printf("Entity declaration\n");
-                break;
-            case TOKEN_VAR:
-                printf("Var declaration\n");
-                break;
-            default:
-                printf("Invalid statement\n");
-        }
-        printf(" %-17.*s|\n", (int)token.length, token.start);
+        infix_t infix = parse_table[token.type].infix;
+
+        if (NULL == infix) break;
+
+        left = infix(parser, left, true);
+    }
+
+    return left;
+}
+
+ast_node_t* parse(parser_t* parser)
+{
+    token_t token;
+    ast_node_t* node = NULL;
+    do
+    {
+        //token = advance(parser);
+        node = parse_expression(parser, 0);
+        token = peek(parser);
+        // switch (token.type)
+        // {
+        //     case TOKEN_MODULE:
+        //         printf("Module declaration\n");
+        //         break;
+        //     case TOKEN_RECORD:
+        //         printf("Record declaration\n");
+        //         break;
+        //     case TOKEN_ENTRY:
+        //         printf("Entry declaration\n");
+        //         break;
+        //     case TOKEN_PURE:
+        //         printf("Pure declaration\n");
+        //         break;
+        //     case TOKEN_ENTITY:
+        //         printf("Entity declaration\n");
+        //         break;
+        //     case TOKEN_VAR:
+        //         printf("Var declaration\n");
+        //         break;
+        //     default:
+        //         printf("Invalid statement\n");
+        // }
+        // printf(" %-17.*s|\n", (int)token.length, token.start);
     } while (token.type != TOKEN_EOF);
+
+    return node;
 }
 
 void print_ast_node(FILE* out, ast_node_t *node)
@@ -119,11 +243,25 @@ void print_ast_node(FILE* out, ast_node_t *node)
         case NUM_LITERAL:
             fprintf(out, "%ld", node->data.as_num.num);
             break;
+        case STRING_LITERAL:
+            fprintf(out, "\"%s\"", node->data.as_str.cstr);
+            break;
+        case CHAR_LITERAL:
+            fprintf(out, "'%c'", node->data.as_char.c);
+            break;
         case BINARY_OP:
             fprintf(out, "(");
             print_ast_node(out, node->data.as_bin.left);
             fprintf(out, " %c ", *node->data.as_bin.op);
             print_ast_node(out, node->data.as_bin.right);
+            fprintf(out, ")");
+            break;
+        case VARIABLE:
+            fprintf(out, "%s", node->data.as_var.name);
+            break;
+        case UNARY_OP:
+            fprintf(out, "(%c", *node->data.as_un.op);
+            print_ast_node(out, node->data.as_un.expr);
             fprintf(out, ")");
             break;
         default:
