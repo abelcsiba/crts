@@ -5,10 +5,10 @@
 #include <string.h>
 
 
-ast_node_t* new_node(arena_t* arena, ast_node_t node)
+ast_exp_t* new_exp(arena_t* arena, ast_exp_t exp)
 {
-    ast_node_t* ptr = (ast_node_t*)arena_alloc(arena, sizeof(ast_node_t));
-    if (NULL != ptr) *ptr = node;
+    ast_exp_t* ptr = (ast_exp_t*)arena_alloc(arena, sizeof(ast_exp_t));
+    if (NULL != ptr) *ptr = exp;
 
     return ptr;
 }

@@ -56,7 +56,7 @@ void run(vm_t *vm)
         DISPATCH();
     op_pop_top:
         code = CODE();
-        POP();
+        //POP();
         printf("OP_POP %ld\n", code.opnd1);
         vm->pc++;
         DISPATCH();

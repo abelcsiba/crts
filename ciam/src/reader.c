@@ -50,5 +50,10 @@ code_t* open_bc_source_file(const char* path)
 
     if (ferror(file)) return NULL;
 
-    return parse_code(buff, length);
+    code_t* result = parse_code(buff, length);
+
+    free(buff); // TODO: Remove this later!!!!
+    fclose(file);
+
+    return result;
 }

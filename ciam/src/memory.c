@@ -26,11 +26,13 @@ void push_stack(stack_t *stack, value_t val)
 
 value_t pop_stack(stack_t* stack)
 {
+  assert(stack->count - 1 >= 0 && "stack underflow");
   return stack->slots[--stack->count];
 }
 
 void pop_top_stack(stack_t* stack)
 {
+  assert(stack->count - 1 >= 0 && "stack underflow");
   stack->count--;
 }
 

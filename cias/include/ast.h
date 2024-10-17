@@ -15,7 +15,15 @@ typedef enum {
     VARIABLE,
     BINARY_OP,
     UNARY_OP
-} node_type_t;
+} expr_kind_t;
+
+typedef enum {
+    EXPR_STMT,
+    VAR_DECL,
+    IF_STMT,
+    FOR_STMT,
+    BLOCK_STMT
+} stmt_kind_t;
 
 typedef enum {
     I8,
@@ -30,12 +38,13 @@ typedef enum {
     UNKNOWN
 } expr_type_t;
 
-typedef struct ast_node_t ast_node_t;
+typedef struct ast_exp_t ast_exp_t;
+typedef struct ast_stmt_t ast_stmt_t;
 
 struct token_t;
 
-struct ast_node_t {
-    node_type_t kind;
+struct ast_exp_t {
+    expr_kind_t kind;
     expr_type_t type_info;
     struct token_t *token;
 
@@ -57,19 +66,29 @@ struct ast_node_t {
         } as_var;
 
         struct ast_binary {
-            ast_node_t* left;
-            ast_node_t* right;
+            ast_exp_t* left;
+            ast_exp_t* right;
             const char* op;
         } as_bin;
 
         struct ast_unary {
-            ast_node_t* expr;
+            ast_exp_t* expr;
             const char* op;
         } as_un;
     } data;
 };
 
-ast_node_t* new_node(arena_t* arena, ast_node_t node);
+struct ast_stmt_t {
+    stmt_kind_t kind;
+
+    union pl {
+        struct {
+            ast_exp_t* exp;
+        } as_expr;
+    } pl;
+};
+
+ast_exp_t* new_exp(arena_t* arena, ast_exp_t exp);
 
 
 #endif // CIAS_AST_H

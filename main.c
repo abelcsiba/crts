@@ -5,11 +5,13 @@
 #include "reader.h"
 #include "code.h"
 #include "lexer.h"
+#include "compiler.h"
 
 #include "parser.h"
 #include "data.h"
 
 #include "ast.h"
+#include "common/codec.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -51,10 +53,12 @@ int main(void)
   init_vm(&vm, &module);
   run(&vm);
   printf("Exiting VM...\n\n\n");
+  free(vm.memory.stack.slots);
 
   print_header();
   lexer_t lexer;
-  const char* buff = "-3 + 5 * 4 + 7 + \"this is a string\" + 'X' * (53 + 'a') * sum / alef";
+  // const char* buff = "-3 + 5 * 4 + 7 + \"this is a string\" + 'X' * (53 + 'a') * sum / alef";
+  const char* buff = "5 + 4 + 7 * 9 + 6";
   lex(&lexer, buff);
   print_footer();
 
@@ -63,10 +67,36 @@ int main(void)
 
   parser_t parser;
   init_parser(&parser, &arena, &lexer.tokens);
-  ast_node_t* node = parse(&parser);
+  ast_stmt_t* stmt = parse(&parser);
 
-  print_ast_node(stdout, node);
+  if ( NULL != stmt->pl.as_expr.exp ) print_ast_exp(stdout, stmt->pl.as_expr.exp);
   printf("\n");
+
+  compiler_t compiler;
+  compile_ast(&compiler, stmt);
+
+  print_code(stdout, compiler.code, compiler.count);
+
+  destroy_arena(&arena);
+  free(code);
+  free(parser.tokens->data);
+
+  FILE *fp = fopen("./test/bytecode.ciam", "wb");
+
+  if (NULL == fp)
+  {
+    fprintf(stderr, "Unable to open file\n");
+    return EXIT_FAILURE;
+  }
+
+  char* tmp = (char*)malloc(sizeof(ciam_header_t));
+
+  encode(tmp, NULL);
+
+  fwrite(tmp, sizeof(ciam_header_t), 1, fp);
+  free(tmp);
+
+  fclose(fp);
   
   return EXIT_SUCCESS;
 }

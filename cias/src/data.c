@@ -85,5 +85,5 @@ void destroy_arena(arena_t* arena)
         destroy_block(block);
         block = next;
     }
-    free(arena);
+    //free(arena);
 }

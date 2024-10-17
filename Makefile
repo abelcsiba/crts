@@ -2,7 +2,7 @@
 
 CC=gcc
 CFLAGS=-Wall -Wextra
-INCLUDES=-Iciam/include -Icias/include
+INCLUDES=-Iciam/include -Icias/include -Icommon
 LDFLAGS=-Lciam/lib/ -Lcias/lib/
 
 LIBS=-lciam -lcias -lm
@@ -28,7 +28,7 @@ cias/lib/libcias.so:
 $(EXEC): $(OBJ)
 	$(CC) $(OBJ) $(LDFLAGS) $(INCLUDES) $(LIBS) -o $@
 
-$(OBJ): *.c 
+$(OBJ): *.c
 	mkdir -p obj
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@ -g
 
