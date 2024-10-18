@@ -1,7 +1,7 @@
 
 
 CC=gcc
-CFLAGS= -fPIC -Iinclude -I../ciam/include
+CFLAGS= -fPIC -Iinclude -I../ciam/include -I../common
 WFLAGS=-Wall -Wextra
 
 LDFLAGS=-shared

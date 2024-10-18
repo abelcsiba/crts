@@ -89,12 +89,41 @@ int main(void)
     return EXIT_FAILURE;
   }
 
-  char* tmp = (char*)malloc(sizeof(ciam_header_t));
+  char* tmp = (char*)calloc(sizeof(ciam_header_t) + 2 + (9 * 5) + 81, sizeof(char));
 
-  encode(tmp, NULL);
+  const_pool_t pool;
+  pool.numbers.nums = (num_const_t*)malloc(sizeof(num_const_t) * 5);
+  pool.numbers.count = 5;
+  pool.numbers.nums[0].type = VAL_I8;
+  pool.numbers.nums[0].value = 0xBB;
 
-  fwrite(tmp, sizeof(ciam_header_t), 1, fp);
+  pool.numbers.nums[1].type = VAL_I16;
+  pool.numbers.nums[1].value = 0xCC;
+
+  pool.numbers.nums[2].type = VAL_I32;
+  pool.numbers.nums[2].value = 0xDD;
+
+  pool.numbers.nums[3].type = VAL_I64;
+  pool.numbers.nums[3].value = 0xEE;
+
+  pool.numbers.nums[4].type = VAL_I64;
+  pool.numbers.nums[4].value = 0xFF;
+
+  encode(tmp, compiler.code, compiler.count, &pool);
+
+  const_pool_t pool2;
+  decode(tmp, &pool2);
+  uint16_t code_length = ((ciam_header_t*)tmp)->code_size;
+  fwrite(tmp, sizeof(ciam_header_t) + 2 + (9 * pool.numbers.count) + code_length, 1, fp);
   free(tmp);
+  //free(pool.numbers.nums);
+
+  // const char *horizontal = "─";
+  // const char *vertical = "│";
+  // const char *top_left = "┌";
+  // const char *top_right = "┐";
+  // const char *bottom_left = "└";
+  // const char *bottom_right = "┘";
 
   fclose(fp);
   

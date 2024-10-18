@@ -6,10 +6,10 @@ static int const_index = 0;
 
 opcode_t get_binary_opcode(const char op_c)
 {
-    if (op_c == '+') return OP_ADD;
-    else if (op_c == '-') return OP_SUB;
-    else if (op_c == '*') return OP_MUL;
-    else return OP_DIV;
+    if (op_c == '+') return ADD;
+    else if (op_c == '-') return SUB;
+    else if (op_c == '*') return MUL;
+    else return DIV;
 }
 
 static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
@@ -27,7 +27,7 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
             code.op = get_binary_opcode(*exp->data.as_bin.op);
             break;
         default:
-            code.op = OP_HLT;
+            code.op = HLT;
     }
     compiler->code[compiler->count++] = code;
 }

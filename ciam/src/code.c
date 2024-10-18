@@ -24,17 +24,17 @@ void print_code(FILE* out, code_t* code, int count)
             case LOAD_CONST:
                 fprintf(out, "LOAD_CONST %ld\n", code[i].opnd1);
                 break;
-            case OP_ADD:
-                fprintf(out, "OP_ADD\n");
+            case ADD:
+                fprintf(out, "ADD\n");
                 break;
-            case OP_SUB:
-                fprintf(out, "OP_SUB\n");
+            case SUB:
+                fprintf(out, "SUB\n");
                 break;
-            case OP_MUL:
-                fprintf(out, "OP_MUL\n");
+            case MUL:
+                fprintf(out, "MUL\n");
                 break;
-            case OP_DIV:
-                fprintf(out, "OP_DIV\n");
+            case DIV:
+                fprintf(out, "DIV\n");
                 break;
         }
     }

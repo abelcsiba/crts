@@ -24,68 +24,61 @@ void run(vm_t *vm)
 #define CODE() vm->memory.module->code[PC]
     
     static void* jump_table[] = { 
-            &&op_load_const,
-            &&op_nop, 
-            &&op_push,
-            &&op_pop_top, 
-            &&op_tos,
-            &&op_add,
-            &&op_sub,
-            &&op_mul,
-            &&op_div,
-            &&op_hlt
+    #define X(kind, id, has_operand) &&OP_##kind,
+        OPCODE_LIST
+    #undef X
     };
 
     display_init_message(vm);
     code_t code;
     DISPATCH();
 
-    op_load_const:
+    OP_LOAD_CONST:
         code = CODE();
         PUSH(DOUBLE_VAL(code.opnd1));
         printf("LOAD_CONST %f\n", AS_DOUBLE(POP()));
         vm->pc++;
         DISPATCH();
-    op_nop:
+    OP_NOP:
         DISPATCH();
-    op_push:
+    OP_PUSH:
         code = CODE();
         PUSH(DOUBLE_VAL(code.opnd1));
         printf("OP_PUSH %f\n", AS_DOUBLE(POP()));
         vm->pc++;
         DISPATCH();
-    op_pop_top:
+    OP_POP_TOP:
         code = CODE();
         //POP();
         printf("OP_POP %ld\n", code.opnd1);
         vm->pc++;
         DISPATCH();
-    op_tos:
+    OP_TOS:
         code = CODE();
         printf("OP_TOS %ld\n", code.opnd1);
         vm->pc++;
         DISPATCH();
-    op_add:
+    OP_ADD:
         code = CODE();
         printf("OP_ADD %ld\n", code.opnd1);
         vm->pc++;
         DISPATCH();
-    op_sub:
+    OP_SUB:
         code = CODE();
         printf("OP_SUB %ld\n", code.opnd1);
         vm->pc++;
         DISPATCH();
-    op_mul:
+    OP_MUL:
         code = CODE();
         printf("OP_MUL %ld\n", code.opnd1);
         vm->pc++;
         DISPATCH();
-    op_div:
+    OP_DIV:
         code = CODE();
         printf("OP_DIV %ld\n", code.opnd1);
         vm->pc++;
         DISPATCH();
-    op_hlt:
+    OP_HLT:
         return;
 
     /* We shouldn't reach here, so better abort now. */
