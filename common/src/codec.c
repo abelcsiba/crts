@@ -1,68 +1,12 @@
 
-#ifndef COMMON_CODEC_H_
-#define COMMON_CODEC_H_
+#include "codec.h"
 
-#include "../ciam/include/code.h"
-
-#include <stdint.h>
-#include <string.h>
-#include <stdbool.h>
-#include <time.h>
-
-#define CIAM_MAGIC_NUM 0x6c6562c1
-#define CIAM_VER_MAJOR 0x00
-#define CIAM_VER_MINOR 0x01
-#define CIAM_VER_PATCH 0x00
-#define CIAM_VER_REV   0x00
-
-#define PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))
-
-PACK(struct time_stamp_t {
-    uint32_t sec;
-    uint32_t min;
-    uint32_t hour;
-    uint32_t m_day;
-    uint32_t mon;
-    uint32_t year;
-    uint32_t w_day;
-    uint32_t y_day;
-    uint32_t is_dst;
-});
-
-typedef struct time_stamp_t ts_t;
-
-PACK(struct ciam_header_t {
-    uint32_t magic;
-    uint32_t version;
-    ts_t timestamp;
-    uint64_t code_size;   // Maybe remove..?
-    uint64_t const_size;  // Maybe remove..?
-    uint64_t main_addr;
-});
 
 static int op_has_operand[] = {
 #define X(kind, id, has_operand) [id] = has_operand,
     OPCODE_LIST
 #undef X
 };
-
-typedef struct ciam_header_t ciam_header_t;
-
-#define NUM_CONST_SIZE 9
-
-typedef struct {
-    uint8_t type;
-    uint64_t value;
-} num_const_t;
-
-typedef struct {
-    num_const_t* nums;
-    uint16_t count;
-} const_num_table_t;
-
-typedef struct {
-    const_num_table_t numbers;
-} const_pool_t;
 
 static size_t encode_numeric_constants(char* buff, const_num_table_t* num_table)
 {
@@ -110,7 +54,7 @@ static void encode_timestamp(ts_t* timestamp)
     timestamp->is_dst   = local_time->tm_isdst;
 }
 
-void encode(char* buff, code_t* code, size_t code_size, const_pool_t* pool)
+void encode(char* buff, module_t* module)
 {
     ciam_header_t header;
     header.magic = CIAM_MAGIC_NUM;
@@ -122,18 +66,18 @@ void encode(char* buff, code_t* code, size_t code_size, const_pool_t* pool)
     header.version = version;
 
     encode_timestamp(&header.timestamp);
-    header.code_size = code_size;
+    header.code_size = module->code_size;
     header.const_size = 0x9988;
     header.main_addr = sizeof(ciam_header_t);
     memcpy(buff, &header, sizeof(ciam_header_t));
 
     size_t offset = sizeof(ciam_header_t);
-    offset += encode_numeric_constants(buff + sizeof(ciam_header_t), &pool->numbers);
-    size_t inst_code_length = encode_inst_code(buff + offset, code, code_size);
+    offset += encode_numeric_constants(buff + sizeof(ciam_header_t), &module->pool.numbers);
+    size_t inst_code_length = encode_inst_code(buff + offset, module->code, module->code_size);
     ((ciam_header_t*)buff)->code_size = inst_code_length;
 }
 
-static void decode_numeric_constants(char* buff, const_num_table_t* num_table)
+static size_t decode_numeric_constants(char* buff, const_num_table_t* num_table)
 {
 #define DECODE(X, size) do { memcpy(tmp, buff + offset, size); offset += size; } while (false) 
     char tmp[64];
@@ -148,15 +92,44 @@ static void decode_numeric_constants(char* buff, const_num_table_t* num_table)
         DECODE(tmp, sizeof(uint64_t));
         num_table->nums[i].value = *(uint64_t*)tmp;
     }
+    return offset;
 #undef DECODE
 }
 
-void decode(char* buff, const_pool_t* pool)
+static void decode_timestamp(struct tm* timestamp, ts_t* raw_time)
+{
+    timestamp->tm_sec       = raw_time->sec;
+    timestamp->tm_min       = raw_time->min;
+    timestamp->tm_hour      = raw_time->hour;
+    timestamp->tm_mday      = raw_time->m_day;
+    timestamp->tm_mon       = raw_time->mon;
+    timestamp->tm_year      = raw_time->year;
+    timestamp->tm_wday      = raw_time->w_day;
+    timestamp->tm_yday      = raw_time->y_day;
+    timestamp->tm_isdst     = raw_time->is_dst;
+}
+
+static void decode_inst_code(char* buff, code_t** code, size_t code_size)
+{
+    size_t offset = 0;
+    size_t index = 0;
+    while (offset < code_size)
+    {
+        (*code)[index].op = (opcode_t)buff[offset];
+        offset += 1;
+        (*code)[index].opnd1 = (opnd_t)buff[offset];
+        offset += 8;
+        index++;
+    }
+}
+
+void decode(char* buff, module_t* module/*struct tm* ts, code_t** code, size_t* code_size, const_pool_t* pool*/)
 {
     ciam_header_t header = {0};
     memcpy(&header, buff, sizeof(ciam_header_t));
-    decode_numeric_constants(buff + sizeof(ciam_header_t), &pool->numbers);
+    size_t offset = decode_numeric_constants(buff + sizeof(ciam_header_t), &module->pool.numbers);
+    decode_timestamp(module->time_stamp, &header.timestamp);
+    module->code_size = header.code_size;
+    module->code = (code_t*)malloc(sizeof(code_t) * (module->code_size));
+    decode_inst_code(buff + sizeof(ciam_header_t) + offset, &module->code, module->code_size);
 }
-
-
-#endif // COMMON_CODEC_H_

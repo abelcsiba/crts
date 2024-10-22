@@ -5,8 +5,6 @@
 #include <assert.h>
 
 
-DECL_DA(code_t)
-DEF_DA(code_t)
 
 static i64 parse_operand(const char* buffer)
 {
@@ -16,7 +14,7 @@ static i64 parse_operand(const char* buffer)
 
 code_t* parse_code(const char* buffer, size_t length)
 {
-    code_t_array_t array;
+    /*code_t_array_t array;
     array.count = 0;
     array.capacity = 0;
     array.data = NULL;
@@ -31,12 +29,13 @@ code_t* parse_code(const char* buffer, size_t length)
         add_code_t(&array, c);
     }
     
-    return array.data;
+    return array.data;*/
+    return NULL;
 }
 
 code_t* open_bc_source_file(const char* path)
 {
-    FILE* file = fopen(path, "rb");
+    /*FILE* file = fopen(path, "rb");
     if (NULL == file) return NULL;
 
     fseek(file, 0, SEEK_END);
@@ -55,5 +54,6 @@ code_t* open_bc_source_file(const char* path)
     free(buff); // TODO: Remove this later!!!!
     fclose(file);
 
-    return result;
+    return result;*/
+    return NULL;
 }

@@ -15,6 +15,23 @@ void free_code(code_t* code)
     free(code);
 }
 
+void add_to_code_da(code_da* da, code_t val)
+{
+    if (da->count == da->capacity)
+    {
+        size_t new_cap = (0 == da->capacity ? 8 : da->capacity * 2);
+        da->data = (code_t*)realloc(da->data, sizeof(code_t) * new_cap);
+        da->capacity = new_cap;
+    }
+    da->data[da->count++] = val;
+}
+
+void init_code_da(code_da* da)
+{
+    da->count = da->capacity = 0;
+    da->data = NULL;
+}
+
 void print_code(FILE* out, code_t* code, int count)
 {
     for (int i = 0; i < count; i++)

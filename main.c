@@ -1,7 +1,6 @@
 
 #include "vm.h"
 #include "opcode.h"
-#include "common.h"
 #include "reader.h"
 #include "code.h"
 #include "lexer.h"
@@ -11,7 +10,7 @@
 #include "data.h"
 
 #include "ast.h"
-#include "common/codec.h"
+#include "codec.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -39,25 +38,7 @@ void print_footer()
 
 int main(void)
 {
-  char* file_name = "./test/test.raw";
-  code_t *code = open_bc_source_file(file_name);
-  
-  vm_t vm;
-  module_t module;
-  time_t raw_time;
-  time(&raw_time);
-  module.code = code;
-  module.code_size = (u64)3;
-  module.file_name = file_name;
-  module.time_stamp = localtime(&raw_time);
-  init_vm(&vm, &module);
-  run(&vm);
-  printf("Exiting VM...\n\n\n");
-  free(vm.memory.stack.slots);
-
-  print_header();
   lexer_t lexer;
-  // const char* buff = "-3 + 5 * 4 + 7 + \"this is a string\" + 'X' * (53 + 'a') * sum / alef";
   const char* buff = "5 + 4 + 7 * 9 + 6";
   lex(&lexer, buff);
   print_footer();
@@ -73,23 +54,12 @@ int main(void)
   printf("\n");
 
   compiler_t compiler;
+  init_module(&compiler);
   compile_ast(&compiler, stmt);
 
-  print_code(stdout, compiler.code, compiler.count);
+  print_code(stdout, compiler.compiled_m->code, compiler.compiled_m->code_size);
 
-  destroy_arena(&arena);
-  free(code);
-  free(parser.tokens->data);
-
-  FILE *fp = fopen("./test/bytecode.ciam", "wb");
-
-  if (NULL == fp)
-  {
-    fprintf(stderr, "Unable to open file\n");
-    return EXIT_FAILURE;
-  }
-
-  char* tmp = (char*)calloc(sizeof(ciam_header_t) + 2 + (9 * 5) + 81, sizeof(char));
+  /*char tmp[2048];
 
   const_pool_t pool;
   pool.numbers.nums = (num_const_t*)malloc(sizeof(num_const_t) * 5);
@@ -109,23 +79,15 @@ int main(void)
   pool.numbers.nums[4].type = VAL_I64;
   pool.numbers.nums[4].value = 0xFF;
 
-  encode(tmp, compiler.code, compiler.count, &pool);
-
-  const_pool_t pool2;
-  decode(tmp, &pool2);
-  uint16_t code_length = ((ciam_header_t*)tmp)->code_size;
-  fwrite(tmp, sizeof(ciam_header_t) + 2 + (9 * pool.numbers.count) + code_length, 1, fp);
-  free(tmp);
-  //free(pool.numbers.nums);
-
-  // const char *horizontal = "─";
-  // const char *vertical = "│";
-  // const char *top_left = "┌";
-  // const char *top_right = "┐";
-  // const char *bottom_left = "└";
-  // const char *bottom_right = "┘";
-
-  fclose(fp);
+  encode(tmp, compiler.compiled_m);
+  
+  module_t module = {0};
+  module.time_stamp = (struct tm*)malloc(sizeof(struct tm));
+  module.file_name = "example.isl";
+  ciam_vm_t *vm = ciam_vm_new();
+  decode(tmp, &module);
+  ciam_vm_load(vm, &module);
+  ciam_vm_run(vm);*/
   
   return EXIT_SUCCESS;
 }

@@ -230,7 +230,7 @@ ast_stmt_t* parse(parser_t* parser)
     //{
         //token = advance(parser);
 
-        ast_stmt_t* stmt = (ast_stmt_t*)calloc(1, sizeof(ast_stmt_t));
+        ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(parser->arena, sizeof(ast_stmt_t));
         stmt->pl.as_expr.exp = parse_expression(parser, 0);
         //if (NULL == exp) break;
         //token = peek(parser);

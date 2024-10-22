@@ -11,7 +11,6 @@ static const char* token_labels[] = {
 #undef X
 };
 
-DEF_DA(token_t);
 
 static const char* token_ty2label(token_ty_t type)
 {
@@ -242,4 +241,21 @@ Errno lex(lexer_t* lexer, const char* source)
 size_t token_length(token_t *token)
 {
     return token->length;
+}
+
+void add_to_token_da(token_da* da, token_t val)
+{
+    if (da->count == da->capacity)
+    {
+        size_t new_cap = (0 == da->capacity ? 8 : da->capacity * 2);
+        da->data = (token_t*)realloc(da->data, sizeof(token_t) * new_cap);
+        da->capacity = new_cap;
+    }
+    da->data[da->count++] = val;
+}
+
+void init_token_da(token_da* da)
+{
+    da->count = da->capacity = 0;
+    da->data = NULL;
 }

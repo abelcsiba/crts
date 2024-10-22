@@ -41,17 +41,17 @@ typedef enum {
 #define CHAR_VAL(value)     ((value_t){ VAL_CHAR,   { .chr = value }})
 
 typedef struct {
-    valuetype_t type;
+    valuetype_t         type;
 
     union {
-        int8_t i8;
-        int16_t i16;
-        int32_t i32;
-        int64_t i64;
-        float flt;
-        double dbl;
-        bool boolean;
-        char chr;
+        int8_t          i8;
+        int16_t         i16;
+        int32_t         i32;
+        int64_t         i64;
+        float           flt;
+        double          dbl;
+        bool            boolean;
+        char            chr;
     } as;
 } value_t;
 

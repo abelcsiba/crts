@@ -1,7 +1,6 @@
 
-
 CC=gcc
-CFLAGS= -fPIC -Iinclude/ -I../common/include/
+CFLAGS= -fPIC -Iinclude -I../ciam/include/
 WFLAGS=-Wall -Wextra
 
 LDFLAGS=-shared
@@ -15,7 +14,7 @@ OBJECT_FILES=$(SOURCE_FILES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 RM=rm
 
-TARGET=$(LIB_DIR)/libciam.so
+TARGET=$(LIB_DIR)/libcommon.so
 
 .PHONY: all clean
 

@@ -3,15 +3,13 @@
 #ifndef CIAS_LEXER_H_
 #define CIAS_LEXER_H_
 
-#include "common.h"
-
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
-typedef uint64_t pos_t;
-typedef int Errno;
+typedef uint64_t    pos_t;
+typedef int         Errno;
 
 #define TOKEN_LIST                                              \
     X(TOKEN_LPAREN,         "(",        "TOKEN_LPAREN")         \
@@ -58,25 +56,32 @@ typedef enum {
 } token_ty_t;
 
 typedef struct {
-    token_ty_t type;
-    const char* start;
-    size_t length;
-    pos_t line_no;
+    token_ty_t          type;
+    const char*         start;
+    size_t              length;
+    pos_t               line_no;
 } token_t;
 
-DECL_DA(token_t);
+typedef struct {
+    token_t*            data;
+    size_t              count;
+    size_t              capacity;
+} token_da;
 
-typedef token_t_array_t token_list_t;
+typedef token_da        token_list_t;
 
 typedef struct {
-    const char* start;
-    const char* curr;
-    size_t line_no;
-    token_list_t tokens;
+    const char*         start;
+    const char*         curr;
+    size_t              line_no;
+    token_list_t        tokens;
 } lexer_t;
 
-void init_lexer(lexer_t* lexer, const char* source);
-token_t lex_token(lexer_t* lexer);
-Errno lex(lexer_t* lexer, const char* source);
+void        init_lexer(lexer_t* lexer, const char* source);
+token_t     lex_token(lexer_t* lexer);
+Errno       lex(lexer_t* lexer, const char* source);
+
+void add_to_token_da(token_da* da, token_t val);
+void init_token_da(token_da* da);
 
 #endif // CIAS_LEXER_H_
