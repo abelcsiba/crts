@@ -22,7 +22,7 @@ void init_lexer(lexer_t* lexer, const char* source)
     lexer->start = source;
     lexer->curr = source;
     lexer->line_no = 1;
-    init_token_t_array_t(&lexer->tokens);
+    init_token_da(&lexer->tokens);
 }
 
 static bool is_at_end(lexer_t* lexer)
@@ -229,7 +229,7 @@ Errno lex(lexer_t* lexer, const char* source)
         printf(" 0x%02d | %-20s |", token.type, token_ty2label(token.type));
         printf(" %-17.*s|\n", (int)token.length, token.start);
 
-        add_token_t(&lexer->tokens, token);
+        add_to_token_da(&lexer->tokens, token);
 
         if (token.type == TOKEN_ERROR) break;
         if (token.type == TOKEN_EOF) return 0;

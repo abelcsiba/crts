@@ -66,53 +66,53 @@ static void error(parser_t* parser, const char* message)
     error_at(parser, peek(parser),  message);
 }
 
-ast_exp_t* variable(parser_t* parser, token_t token)
+ast_exp_t* variable(arena_t* arena, parser_t* /*parser*/, token_t token)
 {
-    char* tmp = (char*)arena_alloc(parser->arena, sizeof(char) * token.length + 1);
+    char* tmp = (char*)arena_alloc(arena, sizeof(char) * token.length + 1);
     sprintf(tmp, "%.*s", (int)token.length, token.start);
-    return new_exp(parser->arena, (ast_exp_t){ .kind = VARIABLE, .type_info = UNKNOWN, .data.as_var = (struct ast_var){ .name = tmp }});
+    return new_exp(arena, (ast_exp_t){ .kind = VARIABLE, .type_info = UNKNOWN, .data.as_var = (struct ast_var){ .name = tmp }});
 }
 
-ast_exp_t* str_(parser_t* parser, token_t token)
+ast_exp_t* str_(arena_t* arena, parser_t* /*parser*/, token_t token)
 {
     size_t length = (token.length > 2) ? token.length : 1;
-    char* tmp = (char*)arena_alloc(parser->arena, sizeof(char) * length);
+    char* tmp = (char*)arena_alloc(arena, sizeof(char) * length);
     if (length > 2) sprintf(tmp, "%.*s", (int)length - 2, &token.start[1]);
     else sprintf(tmp, "%s", "");
 
-    ast_exp_t* expr = new_exp(parser->arena, (ast_exp_t){ .kind = STRING_LITERAL, .type_info = STRING, .data.as_str = (struct ast_string){ .cstr = tmp }});
+    ast_exp_t* expr = new_exp(arena, (ast_exp_t){ .kind = STRING_LITERAL, .type_info = STRING, .data.as_str = (struct ast_string){ .cstr = tmp }});
     return expr;
 }
 
-ast_exp_t* chr_(parser_t* parser, token_t token)
+ast_exp_t* chr_(arena_t* arena, parser_t* /*parser*/, token_t token)
 {
-    return new_exp(parser->arena, (ast_exp_t){ .kind = CHAR_LITERAL, .type_info = CHAR, .data.as_char = (struct ast_char){ .c = token.start[1] }});
+    return new_exp(arena, (ast_exp_t){ .kind = CHAR_LITERAL, .type_info = CHAR, .data.as_char = (struct ast_char){ .c = token.start[1] }});
 }
 
-ast_exp_t* group(parser_t* parser, token_t /*token*/)
+ast_exp_t* group(arena_t* arena, parser_t* parser, token_t /*token*/)
 {
-    ast_exp_t* exp = parse_expression(parser, PREC_NONE);
+    ast_exp_t* exp = parse_expression(arena, parser, PREC_NONE);
     consume(parser, TOKEN_RPAREN, "Missing ')' symbol");
     return exp;
 }
 
-ast_exp_t* number(parser_t* parser, token_t token)
+ast_exp_t* number(arena_t* arena, parser_t* /*parser*/, token_t token)
 {
     // This is killing me. There has to be an easier way.
     char* tmp = (char*)malloc(sizeof(char) * token.length + 1);
     sprintf(tmp, "%.*s", (int)token.length, token.start);
-    ast_exp_t* expr = new_exp(parser->arena, (ast_exp_t){ .kind = NUM_LITERAL, .type_info = I8, .data.as_num = (struct ast_number){ .num = strtof(tmp, NULL) }});
+    ast_exp_t* expr = new_exp(arena, (ast_exp_t){ .kind = NUM_LITERAL, .type_info = I8, .data.as_num = (struct ast_number){ .num = strtof(tmp, NULL) }});
     free(tmp);
     return expr;
 }
 
-ast_exp_t* unary(parser_t* parser, token_t token)
+ast_exp_t* unary(arena_t* arena, parser_t* parser, token_t token)
 {
-    char* op = (char*)arena_alloc(parser->arena, token.length + 1);
+    char* op = (char*)arena_alloc(arena, token.length + 1);
     sprintf(op, "%.*s", (int)token.length, token.start);
-    ast_exp_t* expr = parse_expression(parser, parse_table[token.type].prec);
+    ast_exp_t* expr = parse_expression(arena, parser, parse_table[token.type].prec);
     if (NULL == expr) return NULL;
-    return new_exp(parser->arena, (ast_exp_t) 
+    return new_exp(arena, (ast_exp_t) 
             { 
               .kind = UNARY_OP, 
               .type_info = UNKNOWN, 
@@ -124,29 +124,29 @@ ast_exp_t* unary(parser_t* parser, token_t token)
             });
 }
 
-ast_exp_t* call(parser_t* /*parser*/, ast_exp_t* /*left*/, bool /*can_assign*/)
+ast_exp_t* call(arena_t* /*arena*/, parser_t* /*parser*/, ast_exp_t* /*left*/, bool /*can_assign*/)
 {
     return NULL;
 }
 
-ast_exp_t* invoke(parser_t* /*parser*/, ast_exp_t* /*left*/, bool /*can_assign*/)
+ast_exp_t* invoke(arena_t* /*arena*/, parser_t* /*parser*/, ast_exp_t* /*left*/, bool /*can_assign*/)
 {
     return NULL;
 }
 
-ast_exp_t* binary(parser_t* parser, ast_exp_t* left, bool /*can_assign*/)
+ast_exp_t* binary(arena_t* arena, parser_t* parser, ast_exp_t* left, bool /*can_assign*/)
 {
     token_t token = previous(parser);
-    char* op = (char*)arena_alloc(parser->arena, token.length + 1);
+    char* op = (char*)arena_alloc(arena, token.length + 1);
     sprintf(op, "%.*s", (int)token.length, token.start);
-    ast_exp_t* right = parse_expression(parser, parse_table[token.type].prec);
+    ast_exp_t* right = parse_expression(arena, parser, parse_table[token.type].prec);
     if (NULL == right) 
     {
         error_exp(parser, "Invalid expression");
         return NULL;
     }
 
-    return new_exp(parser->arena, (ast_exp_t) 
+    return new_exp(arena, (ast_exp_t) 
             { 
               .kind = BINARY_OP, 
               .type_info = UNKNOWN, 
@@ -184,14 +184,13 @@ static void consume(parser_t* parser, token_ty_t type, const char* message)
     error(parser, message);
 }
 
-void init_parser(parser_t* parser, arena_t* arena, token_list_t *tokens)
+void init_parser(parser_t* parser, token_list_t *tokens)
 {
-    parser->arena = arena;
     parser->tokens = tokens;
     parser->curr = 0;
 }
 
-ast_exp_t* parse_expression(parser_t* parser, precedence_t precedence)
+ast_exp_t* parse_expression(arena_t* arena, parser_t* parser, precedence_t precedence)
 {
     token_t token = advance(parser);
     parse_rule_t rule = parse_table[token.type];
@@ -203,7 +202,7 @@ ast_exp_t* parse_expression(parser_t* parser, precedence_t precedence)
     }
 
     prefix_t prefix = rule.prefix;
-    ast_exp_t* left = prefix(parser, token);
+    ast_exp_t* left = prefix(arena, parser, token);
     if (NULL == left) return NULL;
 
     while (precedence < parse_table[peek(parser).type].prec)
@@ -213,7 +212,7 @@ ast_exp_t* parse_expression(parser_t* parser, precedence_t precedence)
 
         if (NULL == infix) break;
 
-        left = infix(parser, left, true);
+        left = infix(arena, parser, left, true);
         if (NULL == left) {
             return NULL;
         }
@@ -222,7 +221,7 @@ ast_exp_t* parse_expression(parser_t* parser, precedence_t precedence)
     return left;
 }
 
-ast_stmt_t* parse(parser_t* parser)
+ast_stmt_t* parse(arena_t* arena, parser_t* parser)
 {
     //token_t token;
     //ast_stmt_t* exp = NULL;
@@ -230,8 +229,8 @@ ast_stmt_t* parse(parser_t* parser)
     //{
         //token = advance(parser);
 
-        ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(parser->arena, sizeof(ast_stmt_t));
-        stmt->pl.as_expr.exp = parse_expression(parser, 0);
+        ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(arena, sizeof(ast_stmt_t));
+        stmt->pl.as_expr.exp = parse_expression(arena, parser, 0);
         //if (NULL == exp) break;
         //token = peek(parser);
         // switch (token.type)

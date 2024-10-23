@@ -1,7 +1,6 @@
 
 #include "vm.h"
 #include "opcode.h"
-#include "reader.h"
 #include "code.h"
 #include "lexer.h"
 #include "compiler.h"
@@ -47,8 +46,8 @@ int main(void)
   init_arena(&arena, ARENA_DEFAULT_BLOCK_SIZE);
 
   parser_t parser;
-  init_parser(&parser, &arena, &lexer.tokens);
-  ast_stmt_t* stmt = parse(&parser);
+  init_parser(&parser, &lexer.tokens);
+  ast_stmt_t* stmt = parse(&arena, &parser);
 
   if ( NULL != stmt->pl.as_expr.exp ) print_ast_exp(stdout, stmt->pl.as_expr.exp);
   printf("\n");

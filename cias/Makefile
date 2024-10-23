@@ -4,8 +4,6 @@ CC=gcc
 CFLAGS= -fPIC -Iinclude -I../ciam/include -I../common/include
 WFLAGS=-Wall -Wextra
 
-LIBS=-lciam
-
 LDFLAGS=-shared
 
 SRC_DIR=src
@@ -24,7 +22,7 @@ TARGET=$(LIB_DIR)/libcias.so
 all: $(TARGET)
 
 $(TARGET): $(OBJECT_FILES) | $(LIB_DIR)
-	$(CC) $(LDFLAGS) -o $(LIBS) $@ $^
+	$(CC) $(LDFLAGS) -o $@ $^
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	$(CC) $(CFLAGS) $(WFLAGS) -c $< -o $@ -g
