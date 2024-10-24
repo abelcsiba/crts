@@ -16,6 +16,7 @@ typedef struct ciam_vm_t    ciam_vm_t;
 ciam_vm_t*      ciam_vm_new();
 void            ciam_vm_load(ciam_vm_t* vm, module_t* module);
 void            ciam_vm_run(ciam_vm_t *vm);
+void            ciam_destroy_vm(ciam_vm_t* vm);
 
 // Misc
 void            display_init_message(ciam_vm_t* vm);

@@ -42,6 +42,7 @@ typedef int         Errno;
     X(TOKEN_MODULE,         "module",   "TOKEN_MODULE")         \
     X(TOKEN_IMPORT,         "import",   "TOKEN_IMPORT")         \
     X(TOKEN_PURE,           "pure",     "TOKEN_PURE")           \
+    X(TOKEN_PROC,           "proc",     "TOKEN_PROC")           \
     X(TOKEN_RECORD,         "record",   "TOKEN_RECORD")         \
     X(TOKEN_ENTITY,         "entity",   "TOKEN_ENTITY")         \
     X(TOKEN_RETURN,         "return",   "TOKEN_RETURN")         \

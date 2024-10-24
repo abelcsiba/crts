@@ -54,12 +54,19 @@ static void __attribute__((unused)) create_thread(ciam_vm_t* vm, u64 entry_addr,
 // TODO: Incorporate thread handling when groundwork is done
 static void __attribute__((unused)) destroy_thread(ciam_vm_t* vm, u64 tid)
 {
+    if (vm->threads->next == NULL)
+    {
+        free(vm->threads->stack.slots);
+        free(vm->threads);
+        return;
+    }
+
     ciam_thread_t* prev = vm->threads;
     ciam_thread_t* thread = prev->next;
-    do {
+    while (thread != NULL && thread->tid != tid) {
         prev = thread;
         thread = thread->next;
-    } while (thread != NULL && thread->tid != tid);
+    }
 
     assert(thread != NULL && "Cannot find thread");
     prev->next = thread->next;
@@ -76,6 +83,12 @@ ciam_vm_t* ciam_vm_new()
     vm->num_threads = 1;
     init_main_thread(vm);
     return vm;
+}
+
+void ciam_destroy_vm(ciam_vm_t* vm)
+{
+    destroy_thread(vm, 0);
+    free(vm);
 }
 
 void ciam_vm_load(ciam_vm_t* vm, module_t* module)
@@ -113,41 +126,42 @@ void ciam_vm_run(ciam_vm_t *vm)
     OP_PUSH:
         code = CODE();
         PUSH(DOUBLE_VAL(code.opnd1));
-        printf("OP_PUSH %ld\n", code.opnd1);
+        printf("OP_PUSH\n");
         PC++;
         DISPATCH();
     OP_POP_TOP:
         code = CODE();
         //POP();
-        printf("OP_POP %ld\n", code.opnd1);
+        printf("OP_POP\n");
         PC++;
         DISPATCH();
     OP_TOS:
         code = CODE();
-        printf("OP_TOS %ld\n", code.opnd1);
+        printf("OP_TOS\n");
         PC++;
         DISPATCH();
     OP_ADD:
         code = CODE();
-        printf("OP_ADD %ld\n", code.opnd1);
+        printf("OP_ADD\n");
         PC++;
         DISPATCH();
     OP_SUB:
         code = CODE();
-        printf("OP_SUB %ld\n", code.opnd1);
+        printf("OP_SUB\n");
         PC++;
         DISPATCH();
     OP_MUL:
         code = CODE();
-        printf("OP_MUL %ld\n", code.opnd1);
+        printf("OP_MUL\n");
         PC++;
         DISPATCH();
     OP_DIV:
         code = CODE();
-        printf("OP_DIV %ld\n", code.opnd1);
+        printf("OP_DIV\n");
         PC++;
         DISPATCH();
     OP_HLT:
+        printf("HLT reached\n");
         return;
 
     /* We shouldn't reach here, so better abort now. */

@@ -48,17 +48,21 @@ struct ast_exp_t {
     expr_type_t                 type_info;
     struct token_t*             token;
 
-    union data {
+    union {
         struct ast_number {
-            int64_t     num;
+            int8_t      I8;
+            int16_t     I16;
+            int32_t     I32;
+            int64_t     I64;
+            double      DOUBLE;
         } as_num;
 
         struct ast_string {
-            char*       cstr;
+            char*       STRING;
         } as_str;
 
         struct ast_char {
-            char        c;
+            char        CHAR;
         } as_char;
 
         struct ast_var {
@@ -75,7 +79,7 @@ struct ast_exp_t {
             ast_exp_t*  expr;
             const char* op;
         } as_un;
-    } data;
+    };
 };
 
 struct ast_stmt_t {

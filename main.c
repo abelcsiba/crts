@@ -38,7 +38,7 @@ void print_footer()
 int main(void)
 {
   lexer_t lexer;
-  const char* buff = "5 + 4 + 7 * 9 + 6";
+  const char* buff = "5 + 4 + 7 * 9.3 + 6";
   lex(&lexer, buff);
   print_footer();
 
@@ -56,37 +56,24 @@ int main(void)
   init_module(&compiler);
   compile_ast(&compiler, stmt);
 
-  print_code(stdout, compiler.compiled_m->code, compiler.compiled_m->code_size);
+  module_t* module = transfer_module(&compiler);
 
-  /*char tmp[2048];
+  print_code(stdout, module->code, module->code_size);
 
-  const_pool_t pool;
-  pool.numbers.nums = (num_const_t*)malloc(sizeof(num_const_t) * 5);
-  pool.numbers.count = 5;
-  pool.numbers.nums[0].type = VAL_I8;
-  pool.numbers.nums[0].value = 0xBB;
+  module->file_name = "example.isl";
+  struct tm ts = {0};
+  module->time_stamp = &ts;
 
-  pool.numbers.nums[1].type = VAL_I16;
-  pool.numbers.nums[1].value = 0xCC;
-
-  pool.numbers.nums[2].type = VAL_I32;
-  pool.numbers.nums[2].value = 0xDD;
-
-  pool.numbers.nums[3].type = VAL_I64;
-  pool.numbers.nums[3].value = 0xEE;
-
-  pool.numbers.nums[4].type = VAL_I64;
-  pool.numbers.nums[4].value = 0xFF;
-
-  encode(tmp, compiler.compiled_m);
-  
-  module_t module = {0};
-  module.time_stamp = (struct tm*)malloc(sizeof(struct tm));
-  module.file_name = "example.isl";
   ciam_vm_t *vm = ciam_vm_new();
-  decode(tmp, &module);
-  ciam_vm_load(vm, &module);
-  ciam_vm_run(vm);*/
+  ciam_vm_load(vm, module);
+  ciam_vm_run(vm);
+
+  destroy_arena(&arena);
+  free(module->code);
+  free(module->pool.numbers.nums);
+  free(module);
+  free(lexer.tokens.data);
+  ciam_destroy_vm(vm);
   
   return EXIT_SUCCESS;
 }

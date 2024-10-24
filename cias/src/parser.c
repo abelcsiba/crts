@@ -70,7 +70,7 @@ ast_exp_t* variable(arena_t* arena, parser_t* /*parser*/, token_t token)
 {
     char* tmp = (char*)arena_alloc(arena, sizeof(char) * token.length + 1);
     sprintf(tmp, "%.*s", (int)token.length, token.start);
-    return new_exp(arena, (ast_exp_t){ .kind = VARIABLE, .type_info = UNKNOWN, .data.as_var = (struct ast_var){ .name = tmp }});
+    return new_exp(arena, (ast_exp_t){ .kind = VARIABLE, .type_info = UNKNOWN, .as_var = (struct ast_var){ .name = tmp }});
 }
 
 ast_exp_t* str_(arena_t* arena, parser_t* /*parser*/, token_t token)
@@ -80,13 +80,13 @@ ast_exp_t* str_(arena_t* arena, parser_t* /*parser*/, token_t token)
     if (length > 2) sprintf(tmp, "%.*s", (int)length - 2, &token.start[1]);
     else sprintf(tmp, "%s", "");
 
-    ast_exp_t* expr = new_exp(arena, (ast_exp_t){ .kind = STRING_LITERAL, .type_info = STRING, .data.as_str = (struct ast_string){ .cstr = tmp }});
+    ast_exp_t* expr = new_exp(arena, (ast_exp_t){ .kind = STRING_LITERAL, .type_info = STRING, .as_str = (struct ast_string){ .STRING = tmp }});
     return expr;
 }
 
 ast_exp_t* chr_(arena_t* arena, parser_t* /*parser*/, token_t token)
 {
-    return new_exp(arena, (ast_exp_t){ .kind = CHAR_LITERAL, .type_info = CHAR, .data.as_char = (struct ast_char){ .c = token.start[1] }});
+    return new_exp(arena, (ast_exp_t){ .kind = CHAR_LITERAL, .type_info = CHAR, .as_char = (struct ast_char){ .CHAR = token.start[1] }});
 }
 
 ast_exp_t* group(arena_t* arena, parser_t* parser, token_t /*token*/)
@@ -98,12 +98,19 @@ ast_exp_t* group(arena_t* arena, parser_t* parser, token_t /*token*/)
 
 ast_exp_t* number(arena_t* arena, parser_t* /*parser*/, token_t token)
 {
-    // This is killing me. There has to be an easier way.
-    char* tmp = (char*)malloc(sizeof(char) * token.length + 1);
-    sprintf(tmp, "%.*s", (int)token.length, token.start);
-    ast_exp_t* expr = new_exp(arena, (ast_exp_t){ .kind = NUM_LITERAL, .type_info = I8, .data.as_num = (struct ast_number){ .num = strtof(tmp, NULL) }});
-    free(tmp);
+#define FLOAT_VAL(X) new_exp(arena, (ast_exp_t){ .kind = NUM_LITERAL, .type_info = DOUBLE, .as_num = (struct ast_number){ .DOUBLE = X }})
+#define INT_VAL(X) new_exp(arena, (ast_exp_t){ .kind = NUM_LITERAL, .type_info = I8, .as_num = (struct ast_number){ .I64 = X }})
+    char temp[token.length + 1];
+    sprintf(temp, "%.*s", (int)token.length, token.start);
+    bool is_float = false;
+    for (size_t i = 0; i < token.length + 1; i++) if (token.start[i] == '.') is_float = true;
+    temp[token.length] = '\0';
+    double val;
+    sscanf(temp, "%lf", &val);
+    ast_exp_t* expr = (is_float) ? FLOAT_VAL(val) : INT_VAL((int64_t)val);
     return expr;
+#undef INT_VAL
+#undef FLOAT_VAL
 }
 
 ast_exp_t* unary(arena_t* arena, parser_t* parser, token_t token)
@@ -116,7 +123,7 @@ ast_exp_t* unary(arena_t* arena, parser_t* parser, token_t token)
             { 
               .kind = UNARY_OP, 
               .type_info = UNKNOWN, 
-              .data.as_un = (struct ast_unary)
+              .as_un = (struct ast_unary)
                             { 
                               .op = op, 
                               .expr = expr
@@ -150,7 +157,7 @@ ast_exp_t* binary(arena_t* arena, parser_t* parser, ast_exp_t* left, bool /*can_
             { 
               .kind = BINARY_OP, 
               .type_info = UNKNOWN, 
-              .data.as_bin = (struct ast_binary)
+              .as_bin = (struct ast_binary)
                             { 
                               .op = op, 
                               .left = left, 
@@ -267,27 +274,30 @@ void print_ast_exp(FILE* out, ast_exp_t *exp)
     switch (exp->kind)
     {
         case NUM_LITERAL:
-            fprintf(out, "%ld", exp->data.as_num.num);
+            if (exp->type_info == I8)
+                fprintf(out, "%ld", exp->as_num.I64);
+            else if (exp->type_info == DOUBLE)
+                fprintf(out, "%.2f", (double)exp->as_num.DOUBLE);
             break;
         case STRING_LITERAL:
-            fprintf(out, "\"%s\"", exp->data.as_str.cstr);
+            fprintf(out, "\"%s\"", exp->as_str.STRING);
             break;
         case CHAR_LITERAL:
-            fprintf(out, "'%c'", exp->data.as_char.c);
+            fprintf(out, "'%c'", exp->as_char.CHAR);
             break;
         case BINARY_OP:
             fprintf(out, "(");
-            print_ast_exp(out, exp->data.as_bin.left);
-            fprintf(out, " %c ", *exp->data.as_bin.op);
-            print_ast_exp(out, exp->data.as_bin.right);
+            print_ast_exp(out, exp->as_bin.left);
+            fprintf(out, " %c ", *exp->as_bin.op);
+            print_ast_exp(out, exp->as_bin.right);
             fprintf(out, ")");
             break;
         case VARIABLE:
-            fprintf(out, "%s", exp->data.as_var.name);
+            fprintf(out, "%s", exp->as_var.name);
             break;
         case UNARY_OP:
-            fprintf(out, "(%c", *exp->data.as_un.op);
-            print_ast_exp(out, exp->data.as_un.expr);
+            fprintf(out, "(%c", *exp->as_un.op);
+            print_ast_exp(out, exp->as_un.expr);
             fprintf(out, ")");
             break;
         default:
