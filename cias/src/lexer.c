@@ -65,29 +65,6 @@ static void skip_whitesace(lexer_t* lexer)
         else if ( c == '\n' ) { lexer->line_no++; advance(lexer); }
         else if ( ( c == '/' ) && (peek_next(lexer) == '/' )) while (peek(lexer) != '\n' && is_at_end(lexer)) advance(lexer);
         else return;
-        // switch (c)
-        // {
-        //     case ' ':
-        //     case '\r':
-        //     case '\t':
-        //         advance(lexer);
-        //         break;
-        //     case '\n':
-        //         lexer->line_no++;
-        //         advance(lexer);
-        //         break;
-        //     case '/':
-        //         if (peek_next(lexer) == '/')
-        //         {
-        //             while (peek(lexer) != '\n' && is_at_end(lexer)) advance(lexer);
-        //         }
-        //         else
-        //         {
-        //             return;
-        //         }
-        //     default:
-        //         return;
-        // }
     }
 }
 
@@ -151,19 +128,44 @@ static token_ty_t check_keyword(lexer_t* lexer, int start, int length, const cha
 
 static token_ty_t identifier_type(lexer_t* lexer)
 {
-    switch(lexer->start[0])
+    switch(lexer->start[0]) // TODO: record, entry, entity etc.
     {
-        case 'v': return check_keyword(lexer, 1, 2, "ar", TOKEN_VAR);
+        case 'e': return check_keyword(lexer, 1, 3, "lse", TOKEN_ELSE);
+        case 'f': 
+            if (lexer->curr - lexer->start > 1)
+            {
+                switch (lexer->start[1])
+                {
+                    case 'o': return check_keyword(lexer, 2, 1, "r", TOKEN_FOR);
+                    case 'a': return check_keyword(lexer, 2, 3, "lse", TOKEN_FALSE);
+                }
+            }
+            break;
+        case 'i': 
+            if (lexer->curr - lexer->start > 1)
+            {
+                switch (lexer->start[1])
+                {
+                    case 'f': return check_keyword(lexer, 1, 1, "f", TOKEN_IF);
+                    case 'm': return check_keyword(lexer, 1, 5, "mport", TOKEN_IF);
+                }
+            }
+            break;
+        case 'm': return check_keyword(lexer, 1, 5, "odule", TOKEN_MODULE);
+        case 'n': return check_keyword(lexer, 1, 3, "ull", TOKEN_NULL);
         case 'p': 
             if (lexer->curr - lexer->start > 1)
             {
                 switch (lexer->start[1])
                 {
-                    case 'u': return check_keyword(lexer, 1, 3, "ure", TOKEN_PURE);
-                    case 'r': return check_keyword(lexer, 1, 3, "roc", TOKEN_PROC);
+                    case 'u': return check_keyword(lexer, 2, 3, "ure", TOKEN_PURE);
+                    case 'r': return check_keyword(lexer, 2, 3, "roc", TOKEN_PROC);
                 }
             }
             break;
+        case 'r': return check_keyword(lexer, 1, 5, "eturn", TOKEN_RETURN);
+        case 't': return check_keyword(lexer, 1, 3, "rue", TOKEN_TRUE);
+        case 'v': return check_keyword(lexer, 1, 2, "ar", TOKEN_VAR);
     }
     return TOKEN_IDENTIFIER;
 }
@@ -193,25 +195,29 @@ token_t lex_token(lexer_t* lexer)
 
     char c = advance(lexer);
 
-    if ( c == '(' ) return make_token(lexer, TOKEN_LPAREN);
-    else if ( c == ')' ) return make_token(lexer, TOKEN_RPAREN);
-    else if ( c == '{' ) return make_token(lexer, TOKEN_LBRACE);
-    else if ( c == '}' ) return make_token(lexer, TOKEN_RBRACE);
-    else if ( c == '[' ) return make_token(lexer, TOKEN_LBRACKET);
-    else if ( c == ']' ) return make_token(lexer, TOKEN_RBRACKET);
-    else if ( c == ';' ) return make_token(lexer, TOKEN_SEMI);
-    else if ( c == '.' ) return make_token(lexer, TOKEN_DOT);
-    else if ( c == ',' ) return make_token(lexer, TOKEN_COMMA);
-    else if ( c == '+' ) return make_token(lexer, TOKEN_PLUS);
-    else if ( c == '-' ) return make_token(lexer, TOKEN_MINUS);
-    else if ( c == '/' ) return make_token(lexer, TOKEN_SLASH);
-    else if ( c == '*' ) return make_token(lexer, TOKEN_ASTERISK);
-    else if ( c == '!' ) return make_token(lexer, (match(lexer, '=') ? TOKEN_BANG_EQUAL : TOKEN_BANG));
-    else if ( c == '=' ) return make_token(lexer, (match(lexer, '=') ? TOKEN_EQUAL_EQUAL : TOKEN_EQUAL));
-    else if ( c == '<' ) return make_token(lexer, (match(lexer, '=') ? TOKEN_LESS_EQUAL : TOKEN_LESS));
-    else if ( c == '>' ) return make_token(lexer, (match(lexer, '=') ? TOKEN_GREATER_EQUAL : TOKEN_GREATER));
-    else if ( c == '"' ) return make_string(lexer, '"');
-    else if ( c == '\'' ) return make_string(lexer, '\''); 
+    if ( c == '(' )         return make_token(lexer, TOKEN_LPAREN);
+    else if ( c == ')' )    return make_token(lexer, TOKEN_RPAREN);
+    else if ( c == '{' )    return make_token(lexer, TOKEN_LBRACE);
+    else if ( c == '}' )    return make_token(lexer, TOKEN_RBRACE);
+    else if ( c == '[' )    return make_token(lexer, TOKEN_LBRACKET);
+    else if ( c == ']' )    return make_token(lexer, TOKEN_RBRACKET);
+    else if ( c == ';' )    return make_token(lexer, TOKEN_SEMI);
+    else if ( c == ',' )    return make_token(lexer, TOKEN_COMMA);
+    else if ( c == '.' )    return make_token(lexer, TOKEN_DOT);
+    else if ( c == '+' )    return make_token(lexer, TOKEN_PLUS);
+    else if ( c == '-' )    return make_token(lexer, TOKEN_MINUS);
+    else if ( c == '/' )    return make_token(lexer, TOKEN_SLASH);
+    else if ( c == '*' )    return make_token(lexer, TOKEN_ASTERISK);
+    else if ( c == '~' )    return make_token(lexer, TOKEN_TILDE);
+    else if ( c == '^' )    return make_token(lexer, TOKEN_XOR);
+    else if ( c == '&' )    return make_token(lexer, (match(lexer, '&') ? TOKEN_AND : TOKEN_BIT_AND));
+    else if ( c == '|' )    return make_token(lexer, (match(lexer, '|') ? TOKEN_OR : TOKEN_BIT_OR));
+    else if ( c == '!' )    return make_token(lexer, (match(lexer, '=') ? TOKEN_BANG_EQUAL : TOKEN_BANG));
+    else if ( c == '=' )    return make_token(lexer, (match(lexer, '=') ? TOKEN_EQUAL_EQUAL : TOKEN_EQUAL));
+    else if ( c == '<' )    return make_token(lexer, (match(lexer, '=') ? TOKEN_LESS_EQUAL : (match(lexer, '<') ? TOKEN_LEFT_SHIFT : TOKEN_LESS)));
+    else if ( c == '>' )    return make_token(lexer, (match(lexer, '=') ? TOKEN_GREATER_EQUAL : (match(lexer, '>') ? TOKEN_RIGHT_SHIFT : TOKEN_GREATER)));
+    else if ( c == '"' )    return make_string(lexer, '"');
+    else if ( c == '\'' )   return make_string(lexer, '\''); 
     else if ( is_digit(c) ) return make_number(lexer);
     else if ( is_alpha(c) ) return make_identifier(lexer);
     

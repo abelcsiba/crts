@@ -4,10 +4,12 @@
 
 #include "data.h"
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
 
 typedef enum {
+    NULL_LITERAL,
     NUM_LITERAL,
     STRING_LITERAL,
     CHAR_LITERAL,
@@ -64,6 +66,10 @@ struct ast_exp_t {
         struct ast_char {
             char        CHAR;
         } as_char;
+
+        struct ast_bool {
+            bool        BOOL;
+        } as_bool;
 
         struct ast_var {
             char*       name;

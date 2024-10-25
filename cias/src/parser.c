@@ -4,24 +4,41 @@
 #include <string.h>
 
 static parse_rule_t parse_table[] = {
-    [TOKEN_LPAREN]          = { .prec = PREC_NONE,          .prefix = group,    .infix = call },
-    [TOKEN_RPAREN]          = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL },
-    [TOKEN_LBRACE]          = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL },
-    [TOKEN_RBRACE]          = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL },
-    [TOKEN_COMMA]           = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL },
-    [TOKEN_DOT]             = { .prec = PREC_CALL,          .prefix = NULL,     .infix = invoke },
-    [TOKEN_MINUS]           = { .prec = PREC_TERM,          .prefix = unary,    .infix = binary },
-    [TOKEN_PLUS]            = { .prec = PREC_TERM,          .prefix = unary,     .infix = binary },
-    [TOKEN_SEMI]            = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL },
-    [TOKEN_SLASH]           = { .prec = PREC_FACTOR,        .prefix = NULL,     .infix = binary },
     [TOKEN_ASTERISK]        = { .prec = PREC_FACTOR,        .prefix = NULL,     .infix = binary },
-    [TOKEN_BANG]            = { .prec = PREC_NONE,          .prefix = unary,    .infix = NULL },
+    [TOKEN_AND]             = { .prec = PREC_AND,           .prefix = NULL,     .infix = binary },
+    [TOKEN_BANG]            = { .prec = PREC_NONE,          .prefix = unary,    .infix = NULL   },
     [TOKEN_BANG_EQUAL]      = { .prec = PREC_EQUALITY,      .prefix = NULL,     .infix = binary },
-    [TOKEN_NUMBER]          = { .prec = PREC_NONE,          .prefix = number,   .infix = NULL },
-    [TOKEN_EOF]             = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL },
-    [TOKEN_STRING]          = { .prec = PREC_NONE,          .prefix = str_,     .infix = NULL },
-    [TOKEN_CHAR]            = { .prec = PREC_NONE,          .prefix = chr_,     .infix = NULL },
-    [TOKEN_IDENTIFIER]      = { .prec = PREC_NONE,          .prefix = variable, .infix = NULL },
+    [TOKEN_BIT_AND]         = { .prec = PREC_BIT_AND,       .prefix = NULL,     .infix = binary },
+    [TOKEN_BIT_OR]          = { .prec = PREC_BIT_OR,        .prefix = NULL,     .infix = binary },
+    [TOKEN_CHAR]            = { .prec = PREC_NONE,          .prefix = chr_,     .infix = NULL   },
+    [TOKEN_COMMA]           = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL   },
+    [TOKEN_DOT]             = { .prec = PREC_CALL,          .prefix = NULL,     .infix = invoke },
+    [TOKEN_EOF]             = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL   },
+    [TOKEN_EQUAL]           = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL   },
+    [TOKEN_EQUAL_EQUAL]     = { .prec = PREC_EQUALITY,      .prefix = NULL,     .infix = binary },
+    [TOKEN_FALSE]           = { .prec = PREC_NONE,          .prefix = boolean,  .infix = NULL   },
+    [TOKEN_GREATER]         = { .prec = PREC_COMPARISON,    .prefix = NULL,     .infix = binary },
+    [TOKEN_GREATER_EQUAL]   = { .prec = PREC_COMPARISON,    .prefix = NULL,     .infix = binary },
+    [TOKEN_IDENTIFIER]      = { .prec = PREC_NONE,          .prefix = variable, .infix = NULL   },
+    [TOKEN_LEFT_SHIFT]      = { .prec = PREC_SHIFT,         .prefix = NULL,     .infix = binary },
+    [TOKEN_LESS]            = { .prec = PREC_COMPARISON,    .prefix = NULL,     .infix = binary },
+    [TOKEN_LESS_EQUAL]      = { .prec = PREC_COMPARISON,    .prefix = NULL,     .infix = binary },
+    [TOKEN_LBRACE]          = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL   },
+    [TOKEN_LPAREN]          = { .prec = PREC_NONE,          .prefix = group,    .infix = call   },
+    [TOKEN_MINUS]           = { .prec = PREC_TERM,          .prefix = unary,    .infix = binary },
+    [TOKEN_NUMBER]          = { .prec = PREC_NONE,          .prefix = number,   .infix = NULL   },
+    [TOKEN_NULL]            = { .prec = PREC_NONE,          .prefix = null_,    .infix = NULL   },
+    [TOKEN_OR]              = { .prec = PREC_OR,            .prefix = NULL,     .infix = binary },
+    [TOKEN_PLUS]            = { .prec = PREC_TERM,          .prefix = unary,    .infix = binary },
+    [TOKEN_RBRACE]          = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL   },
+    [TOKEN_RIGHT_SHIFT]     = { .prec = PREC_SHIFT,         .prefix = NULL,     .infix = binary },
+    [TOKEN_RPAREN]          = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL   },
+    [TOKEN_SEMI]            = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL   },
+    [TOKEN_SLASH]           = { .prec = PREC_FACTOR,        .prefix = NULL,     .infix = binary },
+    [TOKEN_STRING]          = { .prec = PREC_NONE,          .prefix = str_,     .infix = NULL   },
+    [TOKEN_TILDE]           = { .prec = PREC_NONE,          .prefix = unary,    .infix = NULL   },
+    [TOKEN_TRUE]            = { .prec = PREC_NONE,          .prefix = boolean,  .infix = NULL   },
+    [TOKEN_XOR]             = { .prec = PREC_BIT_XOR,       .prefix = NULL,     .infix = binary },
 };
 
 static void consume(parser_t* parser, token_ty_t type, const char* message);
@@ -111,6 +128,17 @@ ast_exp_t* number(arena_t* arena, parser_t* /*parser*/, token_t token)
     return expr;
 #undef INT_VAL
 #undef FLOAT_VAL
+}
+
+ast_exp_t* boolean(arena_t* arena, parser_t* /*parser*/, token_t token)
+{
+    bool value = (token.type == TOKEN_TRUE);
+    return new_exp(arena, (ast_exp_t){ .kind = BOOL_LITERAL, .type_info = BOOL, .as_bool = (struct ast_bool){ .BOOL = value }});
+}
+
+ast_exp_t* null_(arena_t* arena, parser_t* /*parser*/, token_t /*token*/)
+{
+     return new_exp(arena, (ast_exp_t){ .kind = NULL_LITERAL, .type_info = UNKNOWN, .as_bool = (struct ast_bool){ .BOOL = false }});
 }
 
 ast_exp_t* unary(arena_t* arena, parser_t* parser, token_t token)
@@ -285,10 +313,16 @@ void print_ast_exp(FILE* out, ast_exp_t *exp)
         case CHAR_LITERAL:
             fprintf(out, "'%c'", exp->as_char.CHAR);
             break;
+        case BOOL_LITERAL:
+            fprintf(out, "%s", (exp->as_bool.BOOL) ? "true" : "false");
+            break;
+        case NULL_LITERAL:
+            fprintf(out, "null");
+            break;
         case BINARY_OP:
             fprintf(out, "(");
             print_ast_exp(out, exp->as_bin.left);
-            fprintf(out, " %c ", *exp->as_bin.op);
+            fprintf(out, " %s ", exp->as_bin.op);
             print_ast_exp(out, exp->as_bin.right);
             fprintf(out, ")");
             break;

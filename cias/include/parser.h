@@ -21,12 +21,16 @@ typedef ast_exp_t* (*prefix_t)(arena_t*, parser_t*, token_t);
 typedef ast_exp_t* (*infix_t)(arena_t*, parser_t*, ast_exp_t*, bool);
 
 typedef enum {
-    PREC_NONE = 0,              // 
+    PREC_NONE = 0,          // 
     PREC_ASSIGNMENT,        // =
     PREC_OR,                // ||
     PREC_AND,               // &&
+    PREC_BIT_OR,            // |
+    PREC_BIT_XOR,           // ^
+    PREC_BIT_AND,           // &
     PREC_EQUALITY,          // == !=
     PREC_COMPARISON,        // < > <= >=
+    PREC_SHIFT,             // << >>
     PREC_TERM,              // + -
     PREC_FACTOR,            // * /
     PREC_UNARY,             // - !
@@ -49,6 +53,8 @@ ast_exp_t*      binary(arena_t* arena, parser_t* parser, ast_exp_t* left, bool c
 ast_exp_t*      str_(arena_t* arena, parser_t* parser, token_t token);
 ast_exp_t*      chr_(arena_t* arena, parser_t* parser, token_t token);
 ast_exp_t*      variable(arena_t* arena, parser_t* parser, token_t token);
+ast_exp_t*      boolean(arena_t* arena, parser_t* /*parser*/, token_t token);
+ast_exp_t*      null_(arena_t* arena, parser_t* /*parser*/, token_t /*token*/);
 
 void            init_parser(parser_t* parser, token_list_t *tokens);
 ast_exp_t*      parse_expression(arena_t* arena, parser_t* parser, precedence_t precedence);

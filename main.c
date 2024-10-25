@@ -21,7 +21,7 @@
 
 void print_header()
 {
-  printf("================ Launching CIAM Assembler =================\n");
+  printf("================ Launching CIAM Compiler ==================\n");
   printf("|                                                         |\n");
   printf("|                      LEXER OUTPUT                       |\n");
   printf("|                                                         |\n");
@@ -35,10 +35,31 @@ void print_footer()
   printf("|---------------------------------------------------------|\n");
 }
 
-int main(void)
+int main(int argc, char** argv)
 {
+  char *src;
+  if (argc < 2)
+  {
+    fprintf(stderr, "Missing input file, using default '%s'", "./test/expr.isl");
+    src = "./test/expr.isl";
+  }
+  else src = argv[1];
+  
+  FILE* fp = fopen(src, "rb");
+  if (NULL == fp)
+  {
+    fprintf(stderr, "Failed to open file '%s'", src);
+    return EXIT_FAILURE;
+  }
+
+  fseek(fp, 0, SEEK_END);
+  size_t length = ftell(fp);
+  fseek(fp, 0, SEEK_SET);
+  char* buff = (char*)calloc(length + 1, sizeof(char));
+  fread(buff, sizeof(char), length, fp);
+
   lexer_t lexer;
-  const char* buff = "5 + 4 + 7 * 9.3 + 6 / 155.67 + 14";
+  //const char* buff = "5 + 4 + 7 * 9.3 + 6 / 155.67 + 14";
   printf("\n\n");
   print_header();
   lex(&lexer, buff);
@@ -80,6 +101,8 @@ int main(void)
   free(module);
   free(lexer.tokens.data);
   ciam_destroy_vm(vm);
+  fclose(fp);
+  free(buff);
   
   return EXIT_SUCCESS;
 }
