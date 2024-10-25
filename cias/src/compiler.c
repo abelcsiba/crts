@@ -62,7 +62,7 @@ void compile_ast(compiler_t* compiler, ast_stmt_t* stmt)
 void init_module(compiler_t* compiler)
 {
     compiler->compiled_m = (module_t*)calloc(1, sizeof(module_t));
-    compiler->compiled_m->pool.numbers.nums = (num_const_t*)calloc(5, sizeof(num_const_t));
+    compiler->compiled_m->pool.numbers.nums = (num_const_t*)calloc(15, sizeof(num_const_t));
     compiler->code_da = (code_da*)calloc(1, sizeof(code_da));
     init_code_da(compiler->code_da);
 }

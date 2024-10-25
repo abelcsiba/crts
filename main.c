@@ -38,7 +38,9 @@ void print_footer()
 int main(void)
 {
   lexer_t lexer;
-  const char* buff = "5 + 4 + 7 * 9.3 + 6";
+  const char* buff = "5 + 4 + 7 * 9.3 + 6 / 155.67 + 14";
+  printf("\n\n");
+  print_header();
   lex(&lexer, buff);
   print_footer();
 
@@ -49,7 +51,11 @@ int main(void)
   init_parser(&parser, &lexer.tokens);
   ast_stmt_t* stmt = parse(&arena, &parser);
 
-  if ( NULL != stmt->pl.as_expr.exp ) print_ast_exp(stdout, stmt->pl.as_expr.exp);
+  if ( NULL != stmt->pl.as_expr.exp ) 
+  {
+    printf("\n\nCompiled expression: ");
+    print_ast_exp(stdout, stmt->pl.as_expr.exp);
+  }
   printf("\n");
 
   compiler_t compiler;
@@ -58,7 +64,7 @@ int main(void)
 
   module_t* module = transfer_module(&compiler);
 
-  print_code(stdout, module->code, module->code_size);
+  //print_code(stdout, module->code, module->code_size);
 
   module->file_name = "example.isl";
   struct tm ts = {0};

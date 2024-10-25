@@ -96,7 +96,7 @@ void ciam_vm_load(ciam_vm_t* vm, module_t* module)
     vm->module = module;
 }
 
-void ciam_vm_run(ciam_vm_t *vm)
+void    ciam_vm_run(ciam_vm_t *vm)
 {
 #define PC vm->threads[0].ip
 #define PUSH(X) do { push_stack(&vm->threads[0].stack, X); } while (false)
@@ -118,7 +118,7 @@ void ciam_vm_run(ciam_vm_t *vm)
     OP_LOAD_CONST:
         code = CODE();
         PUSH(DOUBLE_VAL(code.opnd1));
-        printf("LOAD_CONST %ld\n", code.opnd1);
+        printf("  0x%02lX | %-14s | %ld\n", PC, "LOAD_CONST", code.opnd1);
         PC++;
         DISPATCH();
     OP_NOP:
@@ -126,42 +126,42 @@ void ciam_vm_run(ciam_vm_t *vm)
     OP_PUSH:
         code = CODE();
         PUSH(DOUBLE_VAL(code.opnd1));
-        printf("OP_PUSH\n");
+        printf("  0x%02lX | %-14s |\n", PC, "OP_PUSH");
         PC++;
         DISPATCH();
     OP_POP_TOP:
         code = CODE();
         //POP();
-        printf("OP_POP\n");
+        printf("  0x%02lX | %-14s |\n", PC, "OP_POP");
         PC++;
         DISPATCH();
     OP_TOS:
         code = CODE();
-        printf("OP_TOS\n");
+        printf("  0x%02lX | %-14s |\n", PC, "OP_TOS");
         PC++;
         DISPATCH();
     OP_ADD:
         code = CODE();
-        printf("OP_ADD\n");
+        printf("  0x%02lX | %-14s |\n", PC, "OP_ADD");
         PC++;
         DISPATCH();
     OP_SUB:
         code = CODE();
-        printf("OP_SUB\n");
+        printf("  0x%02lX | %-14s |\n", PC, "OP_SUB");
         PC++;
         DISPATCH();
     OP_MUL:
         code = CODE();
-        printf("OP_MUL\n");
+        printf("  0x%02lX | %-14s |\n", PC, "OP_MUL");
         PC++;
         DISPATCH();
     OP_DIV:
         code = CODE();
-        printf("OP_DIV\n");
+        printf("  0x%02lX | %-14s |\n", PC, "OP_DIV");
         PC++;
         DISPATCH();
     OP_HLT:
-        printf("HLT reached\n");
+        printf("  0x%02lX | %-14s |\n", PC, "HLT");
         return;
 
     /* We shouldn't reach here, so better abort now. */
@@ -192,4 +192,6 @@ void display_init_message(ciam_vm_t* vm)
     printf("| File name:       | %-22s |\n", vm->module->file_name);
     printf("|------------------|------------------------|\n");
     printf("\n\n");
+    printf("  Addr | CIAM Instruct. | Operand\n");
+    printf("---------------------------------\n");
 }
