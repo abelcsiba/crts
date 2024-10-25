@@ -72,10 +72,10 @@ int main(int argc, char** argv)
   init_parser(&parser, &lexer.tokens);
   ast_stmt_t* stmt = parse(&arena, &parser);
 
-  if ( NULL != stmt->pl.as_expr.exp ) 
+  if ( NULL != stmt->as_expr.exp ) 
   {
     printf("\n\nCompiled expression: ");
-    print_ast_exp(stdout, stmt->pl.as_expr.exp);
+    print_ast_exp(stdout, stmt->as_expr.exp);
   }
   printf("\n");
 

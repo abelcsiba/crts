@@ -30,13 +30,20 @@ static num_const_t emit_num_const(ast_exp_t* exp)
 
 static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
 {
-    code_t code;
+    code_t code = {0};
     switch (exp->kind)
     {
         case NUM_LITERAL:
             code.op = LOAD_CONST;
             code.opnd1 = (opnd_t)const_index;
             compiler->compiled_m->pool.numbers.nums[const_index++] = emit_num_const(exp);
+            break;
+        case BOOL_LITERAL:
+            code.op = LOAD_IMM;
+            code.opnd1 = (opnd_t)((exp->as_bool.BOOL) ? 1 : 0);
+            break;
+        case NULL_LITERAL:
+            code.op = LOAD_NULL;
             break;
         case BINARY_OP:
             compile_expr(compiler, exp->as_bin.left);
@@ -51,7 +58,7 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
 
 void compile_ast(compiler_t* compiler, ast_stmt_t* stmt)
 {
-    compile_expr(compiler, stmt->pl.as_expr.exp);
+    compile_expr(compiler, stmt->as_expr.exp);
     add_to_code_da(compiler->code_da, (code_t){ .op = HLT, .opnd1 = 0x00 });
     compiler->compiled_m->code_size = compiler->code_da->count;
     compiler->compiled_m->code = compiler->code_da->data;

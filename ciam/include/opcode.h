@@ -14,6 +14,8 @@
     X(MUL,          7, 0) \
     X(DIV,          8, 0) \
     X(HLT,          9, 0) \
+    X(LOAD_IMM,    10, 1) \
+    X(LOAD_NULL,   11, 0) \
 
 typedef enum {
 #define X(kind, id, has_operand) kind = id,

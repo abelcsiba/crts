@@ -53,6 +53,7 @@ typedef int         Errno;
     X(TOKEN_RBRACKET,       "]",        "TOKEN_RBRACKET")       \
     X(TOKEN_RECORD,         "record",   "TOKEN_RECORD")         \
     X(TOKEN_RETURN,         "return",   "TOKEN_RETURN")         \
+    X(TOKEN_RIGHT_ARROW,    "->",       "TOKEN_RIGHT_ARROW")    \
     X(TOKEN_RIGHT_SHIFT,    ">>",       "TOKEN_RIGHT_SHIFT")    \
     X(TOKEN_RPAREN,         ")",        "TOKEN_RPAREN")         \
     X(TOKEN_SEMI,           ";",        "TOKEN_SEMI")           \

@@ -205,7 +205,7 @@ token_t lex_token(lexer_t* lexer)
     else if ( c == ',' )    return make_token(lexer, TOKEN_COMMA);
     else if ( c == '.' )    return make_token(lexer, TOKEN_DOT);
     else if ( c == '+' )    return make_token(lexer, TOKEN_PLUS);
-    else if ( c == '-' )    return make_token(lexer, TOKEN_MINUS);
+    else if ( c == '-' )    return make_token(lexer, (match(lexer, '>') ? TOKEN_RIGHT_ARROW : TOKEN_MINUS));
     else if ( c == '/' )    return make_token(lexer, TOKEN_SLASH);
     else if ( c == '*' )    return make_token(lexer, TOKEN_ASTERISK);
     else if ( c == '~' )    return make_token(lexer, TOKEN_TILDE);

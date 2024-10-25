@@ -123,7 +123,7 @@ static void decode_inst_code(char* buff, code_t** code, size_t code_size)
     }
 }
 
-void decode(char* buff, module_t* module/*struct tm* ts, code_t** code, size_t* code_size, const_pool_t* pool*/)
+void decode(char* buff, module_t* module)
 {
     ciam_header_t header = {0};
     memcpy(&header, buff, sizeof(ciam_header_t));

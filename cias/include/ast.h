@@ -91,11 +91,25 @@ struct ast_exp_t {
 struct ast_stmt_t {
     stmt_kind_t         kind;
 
-    union pl {
+    union {
         struct {
             ast_exp_t*  exp;
         } as_expr;
-    } pl;
+
+        struct {
+            ast_exp_t* cond;
+        } as_while;
+
+        struct {
+            ast_exp_t* cond;
+            ast_stmt_t* then_b;
+            ast_stmt_t* else_b;
+        } as_if;
+
+        struct {
+            ast_stmt_t* stmts;
+        } as_block;
+    };
 };
 
 ast_exp_t* new_exp(arena_t* arena, ast_exp_t exp);

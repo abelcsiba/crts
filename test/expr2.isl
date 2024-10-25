@@ -1,1 +1,1 @@
-false <= 5 << alef >> beta > 12 ^ null
+true + 5 * 9 / null

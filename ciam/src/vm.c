@@ -131,7 +131,7 @@ void    ciam_vm_run(ciam_vm_t *vm)
         DISPATCH();
     OP_POP_TOP:
         code = CODE();
-        //POP();
+        POP();
         printf("  0x%02lX | %-14s |\n", PC, "OP_POP");
         PC++;
         DISPATCH();
@@ -163,6 +163,16 @@ void    ciam_vm_run(ciam_vm_t *vm)
     OP_HLT:
         printf("  0x%02lX | %-14s |\n", PC, "HLT");
         return;
+    OP_LOAD_IMM:
+        code = CODE();
+        printf("  0x%02lX | %-14s | %ld\n", PC, "LOAD_IMM", code.opnd1);
+        PC++;
+        DISPATCH();
+    OP_LOAD_NULL:
+        code = CODE();
+        printf("  0x%02lX | %-14s |\n", PC, "LOAD_NULL");
+        PC++;
+        DISPATCH();
 
     /* We shouldn't reach here, so better abort now. */
     printf("We shouldn't reach this point. Aborting...\n");

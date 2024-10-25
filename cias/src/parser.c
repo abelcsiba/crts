@@ -115,8 +115,7 @@ ast_exp_t* group(arena_t* arena, parser_t* parser, token_t /*token*/)
 
 ast_exp_t* number(arena_t* arena, parser_t* /*parser*/, token_t token)
 {
-#define FLOAT_VAL(X) new_exp(arena, (ast_exp_t){ .kind = NUM_LITERAL, .type_info = DOUBLE, .as_num = (struct ast_number){ .DOUBLE = X }})
-#define INT_VAL(X) new_exp(arena, (ast_exp_t){ .kind = NUM_LITERAL, .type_info = I8, .as_num = (struct ast_number){ .I64 = X }})
+#define NUM_VAL(value, type) new_exp(arena, (ast_exp_t){ .kind = NUM_LITERAL, .type_info = type, .as_num = (struct ast_number){ .type = value }})
     char temp[token.length + 1];
     sprintf(temp, "%.*s", (int)token.length, token.start);
     bool is_float = false;
@@ -124,21 +123,35 @@ ast_exp_t* number(arena_t* arena, parser_t* /*parser*/, token_t token)
     temp[token.length] = '\0';
     double val;
     sscanf(temp, "%lf", &val);
-    ast_exp_t* expr = (is_float) ? FLOAT_VAL(val) : INT_VAL((int64_t)val);
+    ast_exp_t* expr = (is_float) ? NUM_VAL(val, DOUBLE) : NUM_VAL(val, I64);
     return expr;
-#undef INT_VAL
-#undef FLOAT_VAL
+#undef NUM_VAL
 }
 
 ast_exp_t* boolean(arena_t* arena, parser_t* /*parser*/, token_t token)
 {
-    bool value = (token.type == TOKEN_TRUE);
-    return new_exp(arena, (ast_exp_t){ .kind = BOOL_LITERAL, .type_info = BOOL, .as_bool = (struct ast_bool){ .BOOL = value }});
+    return new_exp(arena, (ast_exp_t)
+            { 
+                .kind = BOOL_LITERAL, 
+                .type_info = BOOL, 
+                .as_bool = (struct ast_bool)
+                                { 
+                                    .BOOL = (token.type == TOKEN_TRUE) 
+                                }
+            });
 }
 
 ast_exp_t* null_(arena_t* arena, parser_t* /*parser*/, token_t /*token*/)
 {
-     return new_exp(arena, (ast_exp_t){ .kind = NULL_LITERAL, .type_info = UNKNOWN, .as_bool = (struct ast_bool){ .BOOL = false }});
+     return new_exp(arena, (ast_exp_t)
+            { 
+                .kind = NULL_LITERAL, 
+                .type_info = UNKNOWN, 
+                .as_bool = (struct ast_bool)
+                                { 
+                                    .BOOL = false 
+                                }
+            });
 }
 
 ast_exp_t* unary(arena_t* arena, parser_t* parser, token_t token)
@@ -265,7 +278,7 @@ ast_stmt_t* parse(arena_t* arena, parser_t* parser)
         //token = advance(parser);
 
         ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(arena, sizeof(ast_stmt_t));
-        stmt->pl.as_expr.exp = parse_expression(arena, parser, 0);
+        stmt->as_expr.exp = parse_expression(arena, parser, 0);
         //if (NULL == exp) break;
         //token = peek(parser);
         // switch (token.type)
@@ -302,7 +315,7 @@ void print_ast_exp(FILE* out, ast_exp_t *exp)
     switch (exp->kind)
     {
         case NUM_LITERAL:
-            if (exp->type_info == I8)
+            if (exp->type_info == I64)
                 fprintf(out, "%ld", exp->as_num.I64);
             else if (exp->type_info == DOUBLE)
                 fprintf(out, "%.2f", (double)exp->as_num.DOUBLE);
