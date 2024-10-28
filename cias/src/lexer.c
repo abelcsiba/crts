@@ -30,7 +30,7 @@ static bool is_at_end(lexer_t* lexer)
     return *lexer->curr == '\0';
 }
 
-static bool is_digit(char c)
+static bool is_digit(char c) // TODO: remove this
 {
     return c >= '0' && c <= '9';
 }
@@ -128,7 +128,7 @@ static token_ty_t check_keyword(lexer_t* lexer, int start, int length, const cha
 
 static token_ty_t identifier_type(lexer_t* lexer)
 {
-    switch(lexer->start[0]) // TODO: record, entry, entity etc.
+    switch(lexer->start[0]) // TODO: add the rest of the keywords
     {
         case 'e': return check_keyword(lexer, 1, 3, "lse", TOKEN_ELSE);
         case 'f': 
@@ -202,6 +202,8 @@ token_t lex_token(lexer_t* lexer)
     else if ( c == '[' )    return make_token(lexer, TOKEN_LBRACKET);
     else if ( c == ']' )    return make_token(lexer, TOKEN_RBRACKET);
     else if ( c == ';' )    return make_token(lexer, TOKEN_SEMI);
+    else if ( c == ':' )    return make_token(lexer, TOKEN_COLON);
+    else if ( c == '?' )    return make_token(lexer, TOKEN_QUESTION);
     else if ( c == ',' )    return make_token(lexer, TOKEN_COMMA);
     else if ( c == '.' )    return make_token(lexer, TOKEN_DOT);
     else if ( c == '+' )    return make_token(lexer, TOKEN_PLUS);
@@ -242,8 +244,8 @@ Errno lex(lexer_t* lexer, const char* source)
             printf("|        |");
         }
 
-        printf(" 0x%02d | %-20s |", token.type, token_ty2label(token.type));
-        printf(" %-17.*s|\n", (int)token.length, token.start);
+        printf(" 0x%02d | %-20.18s |", token.type, token_ty2label(token.type));
+        printf(" %-20.*s|\n", (int)token.length, token.start);
 
         add_to_token_da(&lexer->tokens, token);
 

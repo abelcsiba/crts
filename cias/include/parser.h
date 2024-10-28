@@ -23,6 +23,7 @@ typedef ast_exp_t* (*infix_t)(arena_t*, parser_t*, ast_exp_t*, bool);
 typedef enum {
     PREC_NONE = 0,          // 
     PREC_ASSIGNMENT,        // =
+    PREC_TERNARY,           // ?:
     PREC_OR,                // ||
     PREC_AND,               // &&
     PREC_BIT_OR,            // |
@@ -50,6 +51,7 @@ ast_exp_t*      number(arena_t* arena, parser_t* parser, token_t token);
 ast_exp_t*      call(arena_t* arena, parser_t* parser, ast_exp_t* left, bool can_assign);
 ast_exp_t*      invoke(arena_t* arena, parser_t* parser, ast_exp_t* left, bool can_assign);
 ast_exp_t*      binary(arena_t* arena, parser_t* parser, ast_exp_t* left, bool can_assign);
+ast_exp_t*      ternary(arena_t* arena, parser_t* parser, ast_exp_t* left, bool can_assign);
 ast_exp_t*      str_(arena_t* arena, parser_t* parser, token_t token);
 ast_exp_t*      chr_(arena_t* arena, parser_t* parser, token_t token);
 ast_exp_t*      variable(arena_t* arena, parser_t* parser, token_t token);

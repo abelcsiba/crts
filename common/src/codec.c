@@ -59,10 +59,7 @@ void encode(char* buff, module_t* module)
     ciam_header_t header;
     header.magic = CIAM_MAGIC_NUM;
     int32_t version = 0;
-    version |= ((uint32_t)CIAM_VER_MAJOR << 3 * 8);
-    version |= ((uint32_t)CIAM_VER_MINOR << 2 * 8);
-    version |= ((uint32_t)CIAM_VER_PATCH << 1 * 8);
-    version |= ((uint32_t)CIAM_VER_REV   << 0 * 8);
+    version = ENCODE_CIAM_VERSION(version);
     header.version = version;
 
     encode_timestamp(&header.timestamp);

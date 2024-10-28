@@ -199,7 +199,7 @@ void display_init_message(ciam_vm_t* vm)
     printf("|------------------|------------------------|\n");
     printf("| Const value size | %-22d |\n", vm->module->pool.numbers.count);
     printf("|------------------|------------------------|\n");
-    printf("| File name:       | %-22s |\n", vm->module->file_name);
+    printf("| File name:       | %-22.20s |\n", vm->module->file_name);
     printf("|------------------|------------------------|\n");
     printf("| Code size:       | %-22ld |\n", vm->module->code_size);
     printf("|------------------|------------------------|\n");

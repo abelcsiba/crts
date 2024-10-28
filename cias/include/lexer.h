@@ -18,6 +18,7 @@ typedef int         Errno;
     X(TOKEN_BANG_EQUAL,     "!=",       "TOKEN_BANG_EQUAL")     \
     X(TOKEN_BIT_AND,        "&",        "TOKEN_BIT_AND")        \
     X(TOKEN_BIT_OR,         "|",        "TOKEN_BIT_OR")         \
+    X(TOKEN_COLON,          ":",        "TOKEN_COLON")          \
     X(TOKEN_COMMA,          ",",        "TOKEN_COMMA")          \
     X(TOKEN_DOT,            ".",        "TOKEN_DOT")            \
     X(TOKEN_EQUAL,          "=",        "TOKEN_EQUAL")          \
@@ -49,6 +50,7 @@ typedef int         Errno;
     X(TOKEN_PLUS,           "+",        "TOKEN_PLUS")           \
     X(TOKEN_PURE,           "pure",     "TOKEN_PURE")           \
     X(TOKEN_PROC,           "proc",     "TOKEN_PROC")           \
+    X(TOKEN_QUESTION,       "?",        "TOKEN_QUESTION")       \
     X(TOKEN_RBRACE,         "}",        "TOKEN_RBRACE")         \
     X(TOKEN_RBRACKET,       "]",        "TOKEN_RBRACKET")       \
     X(TOKEN_RECORD,         "record",   "TOKEN_RECORD")         \

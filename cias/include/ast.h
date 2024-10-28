@@ -81,6 +81,12 @@ struct ast_exp_t {
             const char* op;
         } as_bin;
 
+        struct ast_ternary {
+            ast_exp_t*  cond;
+            ast_exp_t*  op1;
+            ast_exp_t* op2;
+        } as_ter;
+
         struct ast_unary {
             ast_exp_t*  expr;
             const char* op;
@@ -97,11 +103,11 @@ struct ast_stmt_t {
         } as_expr;
 
         struct {
-            ast_exp_t* cond;
-        } as_while;
+            ast_exp_t*  cond;
+        } as_loop;
 
         struct {
-            ast_exp_t* cond;
+            ast_exp_t*  cond;
             ast_stmt_t* then_b;
             ast_stmt_t* else_b;
         } as_if;

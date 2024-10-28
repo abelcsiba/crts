@@ -4,63 +4,56 @@
 #include <string.h>
 
 static parse_rule_t parse_table[] = {
-    [TOKEN_ASTERISK]        = { .prec = PREC_FACTOR,        .prefix = NULL,     .infix = binary },
-    [TOKEN_AND]             = { .prec = PREC_AND,           .prefix = NULL,     .infix = binary },
-    [TOKEN_BANG]            = { .prec = PREC_NONE,          .prefix = unary,    .infix = NULL   },
-    [TOKEN_BANG_EQUAL]      = { .prec = PREC_EQUALITY,      .prefix = NULL,     .infix = binary },
-    [TOKEN_BIT_AND]         = { .prec = PREC_BIT_AND,       .prefix = NULL,     .infix = binary },
-    [TOKEN_BIT_OR]          = { .prec = PREC_BIT_OR,        .prefix = NULL,     .infix = binary },
-    [TOKEN_CHAR]            = { .prec = PREC_NONE,          .prefix = chr_,     .infix = NULL   },
-    [TOKEN_COMMA]           = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL   },
-    [TOKEN_DOT]             = { .prec = PREC_CALL,          .prefix = NULL,     .infix = invoke },
-    [TOKEN_EOF]             = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL   },
-    [TOKEN_EQUAL]           = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL   },
-    [TOKEN_EQUAL_EQUAL]     = { .prec = PREC_EQUALITY,      .prefix = NULL,     .infix = binary },
-    [TOKEN_FALSE]           = { .prec = PREC_NONE,          .prefix = boolean,  .infix = NULL   },
-    [TOKEN_GREATER]         = { .prec = PREC_COMPARISON,    .prefix = NULL,     .infix = binary },
-    [TOKEN_GREATER_EQUAL]   = { .prec = PREC_COMPARISON,    .prefix = NULL,     .infix = binary },
-    [TOKEN_IDENTIFIER]      = { .prec = PREC_NONE,          .prefix = variable, .infix = NULL   },
-    [TOKEN_LEFT_SHIFT]      = { .prec = PREC_SHIFT,         .prefix = NULL,     .infix = binary },
-    [TOKEN_LESS]            = { .prec = PREC_COMPARISON,    .prefix = NULL,     .infix = binary },
-    [TOKEN_LESS_EQUAL]      = { .prec = PREC_COMPARISON,    .prefix = NULL,     .infix = binary },
-    [TOKEN_LBRACE]          = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL   },
-    [TOKEN_LPAREN]          = { .prec = PREC_NONE,          .prefix = group,    .infix = call   },
-    [TOKEN_MINUS]           = { .prec = PREC_TERM,          .prefix = unary,    .infix = binary },
-    [TOKEN_NUMBER]          = { .prec = PREC_NONE,          .prefix = number,   .infix = NULL   },
-    [TOKEN_NULL]            = { .prec = PREC_NONE,          .prefix = null_,    .infix = NULL   },
-    [TOKEN_OR]              = { .prec = PREC_OR,            .prefix = NULL,     .infix = binary },
-    [TOKEN_PLUS]            = { .prec = PREC_TERM,          .prefix = unary,    .infix = binary },
-    [TOKEN_RBRACE]          = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL   },
-    [TOKEN_RIGHT_SHIFT]     = { .prec = PREC_SHIFT,         .prefix = NULL,     .infix = binary },
-    [TOKEN_RPAREN]          = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL   },
-    [TOKEN_SEMI]            = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL   },
-    [TOKEN_SLASH]           = { .prec = PREC_FACTOR,        .prefix = NULL,     .infix = binary },
-    [TOKEN_STRING]          = { .prec = PREC_NONE,          .prefix = str_,     .infix = NULL   },
-    [TOKEN_TILDE]           = { .prec = PREC_NONE,          .prefix = unary,    .infix = NULL   },
-    [TOKEN_TRUE]            = { .prec = PREC_NONE,          .prefix = boolean,  .infix = NULL   },
-    [TOKEN_XOR]             = { .prec = PREC_BIT_XOR,       .prefix = NULL,     .infix = binary },
+    [TOKEN_ASTERISK]        = { .prec = PREC_FACTOR,        .prefix = NULL,     .infix = binary     },
+    [TOKEN_AND]             = { .prec = PREC_AND,           .prefix = NULL,     .infix = binary     },
+    [TOKEN_BANG]            = { .prec = PREC_NONE,          .prefix = unary,    .infix = NULL       },
+    [TOKEN_BANG_EQUAL]      = { .prec = PREC_EQUALITY,      .prefix = NULL,     .infix = binary     },
+    [TOKEN_BIT_AND]         = { .prec = PREC_BIT_AND,       .prefix = NULL,     .infix = binary     },
+    [TOKEN_BIT_OR]          = { .prec = PREC_BIT_OR,        .prefix = NULL,     .infix = binary     },
+    [TOKEN_CHAR]            = { .prec = PREC_NONE,          .prefix = chr_,     .infix = NULL       },
+    [TOKEN_COMMA]           = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL       },
+    [TOKEN_DOT]             = { .prec = PREC_CALL,          .prefix = NULL,     .infix = invoke     },
+    [TOKEN_EOF]             = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL       },
+    [TOKEN_EQUAL]           = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL       },
+    [TOKEN_EQUAL_EQUAL]     = { .prec = PREC_EQUALITY,      .prefix = NULL,     .infix = binary     },
+    [TOKEN_FALSE]           = { .prec = PREC_NONE,          .prefix = boolean,  .infix = NULL       },
+    [TOKEN_GREATER]         = { .prec = PREC_COMPARISON,    .prefix = NULL,     .infix = binary     },
+    [TOKEN_GREATER_EQUAL]   = { .prec = PREC_COMPARISON,    .prefix = NULL,     .infix = binary     },
+    [TOKEN_IDENTIFIER]      = { .prec = PREC_NONE,          .prefix = variable, .infix = NULL       },
+    [TOKEN_LEFT_SHIFT]      = { .prec = PREC_SHIFT,         .prefix = NULL,     .infix = binary     },
+    [TOKEN_LESS]            = { .prec = PREC_COMPARISON,    .prefix = NULL,     .infix = binary     },
+    [TOKEN_LESS_EQUAL]      = { .prec = PREC_COMPARISON,    .prefix = NULL,     .infix = binary     },
+    [TOKEN_LBRACE]          = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL       },
+    [TOKEN_LPAREN]          = { .prec = PREC_NONE,          .prefix = group,    .infix = call       },
+    [TOKEN_MINUS]           = { .prec = PREC_TERM,          .prefix = unary,    .infix = binary     },
+    [TOKEN_NUMBER]          = { .prec = PREC_NONE,          .prefix = number,   .infix = NULL       },
+    [TOKEN_NULL]            = { .prec = PREC_NONE,          .prefix = null_,    .infix = NULL       },
+    [TOKEN_OR]              = { .prec = PREC_OR,            .prefix = NULL,     .infix = binary     },
+    [TOKEN_PLUS]            = { .prec = PREC_TERM,          .prefix = unary,    .infix = binary     },
+    [TOKEN_QUESTION]        = { .prec = PREC_TERNARY,       .prefix = NULL,     .infix = ternary    },
+    [TOKEN_RBRACE]          = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL       },
+    [TOKEN_RIGHT_SHIFT]     = { .prec = PREC_SHIFT,         .prefix = NULL,     .infix = binary     },
+    [TOKEN_RPAREN]          = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL       },
+    [TOKEN_SEMI]            = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL       },
+    [TOKEN_SLASH]           = { .prec = PREC_FACTOR,        .prefix = NULL,     .infix = binary     },
+    [TOKEN_STRING]          = { .prec = PREC_NONE,          .prefix = str_,     .infix = NULL       },
+    [TOKEN_TILDE]           = { .prec = PREC_NONE,          .prefix = unary,    .infix = NULL       },
+    [TOKEN_TRUE]            = { .prec = PREC_NONE,          .prefix = boolean,  .infix = NULL       },
+    [TOKEN_XOR]             = { .prec = PREC_BIT_XOR,       .prefix = NULL,     .infix = binary     },
 };
 
-static void consume(parser_t* parser, token_ty_t type, const char* message);
-static token_t previous(parser_t* parser);
-static token_t peek(parser_t* parser);
+static void     consume(parser_t* parser, token_ty_t type, const char* message);
+static token_t  previous(parser_t* parser);
+static token_t  peek(parser_t* parser);
 
 static void error_at(parser_t* parser, token_t token, const char* message)
 {
     fprintf(stderr, "[line %ld] Error", token.line_no);
 
-    if (token.type == TOKEN_EOF)
-    {
-        fprintf(stderr, " at end");
-    }
-    else if (token.type == TOKEN_ERROR)
-    {
+    if (token.type == TOKEN_EOF)        fprintf(stderr, " at EOF");
+    else if (token.type == TOKEN_ERROR) fprintf(stderr, " with expression '%.*s'", (int)token.length, token.start);
+    else                                fprintf(stderr, " at '%.*s'", (int)token.length, token.start);
 
-    }
-    else 
-    {
-        fprintf(stderr, " at '%.*s'", (int)token.length, token.start);
-    }
     fprintf(stderr, ": %s\n", message);
     parser->had_error = true;
 }
@@ -70,10 +63,9 @@ static void error_exp(parser_t* parser, const char* message)
     token_t token = peek(parser);
     const char* code = token.start;
     int index = 0;
-    while (code[index] != '\n' && code[index] != EOF)
-    {
-        index++;
-    }
+
+    while (code[index] != '\n' && code[index] != EOF) index++;
+
     fprintf(stderr, "[line %ld] Error: %s\n", token.line_no, message);
     fprintf(stderr, "\n - [Diag] At expression: '%.*s'\n", index, code);
 }
@@ -94,8 +86,9 @@ ast_exp_t* str_(arena_t* arena, parser_t* /*parser*/, token_t token)
 {
     size_t length = (token.length > 2) ? token.length : 1;
     char* tmp = (char*)arena_alloc(arena, sizeof(char) * length);
+
     if (length > 2) sprintf(tmp, "%.*s", (int)length - 2, &token.start[1]);
-    else sprintf(tmp, "%s", "");
+    else            sprintf(tmp, "%s", "");
 
     ast_exp_t* expr = new_exp(arena, (ast_exp_t){ .kind = STRING_LITERAL, .type_info = STRING, .as_str = (struct ast_string){ .STRING = tmp }});
     return expr;
@@ -119,7 +112,11 @@ ast_exp_t* number(arena_t* arena, parser_t* /*parser*/, token_t token)
     char temp[token.length + 1];
     sprintf(temp, "%.*s", (int)token.length, token.start);
     bool is_float = false;
-    for (size_t i = 0; i < token.length + 1; i++) if (token.start[i] == '.') is_float = true;
+
+    for (size_t i = 0; i < token.length + 1; i++) 
+        if (token.start[i] == '.') 
+            is_float = true;
+
     temp[token.length] = '\0';
     double val;
     sscanf(temp, "%lf", &val);
@@ -174,11 +171,13 @@ ast_exp_t* unary(arena_t* arena, parser_t* parser, token_t token)
 
 ast_exp_t* call(arena_t* /*arena*/, parser_t* /*parser*/, ast_exp_t* /*left*/, bool /*can_assign*/)
 {
+    // TODO
     return NULL;
 }
 
 ast_exp_t* invoke(arena_t* /*arena*/, parser_t* /*parser*/, ast_exp_t* /*left*/, bool /*can_assign*/)
 {
+    // TODO
     return NULL;
 }
 
@@ -205,6 +204,12 @@ ast_exp_t* binary(arena_t* arena, parser_t* parser, ast_exp_t* left, bool /*can_
                               .right = right
                             }
             });
+}
+
+ast_exp_t* ternary(arena_t* /*arena*/, parser_t* /*parser*/, ast_exp_t* /*left*/, bool /*can_assign*/)
+{
+    // TODO: ternary implementation here
+    return NULL;
 }
 
 static token_t advance(parser_t* parser)

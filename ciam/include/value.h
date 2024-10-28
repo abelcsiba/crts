@@ -5,16 +5,16 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define VALUE_TYPE_LIST     \
-    X(VAL_I8, "I8")         \
-    X(VAL_I16, "I16")       \
-    X(VAL_I32, "I32")       \
-    X(VAL_I64, "I64")       \
-    X(VAL_FLOAT, "FLOAT")   \
-    X(VAL_DOUBLE, "DOUBLE") \
-    X(VAL_BOOL, "BOOL")     \
-    X(VAL_CHAR, "CHAR")     \
-    X(VAL_OBJECT, "OBJECT") \
+#define VALUE_TYPE_LIST         \
+    X(VAL_I8,       "I8")       \
+    X(VAL_I16,      "I16")      \
+    X(VAL_I32,      "I32")      \
+    X(VAL_I64,      "I64")      \
+    X(VAL_FLOAT,    "FLOAT")    \
+    X(VAL_DOUBLE,   "DOUBLE")   \
+    X(VAL_BOOL,     "BOOL")     \
+    X(VAL_CHAR,     "CHAR")     \
+    X(VAL_OBJECT,   "OBJECT")   \
 
 typedef enum {
     #define X(type, str) type,

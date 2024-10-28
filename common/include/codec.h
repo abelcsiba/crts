@@ -15,6 +15,12 @@
 #define CIAM_VER_PATCH      0x00
 #define CIAM_VER_REV        0x00
 
+#define ENCODE_CIAM_VERSION(version) (version | ((uint32_t)CIAM_VER_MAJOR << 3 * 8) |   \
+                                                ((uint32_t)CIAM_VER_MINOR << 2 * 8) |   \
+                                                ((uint32_t)CIAM_VER_PATCH << 1 * 8) |   \
+                                                ((uint32_t)CIAM_VER_REV   << 0 * 8))    \
+
+
 #define PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))
 
 PACK(struct time_stamp_t {
