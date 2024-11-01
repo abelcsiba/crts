@@ -130,7 +130,16 @@ static token_ty_t identifier_type(lexer_t* lexer)
 {
     switch(lexer->start[0]) // TODO: add the rest of the keywords
     {
-        case 'e': return check_keyword(lexer, 1, 3, "lse", TOKEN_ELSE);
+        case 'e': 
+            if (lexer->curr - lexer->start > 3)
+            {
+                switch (lexer->start[1])
+                {
+                    case 'l': return check_keyword(lexer, 2, 2, "se", TOKEN_ELSE);
+                    case 'n': return (check_keyword(lexer, 2, 4, "tity", TOKEN_ENTITY) == TOKEN_ENTITY) ? TOKEN_ENTITY : check_keyword(lexer, 2, 3, "try", TOKEN_ENTRY);
+                }
+            }
+            break;
         case 'f': 
             if (lexer->curr - lexer->start > 1)
             {
@@ -244,7 +253,7 @@ Errno lex(lexer_t* lexer, const char* source)
             printf("|        |");
         }
 
-        printf(" 0x%02d | %-20.18s |", token.type, token_ty2label(token.type));
+        printf(" 0x%02d | %-17.20s |", token.type, token_ty2label(token.type));
         printf(" %-20.*s|\n", (int)token.length, token.start);
 
         add_to_token_da(&lexer->tokens, token);

@@ -23,9 +23,15 @@ typedef enum {
     EXPR_STMT,
     VAR_DECL,
     IF_STMT,
-    FOR_STMT,
+    LOOP_STMT,
     BLOCK_STMT
 } stmt_kind_t;
+
+typedef enum {
+    ENTRY,
+    PURE,
+    PROC
+} callable_kind_t;
 
 typedef enum {
     I8,
@@ -37,6 +43,7 @@ typedef enum {
     BOOL,
     CHAR,
     STRING,
+    VOID,
     UNKNOWN
 } expr_type_t;
 
@@ -94,6 +101,22 @@ struct ast_exp_t {
     };
 };
 
+struct ast_callable_t {
+    callable_kind_t     kind;
+    expr_type_t         ret_type;
+    size_t              arity;
+    expr_type_t*        arg_types;
+
+    ast_stmt_t*         body;
+};
+
+typedef struct stmt_list_t stmt_list_t;
+
+struct stmt_list_t {
+    ast_stmt_t*         data;
+    stmt_list_t*        next;
+};
+
 struct ast_stmt_t {
     stmt_kind_t         kind;
 
@@ -113,7 +136,7 @@ struct ast_stmt_t {
         } as_if;
 
         struct {
-            ast_stmt_t* stmts;
+            stmt_list_t *stmts;
         } as_block;
     };
 };

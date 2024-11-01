@@ -237,6 +237,16 @@ static void consume(parser_t* parser, token_ty_t type, const char* message)
     error(parser, message);
 }
 
+static bool match(parser_t* parser, token_ty_t type)
+{
+    if (peek(parser).type == type) 
+    {
+        advance(parser);
+        return true;
+    }
+    return false;
+}
+
 void init_parser(parser_t* parser, token_list_t *tokens)
 {
     parser->tokens = tokens;
@@ -274,45 +284,96 @@ ast_exp_t* parse_expression(arena_t* arena, parser_t* parser, precedence_t prece
     return left;
 }
 
-ast_stmt_t* parse(arena_t* arena, parser_t* parser)
+static ast_stmt_t* parse_exp_stmt(arena_t* arena, parser_t* parser)
 {
-    //token_t token;
-    //ast_stmt_t* exp = NULL;
-    //do
-    //{
-        //token = advance(parser);
+    if (peek(parser).type == TOKEN_SEMI) return NULL;
 
-        ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(arena, sizeof(ast_stmt_t));
-        stmt->as_expr.exp = parse_expression(arena, parser, 0);
-        //if (NULL == exp) break;
-        //token = peek(parser);
-        // switch (token.type)
-        // {
-        //     case TOKEN_MODULE:
-        //         printf("Module declaration\n");
-        //         break;
-        //     case TOKEN_RECORD:
-        //         printf("Record declaration\n");
-        //         break;
-        //     case TOKEN_ENTRY:
-        //         printf("Entry declaration\n");
-        //         break;
-        //     case TOKEN_PURE:
-        //         printf("Pure declaration\n");
-        //         break;
-        //     case TOKEN_ENTITY:
-        //         printf("Entity declaration\n");
-        //         break;
-        //     case TOKEN_VAR:
-        //         printf("Var declaration\n");
-        //         break;
-        //     default:
-        //         printf("Invalid statement\n");
-        // }
-        // printf(" %-17.*s|\n", (int)token.length, token.start);
-    //} while (token.type != TOKEN_EOF);
+    ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(arena, sizeof(ast_stmt_t));
+    stmt->as_expr.exp = parse_expression(arena, parser, PREC_NONE);
+    if (NULL == stmt->as_expr.exp) return NULL;
+
+    if (!match(parser, TOKEN_SEMI))
+    {
+        error(parser, "Missing ';' at the end of expression");
+        return NULL;
+    } 
 
     return stmt;
+}
+
+static ast_stmt_t* parse_block_stmt(arena_t* arena, parser_t* parser)
+{
+    ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(arena, sizeof(ast_stmt_t));
+    stmt->as_block.stmts = (stmt_list_t*)arena_alloc(arena, sizeof(stmt_list_t));
+    stmt->as_block.stmts->data = NULL;
+    stmt->as_block.stmts->next = NULL;
+    stmt->kind = BLOCK_STMT;
+
+    token_t token = peek(parser);
+    while (TOKEN_EOF != token.type && TOKEN_RBRACE != token.type)
+    {
+        ast_stmt_t* child_stmt;
+        switch (token.type)
+        {
+            //case TOKEN_RBRACE: return stmt;
+            case TOKEN_IF:
+                // TODO: parse IF stmt
+                break;
+            case TOKEN_VAR:
+                // TODO: parse var declaration
+                break;
+            case TOKEN_RETURN:
+                // TODO: parse return stmt
+                break;
+            case TOKEN_LBRACE:
+                advance(parser);
+                child_stmt = parse_block_stmt(arena, parser);
+                break;
+            default:
+                child_stmt = parse_exp_stmt(arena, parser);
+                break;
+        }
+        if (NULL == child_stmt) 
+        {
+            error_at(parser, token, "Unknown statement");
+            exit(1);
+        }
+
+        if ( NULL == stmt->as_block.stmts->data )
+        {
+            stmt->as_block.stmts->data = child_stmt;
+        }
+        else
+        {
+            stmt_list_t* entry = (stmt_list_t*)arena_alloc(arena, sizeof(stmt_list_t));
+            entry->data = child_stmt;
+            entry->next = NULL;
+            stmt->as_block.stmts->next = entry; 
+        }
+        token = peek(parser);
+    }
+
+    if (TOKEN_EOF == token.type) 
+    {
+        error_at(parser, token, "Unexpected end of line");
+        exit(1);
+    }
+
+    return stmt;
+}
+
+ast_stmt_t* parse(arena_t* arena, parser_t* parser)
+{
+    token_t token = advance(parser);
+
+    switch (token.type)
+    {
+        case TOKEN_LBRACE:
+            return parse_block_stmt(arena, parser);
+        default: 
+            return parse_exp_stmt(arena, parser);
+    }
+    return NULL;
 }
 
 void print_ast_exp(FILE* out, ast_exp_t *exp)
@@ -355,5 +416,28 @@ void print_ast_exp(FILE* out, ast_exp_t *exp)
         default:
             fprintf(out, "UNKNOWN");
             break;
+    }
+}
+
+void print_ast_stmt(FILE* out, ast_stmt_t *stmt)
+{
+    switch (stmt->kind)
+    {
+    case EXPR_STMT:
+        fprintf(out, "[EXP:");
+        print_ast_exp(out, stmt->as_expr.exp);
+        fprintf(out, "]\n");
+        break;
+    case BLOCK_STMT:
+        fprintf(out, "{\n");
+        for (stmt_list_t* entry = stmt->as_block.stmts; entry != NULL; entry = entry->next)
+            print_ast_stmt(out, entry->data);
+        fprintf(out, "}\n");
+        break;
+    
+    default:
+        fprintf(out, "Unknown statement type\n");
+        exit(1);
+        break;
     }
 }

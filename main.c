@@ -41,7 +41,7 @@ int main(int argc, char** argv)
   if (argc < 2)
   {
     fprintf(stderr, "Missing input file, using default '%s'", "./test/expr.isl");
-    src = "./test/expr.isl";
+    src = "./test/expr3.isl";
   }
   else src = argv[1];
   
@@ -72,11 +72,15 @@ int main(int argc, char** argv)
   init_parser(&parser, &lexer.tokens);
   ast_stmt_t* stmt = parse(&arena, &parser);
 
-  if ( NULL != stmt->as_expr.exp ) 
-  {
-    printf("\n\nCompiled expression: ");
-    print_ast_exp(stdout, stmt->as_expr.exp);
-  }
+  if (NULL == stmt) goto closure;
+
+  printf("\n\nCompiled statements:\n");
+  print_ast_stmt(stdout, stmt);
+  // if (stmt->kind ==  EXPR_STMT) 
+  // {
+  //   printf("\n\nCompiled expression: ");
+  //   print_ast_exp(stdout, stmt->as_expr.exp);
+  // }
   printf("\n");
 
   compiler_t compiler;
@@ -87,7 +91,7 @@ int main(int argc, char** argv)
 
   //print_code(stdout, module->code, module->code_size);
 
-  module->file_name = "example.isl";
+  module->file_name = src;
   struct tm ts = {0};
   module->time_stamp = &ts;
 
@@ -95,12 +99,15 @@ int main(int argc, char** argv)
   ciam_vm_load(vm, module);
   ciam_vm_run(vm);
 
-  destroy_arena(&arena);
+  ciam_destroy_vm(vm);
   free(module->code);
   free(module->pool.numbers.nums);
   free(module);
+
+closure:
+  destroy_arena(&arena);
   free(lexer.tokens.data);
-  ciam_destroy_vm(vm);
+  
   fclose(fp);
   free(buff);
   
