@@ -46,6 +46,10 @@ static void     consume(parser_t* parser, token_ty_t type, const char* message);
 static token_t  previous(parser_t* parser);
 static token_t  peek(parser_t* parser);
 
+static ast_stmt_t* parse_block_stmt(arena_t* arena, parser_t* parser);
+static ast_stmt_t* parse_exp_stmt(arena_t* arena, parser_t* parser);
+static ast_stmt_t* parse_if_stmt(arena_t* arena, parser_t* parser);
+
 static void error_at(parser_t* parser, token_t token, const char* message)
 {
     fprintf(stderr, "[line %ld] Error", token.line_no);
@@ -301,38 +305,74 @@ static ast_stmt_t* parse_exp_stmt(arena_t* arena, parser_t* parser)
     return stmt;
 }
 
-static ast_stmt_t* parse_block_stmt(arena_t* arena, parser_t* parser)
+static ast_stmt_t* parse_if_stmt(arena_t* arena, parser_t* parser)
+{
+    advance(parser); // eat IF keyword
+    ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(arena, sizeof(ast_stmt_t));
+    stmt->kind = IF_STMT;
+    stmt->as_if.cond = NULL;
+    stmt->as_if.then_b = NULL;
+    stmt->as_if.else_b = NULL;
+
+    token_t token = advance(parser);
+    if (token.type != TOKEN_LPAREN)
+    {
+        error_at(parser, token, "Missing '(' symbol");
+        exit(1);
+    }
+    ast_exp_t* cond = parse_expression(arena, parser, 0);
+    if (NULL == cond)
+    {
+        error_at(parser, token, "Invalid if condition expression");
+        exit(1);
+    }
+    stmt->as_if.cond = cond;
+
+    token = advance(parser);
+    if (token.type != TOKEN_RPAREN)
+    {
+        error_at(parser, token, "Missing ')' symbol");
+        exit(1);
+    }
+
+    ast_stmt_t* then = parse_statement(arena, parser);
+    if (NULL == then)
+    {
+        error_at(parser, token, "Invalid statement as 'then' block");
+        exit(1);
+    }
+    stmt->as_if.then_b = then;
+    
+    token = peek(parser);
+    if (token.type == TOKEN_ELSE)
+    {
+        advance(parser);
+        ast_stmt_t* else_b = parse_statement(arena, parser);
+        if (NULL == else_b)
+        {
+            error_at(parser, token, "Invalid statement as 'else' block");
+            exit(1);
+        }
+        stmt->as_if.else_b = else_b; 
+    }
+    
+    return stmt;
+}
+
+ast_stmt_t* parse_block_stmt(arena_t* arena, parser_t* parser)
 {
     ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(arena, sizeof(ast_stmt_t));
     stmt->as_block.stmts = (stmt_list_t*)arena_alloc(arena, sizeof(stmt_list_t));
     stmt->as_block.stmts->data = NULL;
     stmt->as_block.stmts->next = NULL;
     stmt->kind = BLOCK_STMT;
-
-    token_t token = peek(parser);
+    advance(parser); // Eat the '{' symbol
+    token_t token = peek(parser); // And check the one after
     while (TOKEN_EOF != token.type && TOKEN_RBRACE != token.type)
     {
         ast_stmt_t* child_stmt;
-        switch (token.type)
-        {
-            //case TOKEN_RBRACE: return stmt;
-            case TOKEN_IF:
-                // TODO: parse IF stmt
-                break;
-            case TOKEN_VAR:
-                // TODO: parse var declaration
-                break;
-            case TOKEN_RETURN:
-                // TODO: parse return stmt
-                break;
-            case TOKEN_LBRACE:
-                advance(parser);
-                child_stmt = parse_block_stmt(arena, parser);
-                break;
-            default:
-                child_stmt = parse_exp_stmt(arena, parser);
-                break;
-        }
+        child_stmt = parse_statement(arena, parser);
+
         if (NULL == child_stmt) 
         {
             error_at(parser, token, "Unknown statement");
@@ -348,7 +388,10 @@ static ast_stmt_t* parse_block_stmt(arena_t* arena, parser_t* parser)
             stmt_list_t* entry = (stmt_list_t*)arena_alloc(arena, sizeof(stmt_list_t));
             entry->data = child_stmt;
             entry->next = NULL;
-            stmt->as_block.stmts->next = entry; 
+            stmt_list_t* element = stmt->as_block.stmts;
+            for (; element->next != NULL; element = element->next)
+                ;
+            element->next = entry;
         }
         token = peek(parser);
     }
@@ -358,22 +401,39 @@ static ast_stmt_t* parse_block_stmt(arena_t* arena, parser_t* parser)
         error_at(parser, token, "Unexpected end of line");
         exit(1);
     }
+    if (token.type == TOKEN_RBRACE) advance(parser);
 
     return stmt;
 }
 
-ast_stmt_t* parse(arena_t* arena, parser_t* parser)
+ast_stmt_t* parse_statement(arena_t* arena, parser_t* parser)
 {
-    token_t token = advance(parser);
-
+    ast_stmt_t* stmt;
+    token_t token = peek(parser);
     switch (token.type)
     {
+        case TOKEN_IF:
+            stmt = parse_if_stmt(arena, parser);
+            break;
+        case TOKEN_VAR:
+            // TODO: parse var declaration
+            break;
+        case TOKEN_RETURN:
+            // TODO: parse return stmt
+            break;
         case TOKEN_LBRACE:
-            return parse_block_stmt(arena, parser);
-        default: 
-            return parse_exp_stmt(arena, parser);
+            stmt = parse_block_stmt(arena, parser);
+            break;
+        default:
+            stmt = parse_exp_stmt(arena, parser);
+            break;
     }
-    return NULL;
+    return stmt;
+}
+
+ast_stmt_t* parse(arena_t* arena, parser_t* parser)
+{    
+    return parse_statement(arena, parser);
 }
 
 void print_ast_exp(FILE* out, ast_exp_t *exp)
@@ -424,9 +484,9 @@ void print_ast_stmt(FILE* out, ast_stmt_t *stmt)
     switch (stmt->kind)
     {
     case EXPR_STMT:
-        fprintf(out, "[EXP:");
+        fprintf(out, "EXP:");
         print_ast_exp(out, stmt->as_expr.exp);
-        fprintf(out, "]\n");
+        fprintf(out, "\n");
         break;
     case BLOCK_STMT:
         fprintf(out, "{\n");
@@ -434,7 +494,20 @@ void print_ast_stmt(FILE* out, ast_stmt_t *stmt)
             print_ast_stmt(out, entry->data);
         fprintf(out, "}\n");
         break;
-    
+    case IF_STMT:
+        fprintf(out, "IF ");
+        print_ast_exp(out, stmt->as_if.cond);
+        fprintf(out, "\n[\n");
+        print_ast_stmt(out, stmt->as_if.then_b);
+        fprintf(out, "]\n");
+        if (NULL != stmt->as_if.else_b)
+        {
+            fprintf(out, "ELSE\n");
+            fprintf(out, "[\n");
+            print_ast_stmt(out, stmt->as_if.else_b);
+            fprintf(out, "]\n");
+        }
+        break;    
     default:
         fprintf(out, "Unknown statement type\n");
         exit(1);
