@@ -26,6 +26,7 @@ static parse_rule_t parse_table[] = {
     [TOKEN_LBRACE]          = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL       },
     [TOKEN_LPAREN]          = { .prec = PREC_NONE,          .prefix = group,    .infix = call       },
     [TOKEN_MINUS]           = { .prec = PREC_TERM,          .prefix = unary,    .infix = binary     },
+    [TOKEN_MODULO]          = { .prec = PREC_FACTOR,        .prefix = NULL,     .infix = binary     },
     [TOKEN_NUMBER]          = { .prec = PREC_NONE,          .prefix = number,   .infix = NULL       },
     [TOKEN_NULL]            = { .prec = PREC_NONE,          .prefix = null_,    .infix = NULL       },
     [TOKEN_OR]              = { .prec = PREC_OR,            .prefix = NULL,     .infix = binary     },
@@ -49,6 +50,11 @@ static token_t  peek(parser_t* parser);
 static ast_stmt_t* parse_block_stmt(arena_t* arena, parser_t* parser);
 static ast_stmt_t* parse_exp_stmt(arena_t* arena, parser_t* parser);
 static ast_stmt_t* parse_if_stmt(arena_t* arena, parser_t* parser);
+static ast_stmt_t* parse_loop_stmt(arena_t* arena, parser_t* parser);
+static ast_stmt_t* parse_declaration_stmt(arena_t* arena, parser_t* parser);
+static expr_type_t parse_var_type(parser_t* parser);
+
+static void print_ast_exp(FILE* out, ast_exp_t* exp);
 
 static void error_at(parser_t* parser, token_t token, const char* message)
 {
@@ -307,6 +313,7 @@ static ast_stmt_t* parse_exp_stmt(arena_t* arena, parser_t* parser)
 
 static ast_stmt_t* parse_if_stmt(arena_t* arena, parser_t* parser)
 {
+#define defer_error(X) do { error_at(parser, token, X); exit(1); } while (false)
     advance(parser); // eat IF keyword
     ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(arena, sizeof(ast_stmt_t));
     stmt->kind = IF_STMT;
@@ -315,32 +322,19 @@ static ast_stmt_t* parse_if_stmt(arena_t* arena, parser_t* parser)
     stmt->as_if.else_b = NULL;
 
     token_t token = advance(parser);
-    if (token.type != TOKEN_LPAREN)
-    {
-        error_at(parser, token, "Missing '(' symbol");
-        exit(1);
-    }
+    if (token.type != TOKEN_LPAREN) defer_error("Missing '(' symbol");
+
     ast_exp_t* cond = parse_expression(arena, parser, 0);
-    if (NULL == cond)
-    {
-        error_at(parser, token, "Invalid if condition expression");
-        exit(1);
-    }
+    if (NULL == cond) defer_error("Invalid if condition expression");
+
     stmt->as_if.cond = cond;
 
     token = advance(parser);
-    if (token.type != TOKEN_RPAREN)
-    {
-        error_at(parser, token, "Missing ')' symbol");
-        exit(1);
-    }
+    if (token.type != TOKEN_RPAREN) defer_error("Missing ')' symbol");
 
     ast_stmt_t* then = parse_statement(arena, parser);
-    if (NULL == then)
-    {
-        error_at(parser, token, "Invalid statement as 'then' block");
-        exit(1);
-    }
+    if (NULL == then) defer_error("Invalid statement as 'then' block");
+
     stmt->as_if.then_b = then;
     
     token = peek(parser);
@@ -348,19 +342,115 @@ static ast_stmt_t* parse_if_stmt(arena_t* arena, parser_t* parser)
     {
         advance(parser);
         ast_stmt_t* else_b = parse_statement(arena, parser);
-        if (NULL == else_b)
-        {
-            error_at(parser, token, "Invalid statement as 'else' block");
-            exit(1);
-        }
+        if (NULL == else_b) defer_error("Invalid statement as 'else' block");
+
         stmt->as_if.else_b = else_b; 
     }
     
     return stmt;
+#undef defer_error
 }
 
-ast_stmt_t* parse_block_stmt(arena_t* arena, parser_t* parser)
+static ast_stmt_t* parse_loop_stmt(arena_t* arena, parser_t* parser)
 {
+#define defer_error(X) do { error_at(parser, token, X); exit(1); } while (false)
+    advance(parser); // eat LOOP keyword
+    ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(arena, sizeof(ast_stmt_t));
+    stmt->kind = LOOP_STMT;
+    stmt->as_loop.cond = NULL;
+    stmt->as_loop.block = NULL;
+    token_t token = advance(parser);
+    if (TOKEN_LPAREN != token.type) defer_error("Missing '(' symbol");
+
+    ast_exp_t* cond = parse_expression(arena, parser, 0);
+    if (NULL == cond) defer_error("Invalid expression as loop condition");
+    
+    token = advance(parser);
+    if (TOKEN_RPAREN != token.type) defer_error("Missing ')' symbol");
+    
+    ast_stmt_t* block = parse_statement(arena, parser);
+    if (NULL == block) defer_error("Invalid statement as loop body");
+    
+    stmt->as_loop.cond = cond;
+    stmt->as_loop.block = block;
+
+    return stmt;
+#undef defer_error
+}
+
+static expr_type_t parse_var_type(parser_t* parser)
+{
+#define type_case(X) type = X; break
+    advance(parser); // Eat the ':' symbol
+    token_ty_t token_type = peek(parser).type;
+    expr_type_t type = UNKNOWN;
+
+    switch (token_type)
+    {
+        case TOKEN_I8:      type_case(I8);
+        case TOKEN_I16:     type_case(I16);
+        case TOKEN_I32:     type_case(I32);
+        case TOKEN_I64:     type_case(I64);
+        case TOKEN_FLOAT:   type_case(FLOAT);
+        case TOKEN_DOUBLE:  type_case(DOUBLE);
+        case TOKEN_CHAR:    type_case(CHAR);
+        case TOKEN_BOOL:    type_case(BOOL);
+        default:
+            error_at(parser, peek(parser), "Unknown type");
+            exit(1);
+            break;
+    }
+    advance(parser); // Eat the type token;
+
+    // We shouldn't reach here
+    return type;
+#undef type_case
+}
+
+static ast_stmt_t* parse_declaration_stmt(arena_t* arena, parser_t* parser)
+{
+#define defer_error(X) do { error_at(parser, token, X); exit(1); } while (false)
+    ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(arena, sizeof(ast_stmt_t));
+    stmt->kind = VAR_DECL;
+    stmt->as_decl.type = UNKNOWN;
+    stmt->as_decl.exp = NULL;
+    advance(parser); // Eat the VAR keyword
+
+    token_t token = advance(parser);
+    if (TOKEN_IDENTIFIER != token.type) defer_error("Missing variable name");
+
+    stmt->as_decl.name = (char*)arena_alloc(arena, token.length + 1);
+    memset(stmt->as_decl.name, '\0', token.length + 1);
+    memcpy(stmt->as_decl.name, token.start, token.length);
+
+    if (TOKEN_COLON == peek(parser).type) 
+    {
+        expr_type_t type = parse_var_type(parser);
+        if (UNKNOWN == type) defer_error("Unknown type");
+        stmt->as_decl.type = type;
+    }
+
+    token = peek(parser);
+
+    if (TOKEN_EQUAL == token.type) 
+    {
+        advance(parser);
+        ast_exp_t* exp = parse_expression(arena, parser, 0);
+        if (NULL == exp) defer_error("Invalid expression on var initialization");
+        stmt->as_decl.exp = exp;
+    }
+    
+    token = peek(parser);
+    if (TOKEN_SEMI != token.type) defer_error("Missing ';'");
+    else advance(parser); // Eat the ';' symbol
+
+    return stmt;
+#undef defer_error
+}
+
+static ast_stmt_t* parse_block_stmt(arena_t* arena, parser_t* parser)
+{
+#define defer_error(X) do { error_at(parser, token, X); exit(1); } while (false)
     ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(arena, sizeof(ast_stmt_t));
     stmt->as_block.stmts = (stmt_list_t*)arena_alloc(arena, sizeof(stmt_list_t));
     stmt->as_block.stmts->data = NULL;
@@ -373,11 +463,7 @@ ast_stmt_t* parse_block_stmt(arena_t* arena, parser_t* parser)
         ast_stmt_t* child_stmt;
         child_stmt = parse_statement(arena, parser);
 
-        if (NULL == child_stmt) 
-        {
-            error_at(parser, token, "Unknown statement");
-            exit(1);
-        }
+        if (NULL == child_stmt) defer_error("Unknown statement");
 
         if ( NULL == stmt->as_block.stmts->data )
         {
@@ -396,14 +482,12 @@ ast_stmt_t* parse_block_stmt(arena_t* arena, parser_t* parser)
         token = peek(parser);
     }
 
-    if (TOKEN_EOF == token.type) 
-    {
-        error_at(parser, token, "Unexpected end of line");
-        exit(1);
-    }
+    if (TOKEN_EOF == token.type) defer_error("Unexpected end of file");
+    
     if (token.type == TOKEN_RBRACE) advance(parser);
 
     return stmt;
+#undef defer_error
 }
 
 ast_stmt_t* parse_statement(arena_t* arena, parser_t* parser)
@@ -415,8 +499,11 @@ ast_stmt_t* parse_statement(arena_t* arena, parser_t* parser)
         case TOKEN_IF:
             stmt = parse_if_stmt(arena, parser);
             break;
+        case TOKEN_LOOP:
+            stmt = parse_loop_stmt(arena, parser);
+            break;
         case TOKEN_VAR:
-            // TODO: parse var declaration
+            stmt = parse_declaration_stmt(arena, parser);
             break;
         case TOKEN_RETURN:
             // TODO: parse return stmt
@@ -436,7 +523,7 @@ ast_stmt_t* parse(arena_t* arena, parser_t* parser)
     return parse_statement(arena, parser);
 }
 
-void print_ast_exp(FILE* out, ast_exp_t *exp)
+static void print_ast_exp(FILE* out, ast_exp_t *exp)
 {
     switch (exp->kind)
     {
@@ -479,6 +566,23 @@ void print_ast_exp(FILE* out, ast_exp_t *exp)
     }
 }
 
+static char* type2string(expr_type_t type)
+{
+    switch (type)
+    {
+        case I8:      return "i8";
+        case I16:     return "i16";
+        case I32:     return "i32";
+        case I64:     return "i64";
+        case FLOAT:   return "float";
+        case DOUBLE:  return "double";
+        case CHAR:    return "char";
+        case BOOL:    return "bool";
+        default:      return "unknown";
+    }
+    return "unknown";
+}
+
 void print_ast_stmt(FILE* out, ast_stmt_t *stmt)
 {
     switch (stmt->kind)
@@ -493,6 +597,24 @@ void print_ast_stmt(FILE* out, ast_stmt_t *stmt)
         for (stmt_list_t* entry = stmt->as_block.stmts; entry != NULL; entry = entry->next)
             print_ast_stmt(out, entry->data);
         fprintf(out, "}\n");
+        break;
+    case LOOP_STMT:
+        fprintf(out, "LOOP ");
+        print_ast_exp(out, stmt->as_loop.cond);
+        fprintf(out, "\n[\n");
+        print_ast_stmt(out, stmt->as_loop.block);
+        fprintf(out, "]\n");
+        break;
+    case VAR_DECL:
+        fprintf(out, "VAR ");
+        fprintf(out, "%s", stmt->as_decl.name);
+        if (UNKNOWN != stmt->as_decl.type) fprintf(out, " : %s ", type2string(stmt->as_decl.type));
+        if (NULL != stmt->as_decl.exp) 
+        {
+            fprintf(out, " = ");
+            print_ast_exp(out, stmt->as_decl.exp);
+        }
+        fprintf(out, "\n");
         break;
     case IF_STMT:
         fprintf(out, "IF ");

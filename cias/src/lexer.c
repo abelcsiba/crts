@@ -130,6 +130,9 @@ static token_ty_t identifier_type(lexer_t* lexer)
 {
     switch(lexer->start[0]) // TODO: add the rest of the keywords
     {
+        case 'b': return check_keyword(lexer, 1, 3, "ool", TOKEN_BOOL);
+        case 'c': return check_keyword(lexer, 1, 3, "har", TOKEN_CHAR);
+        case 'd': return check_keyword(lexer, 1, 5, "ouble", TOKEN_DOUBLE);
         case 'e': 
             if (lexer->curr - lexer->start > 3)
             {
@@ -145,6 +148,7 @@ static token_ty_t identifier_type(lexer_t* lexer)
             {
                 switch (lexer->start[1])
                 {
+                    case 'l': return check_keyword(lexer, 2, 3, "oat", TOKEN_FLOAT);
                     case 'o': return check_keyword(lexer, 2, 1, "r", TOKEN_FOR);
                     case 'a': return check_keyword(lexer, 2, 3, "lse", TOKEN_FALSE);
                 }
@@ -155,11 +159,16 @@ static token_ty_t identifier_type(lexer_t* lexer)
             {
                 switch (lexer->start[1])
                 {
+                    case '8': return check_keyword(lexer, 1, 1, "8", TOKEN_I8);
+                    case '1': return check_keyword(lexer, 1, 2, "16", TOKEN_I16);
+                    case '3': return check_keyword(lexer, 1, 2, "32", TOKEN_I32);
+                    case '6': return check_keyword(lexer, 1, 2, "64", TOKEN_I64);
                     case 'f': return check_keyword(lexer, 1, 1, "f", TOKEN_IF);
-                    case 'm': return check_keyword(lexer, 1, 5, "mport", TOKEN_IF);
+                    case 'm': return check_keyword(lexer, 1, 5, "mport", TOKEN_IMPORT);
                 }
             }
             break;
+        case 'l': return check_keyword(lexer, 1, 3, "oop", TOKEN_LOOP);
         case 'm': return check_keyword(lexer, 1, 5, "odule", TOKEN_MODULE);
         case 'n': return check_keyword(lexer, 1, 3, "ull", TOKEN_NULL);
         case 'p': 
@@ -174,7 +183,16 @@ static token_ty_t identifier_type(lexer_t* lexer)
             break;
         case 'r': return check_keyword(lexer, 1, 5, "eturn", TOKEN_RETURN);
         case 't': return check_keyword(lexer, 1, 3, "rue", TOKEN_TRUE);
-        case 'v': return check_keyword(lexer, 1, 2, "ar", TOKEN_VAR);
+        case 'v': 
+            if (lexer->curr - lexer->start > 1)
+            {
+                switch (lexer->start[1])
+                {
+                    case 'a': return check_keyword(lexer, 1, 2, "ar", TOKEN_VAR);
+                    case 'o': return check_keyword(lexer, 1, 3, "oid", TOKEN_VOID);
+                }
+            }
+        
     }
     return TOKEN_IDENTIFIER;
 }
@@ -221,6 +239,7 @@ token_t lex_token(lexer_t* lexer)
     else if ( c == '*' )    return make_token(lexer, TOKEN_ASTERISK);
     else if ( c == '~' )    return make_token(lexer, TOKEN_TILDE);
     else if ( c == '^' )    return make_token(lexer, TOKEN_XOR);
+    else if ( c == '%' )    return make_token(lexer, TOKEN_MODULO);
     else if ( c == '&' )    return make_token(lexer, (match(lexer, '&') ? TOKEN_AND : TOKEN_BIT_AND));
     else if ( c == '|' )    return make_token(lexer, (match(lexer, '|') ? TOKEN_OR : TOKEN_BIT_OR));
     else if ( c == '!' )    return make_token(lexer, (match(lexer, '=') ? TOKEN_BANG_EQUAL : TOKEN_BANG));
@@ -253,8 +272,8 @@ Errno lex(lexer_t* lexer, const char* source)
             printf("|        |");
         }
 
-        printf(" 0x%02d | %-17.20s |", token.type, token_ty2label(token.type));
-        printf(" %-20.*s|\n", (int)token.length, token.start);
+        printf(" 0x%02d | %-20.20s |", token.type, token_ty2label(token.type));
+        printf(" %-17.*s|\n", (int)token.length, token.start);
 
         add_to_token_da(&lexer->tokens, token);
 

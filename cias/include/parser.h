@@ -63,7 +63,6 @@ ast_exp_t*      parse_expression(arena_t* arena, parser_t* parser, precedence_t 
 ast_stmt_t*     parse_statement(arena_t* arena, parser_t* parser);
 ast_stmt_t*     parse(arena_t* arena, parser_t* parser);
 
-void            print_ast_exp(FILE* out, ast_exp_t* exp);
 void            print_ast_stmt(FILE* out, ast_stmt_t* stmt);
 
 #endif // CIAS_PARSER_H_

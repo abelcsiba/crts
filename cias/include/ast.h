@@ -126,7 +126,14 @@ struct ast_stmt_t {
         } as_expr;
 
         struct {
+            char*       name;
+            expr_type_t type;
+            ast_exp_t*  exp;
+        } as_decl;
+
+        struct {
             ast_exp_t*  cond;
+            ast_stmt_t* block;
         } as_loop;
 
         struct {
