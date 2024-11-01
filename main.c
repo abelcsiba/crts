@@ -70,12 +70,12 @@ int main(int argc, char** argv)
 
   parser_t parser;
   init_parser(&parser, &lexer.tokens);
-  ast_stmt_t* stmt = parse(&arena, &parser);
+  cu_t* cu = parse(&arena, &parser);
 
-  if (NULL == stmt) goto closure;
+  if (NULL == cu) goto closure;
 
   printf("\n\nCompiled statements:\n");
-  print_ast_stmt(stdout, stmt);
+  print_cu(stdout, cu);
   // if (stmt->kind ==  EXPR_STMT) 
   // {
   //   printf("\n\nCompiled expression: ");
@@ -85,15 +85,17 @@ int main(int argc, char** argv)
 
   compiler_t compiler;
   init_module(&compiler);
-  compile_ast(&compiler, stmt);
+  compile_ast(&compiler, cu->entry);
 
   module_t* module = transfer_module(&compiler);
 
   //print_code(stdout, module->code, module->code_size);
 
   module->file_name = src;
-  struct tm ts = {0};
-  module->time_stamp = &ts;
+  time_t current_time;
+  current_time = time(NULL);
+  struct tm *tm_local = localtime(&current_time);
+  module->time_stamp = tm_local;
 
   ciam_vm_t *vm = ciam_vm_new();
   ciam_vm_load(vm, module);

@@ -61,8 +61,8 @@ ast_exp_t*      null_(arena_t* arena, parser_t* /*parser*/, token_t /*token*/);
 void            init_parser(parser_t* parser, token_list_t *tokens);
 ast_exp_t*      parse_expression(arena_t* arena, parser_t* parser, precedence_t precedence);
 ast_stmt_t*     parse_statement(arena_t* arena, parser_t* parser);
-ast_stmt_t*     parse(arena_t* arena, parser_t* parser);
+cu_t*           parse(arena_t* arena, parser_t* parser);
 
-void            print_ast_stmt(FILE* out, ast_stmt_t* stmt);
+void            print_cu(FILE* out, cu_t* cu);
 
 #endif // CIAS_PARSER_H_

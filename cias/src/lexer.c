@@ -264,7 +264,7 @@ Errno lex(lexer_t* lexer, const char* source)
         token_t token = lex_token(lexer);
         if (token.line_no != line)
         {
-            printf("| 0x%04ld |", token.line_no);
+            printf("| 0x%04lX |", token.line_no);
             line = token.line_no;
         }
         else

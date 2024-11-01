@@ -117,6 +117,17 @@ struct type_list_t {
     type_list_t*            next;
 };
 
+typedef enum {
+    LIBRARY,
+    EXECUTABLE
+} cu_type_t;
+
+typedef struct {
+    cu_type_t               type;
+    stmt_list_t*            pures;
+    ast_stmt_t*             entry;
+} cu_t;
+
 struct ast_stmt_t {
     stmt_kind_t             kind;
 

@@ -522,6 +522,7 @@ static ast_stmt_t* parse_pure_stmt(arena_t* arena, parser_t* parser)
     ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(arena, sizeof(ast_stmt_t));
     stmt->kind = PURE_STMT;
     stmt->as_callable.body = NULL;
+    stmt->as_callable.ret_type = UNKNOWN;
 
     if (TOKEN_IDENTIFIER != token.type) defer_error("Missing pure function name");
     stmt->as_callable.name = (char*)arena_alloc(arena, token.length + 1);
@@ -555,10 +556,14 @@ static ast_stmt_t* parse_pure_stmt(arena_t* arena, parser_t* parser)
         advance(parser); // Eat the '->' symbol
         expr_type_t type = parse_var_type(parser);
         stmt->as_callable.ret_type = type;
-        ast_stmt_t* body = parse_block_stmt(arena, parser);
-        if (NULL == body) defer_error("Invalid pure definition");
-        stmt->as_callable.body = body;
     }
+    else stmt->as_callable.ret_type = VOID;
+
+    if (TOKEN_LBRACE != peek(parser).type) defer_error("missing pure body");
+
+    ast_stmt_t* body = parse_block_stmt(arena, parser);
+    if (NULL == body) defer_error("Invalid pure definition");
+    stmt->as_callable.body = body;
 
     return stmt;
 #undef defer_error
@@ -656,20 +661,40 @@ ast_stmt_t* parse_statement(arena_t* arena, parser_t* parser)
     return stmt;
 }
 
-ast_stmt_t* parse(arena_t* arena, parser_t* parser)
+cu_t* parse(arena_t* arena, parser_t* parser)
 {
+#define defer_error(X) do { error_at(parser, token, X); exit(1); } while (false)
+    cu_t* cu = (cu_t*)arena_alloc(arena, sizeof(cu_t));
+    cu->type = EXECUTABLE;
+    cu->entry = NULL;
+    cu->pures = (stmt_list_t*)arena_alloc(arena, sizeof(stmt_list_t));
     token_t token = peek(parser);
-    ast_stmt_t* ret = NULL;
 
     while (TOKEN_EOF != token.type)
     {
         switch (token.type)
         {
             case TOKEN_ENTRY:
-                ret = parse_entry_stmt(arena, parser);
+                if (NULL != cu->entry) defer_error("Illegal redefinition of entry");
+                ast_stmt_t* entry = parse_entry_stmt(arena, parser);
+                cu->entry = entry;
                 break;
             case TOKEN_PURE:
-                print_ast_stmt(stdout, parse_pure_stmt(arena, parser));
+                ast_stmt_t* pure = parse_pure_stmt(arena, parser);
+                if (NULL == cu->pures->data)
+                {
+                    cu->pures->data = pure;
+                }
+                else
+                {
+                    stmt_list_t* element = cu->pures;
+                    for (;element->next != NULL; element = element->next)
+                        ;
+                    stmt_list_t* next = (stmt_list_t*)arena_alloc(arena, sizeof(stmt_list_t));
+                    next->data = pure;
+                    next->next = NULL;
+                    element->next = next;
+                }
                 break;
             default:
 
@@ -677,7 +702,8 @@ ast_stmt_t* parse(arena_t* arena, parser_t* parser)
         }
         token = peek(parser);
     }
-    return ret;
+    return cu;
+#undef defer_error
 }
 
 static void print_ast_exp(FILE* out, ast_exp_t *exp)
@@ -735,12 +761,13 @@ static char* type2string(expr_type_t type)
         case DOUBLE:  return "double";
         case CHAR:    return "char";
         case BOOL:    return "bool";
-        default:      return "userdef";
+        case VOID:    return "void";
+        default:      return "unknown";
     }
     return "unknown";
 }
 
-void print_ast_stmt(FILE* out, ast_stmt_t *stmt)
+static void print_ast_stmt(FILE* out, ast_stmt_t *stmt)
 {
     switch (stmt->kind)
     {
@@ -812,5 +839,24 @@ void print_ast_stmt(FILE* out, ast_stmt_t *stmt)
         fprintf(out, "Unknown statement type\n");
         exit(1);
         break;
+    }
+}
+
+void print_cu(FILE* out, cu_t* cu)
+{
+    fprintf(out, "\n");
+    if (NULL != cu->pures)
+    {
+        stmt_list_t* element = cu->pures;
+        for (;element != NULL; element = element->next)
+        {
+            print_ast_stmt(out, element->data);
+            fprintf(out, "\n");
+        }
+    }
+    fprintf(out, "\n");
+    if (NULL != cu->entry)
+    {
+        print_ast_stmt(out, cu->entry);
     }
 }

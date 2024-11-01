@@ -1,4 +1,9 @@
 
+
+pure div() {
+    return 5 % 42;
+}
+
 pure sum(a: bool,b : i16, c : float) -> i8
 {
     return 42;
