@@ -1,5 +1,5 @@
 
-pure sum() -> i8
+pure sum(a: bool,b : i16, c : float) -> i8
 {
     return 42;
 }

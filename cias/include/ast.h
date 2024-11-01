@@ -110,6 +110,13 @@ struct stmt_list_t {
     stmt_list_t*            next;
 };
 
+typedef struct type_list_t type_list_t;
+
+struct type_list_t {
+    expr_type_t             type;
+    type_list_t*            next;
+};
+
 struct ast_stmt_t {
     stmt_kind_t             kind;
 
@@ -117,7 +124,7 @@ struct ast_stmt_t {
         struct {
             expr_type_t     ret_type;
             size_t          arity;
-            expr_type_t*    arg_types;
+            type_list_t*    arg_types;
             ast_stmt_t*     body;
             char*           name;
         } as_callable;
