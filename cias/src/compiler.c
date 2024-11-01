@@ -58,7 +58,7 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
 
 void compile_ast(compiler_t* compiler, ast_stmt_t* stmt)
 {
-    compile_expr(compiler, stmt->as_expr.exp);
+    compile_expr(compiler, stmt->as_callable.body->as_block.stmts->data->as_expr.exp); // TODO: proper compilation needed
     add_to_code_da(compiler->code_da, (code_t){ .op = HLT, .opnd1 = 0x00 });
     compiler->compiled_m->code_size = compiler->code_da->count;
     compiler->compiled_m->code = compiler->code_da->data;

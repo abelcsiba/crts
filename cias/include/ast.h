@@ -24,14 +24,12 @@ typedef enum {
     VAR_DECL,
     IF_STMT,
     LOOP_STMT,
-    BLOCK_STMT
+    BLOCK_STMT,
+    RETURN_STMT,
+    ENTRY_STMT,
+    PURE_STMT,
+    PROC_STMT
 } stmt_kind_t;
-
-typedef enum {
-    ENTRY,
-    PURE,
-    PROC
-} callable_kind_t;
 
 typedef enum {
     I8,
@@ -102,48 +100,51 @@ struct ast_exp_t {
 };
 
 struct ast_callable_t {
-    callable_kind_t     kind;
-    expr_type_t         ret_type;
-    size_t              arity;
-    expr_type_t*        arg_types;
-
-    ast_stmt_t*         body;
+    
 };
 
 typedef struct stmt_list_t stmt_list_t;
 
 struct stmt_list_t {
-    ast_stmt_t*         data;
-    stmt_list_t*        next;
+    ast_stmt_t*             data;
+    stmt_list_t*            next;
 };
 
 struct ast_stmt_t {
-    stmt_kind_t         kind;
+    stmt_kind_t             kind;
 
     union {
         struct {
-            ast_exp_t*  exp;
+            expr_type_t     ret_type;
+            size_t          arity;
+            expr_type_t*    arg_types;
+            ast_stmt_t*     body;
+            char*           name;
+        } as_callable;
+
+        struct {
+            ast_exp_t*      exp;
         } as_expr;
 
         struct {
-            char*       name;
-            expr_type_t type;
-            ast_exp_t*  exp;
+            char*           name;
+            expr_type_t     type;
+            ast_exp_t*      exp;
         } as_decl;
 
         struct {
-            ast_exp_t*  cond;
-            ast_stmt_t* block;
+            ast_exp_t*      cond;
+            ast_stmt_t*     block;
         } as_loop;
 
         struct {
-            ast_exp_t*  cond;
-            ast_stmt_t* then_b;
-            ast_stmt_t* else_b;
+            ast_exp_t*      cond;
+            ast_stmt_t*     then_b;
+            ast_stmt_t*     else_b;
         } as_if;
 
         struct {
-            stmt_list_t *stmts;
+            stmt_list_t*    stmts;
         } as_block;
     };
 };

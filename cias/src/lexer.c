@@ -176,8 +176,8 @@ static token_ty_t identifier_type(lexer_t* lexer)
             {
                 switch (lexer->start[1])
                 {
-                    case 'u': return check_keyword(lexer, 2, 3, "ure", TOKEN_PURE);
-                    case 'r': return check_keyword(lexer, 2, 3, "roc", TOKEN_PROC);
+                    case 'u': return check_keyword(lexer, 1, 3, "ure", TOKEN_PURE);
+                    case 'r': return check_keyword(lexer, 1, 3, "roc", TOKEN_PROC);
                 }
             }
             break;
