@@ -317,7 +317,7 @@ static ast_stmt_t* parse_exp_stmt(arena_t* arena, parser_t* parser)
 
 static ast_stmt_t* parse_if_stmt(arena_t* arena, parser_t* parser)
 {
-#define defer_error(X) do { error_at(parser, token, X); exit(1); } while (false)
+#define defer_error(X) do { error_at(parser, token, X); exit(EXIT_FAILURE); } while (false)
     advance(parser); // eat IF keyword
     ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(arena, sizeof(ast_stmt_t));
     stmt->kind = IF_STMT;
@@ -357,7 +357,7 @@ static ast_stmt_t* parse_if_stmt(arena_t* arena, parser_t* parser)
 
 static ast_stmt_t* parse_loop_stmt(arena_t* arena, parser_t* parser)
 {
-#define defer_error(X) do { error_at(parser, token, X); exit(1); } while (false)
+#define defer_error(X) do { error_at(parser, token, X); exit(EXIT_FAILURE); } while (false)
     advance(parser); // eat LOOP keyword
     ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(arena, sizeof(ast_stmt_t));
     stmt->kind = LOOP_STMT;
@@ -400,7 +400,7 @@ static expr_type_t parse_var_type(parser_t* parser)
         case TOKEN_BOOL:    type_case(BOOL);
         default:
             error_at(parser, peek(parser), "Unknown type");
-            exit(1);
+            exit(EXIT_FAILURE);
             break;
     }
     advance(parser); // Eat the type token;
@@ -412,7 +412,7 @@ static expr_type_t parse_var_type(parser_t* parser)
 
 static ast_stmt_t* parse_declaration_stmt(arena_t* arena, parser_t* parser)
 {
-#define defer_error(X) do { error_at(parser, token, X); exit(1); } while (false)
+#define defer_error(X) do { error_at(parser, token, X); exit(EXIT_FAILURE); } while (false)
     ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(arena, sizeof(ast_stmt_t));
     stmt->kind = VAR_DECL;
     stmt->as_decl.type = UNKNOWN;
@@ -454,7 +454,7 @@ static ast_stmt_t* parse_declaration_stmt(arena_t* arena, parser_t* parser)
 
 static ast_stmt_t* parse_entry_stmt(arena_t* arena, parser_t* parser)
 {
-#define defer_error(X) do { error_at(parser, token, X); exit(1); } while (false)
+#define defer_error(X) do { error_at(parser, token, X); exit(EXIT_FAILURE); } while (false)
     token_t token = advance(parser);
     ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(arena, sizeof(ast_stmt_t));
     stmt->kind = ENTRY_STMT;
@@ -470,7 +470,7 @@ static ast_stmt_t* parse_entry_stmt(arena_t* arena, parser_t* parser)
 
 static type_list_t* parse_args(arena_t* arena, parser_t* parser)
 {
-#define defer_error(X) do { error_at(parser, token, X); exit(1); } while (false)
+#define defer_error(X) do { error_at(parser, token, X); exit(EXIT_FAILURE); } while (false)
     type_list_t* args = (type_list_t*)arena_alloc(arena, sizeof(type_list_t));
     args->type = UNKNOWN;
     args->next = NULL;
@@ -516,7 +516,7 @@ static type_list_t* parse_args(arena_t* arena, parser_t* parser)
 // TODO: this parser function is a mess. Clean it up!
 static ast_stmt_t* parse_pure_stmt(arena_t* arena, parser_t* parser)
 {
-#define defer_error(X) do { error_at(parser, token, X); exit(1); } while (false)
+#define defer_error(X) do { error_at(parser, token, X); exit(EXIT_FAILURE); } while (false)
     advance(parser); // Eat the pure keyword
     token_t token = advance(parser);
     ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(arena, sizeof(ast_stmt_t));
@@ -571,7 +571,7 @@ static ast_stmt_t* parse_pure_stmt(arena_t* arena, parser_t* parser)
 
 static ast_stmt_t* parse_return_stmt(arena_t* arena, parser_t* parser)
 {
-#define defer_error(X) do { error_at(parser, token, X); exit(1); } while (false)
+#define defer_error(X) do { error_at(parser, token, X); exit(EXIT_FAILURE); } while (false)
     ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(arena, sizeof(ast_stmt_t));
     stmt->kind = RETURN_STMT;
 
@@ -593,7 +593,7 @@ static ast_stmt_t* parse_return_stmt(arena_t* arena, parser_t* parser)
 
 static ast_stmt_t* parse_block_stmt(arena_t* arena, parser_t* parser)
 {
-#define defer_error(X) do { error_at(parser, token, X); exit(1); } while (false)
+#define defer_error(X) do { error_at(parser, token, X); exit(EXIT_FAILURE); } while (false)
     ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(arena, sizeof(ast_stmt_t));
     stmt->as_block.stmts = (stmt_list_t*)arena_alloc(arena, sizeof(stmt_list_t));
     stmt->as_block.stmts->data = NULL;
@@ -663,7 +663,7 @@ ast_stmt_t* parse_statement(arena_t* arena, parser_t* parser)
 
 cu_t* parse(arena_t* arena, parser_t* parser)
 {
-#define defer_error(X) do { error_at(parser, token, X); exit(1); } while (false)
+#define defer_error(X) do { error_at(parser, token, X); exit(EXIT_FAILURE); } while (false)
     cu_t* cu = (cu_t*)arena_alloc(arena, sizeof(cu_t));
     cu->type = EXECUTABLE;
     cu->entry = NULL;
@@ -837,7 +837,7 @@ static void print_ast_stmt(FILE* out, ast_stmt_t *stmt)
         break;
     default:
         fprintf(out, "Unknown statement type\n");
-        exit(1);
+        exit(EXIT_FAILURE);
         break;
     }
 }

@@ -109,7 +109,7 @@ void        init_lexer(lexer_t* lexer, const char* source);
 token_t     lex_token(lexer_t* lexer);
 Errno       lex(lexer_t* lexer, const char* source);
 
-void add_to_token_da(token_da* da, token_t val);
-void init_token_da(token_da* da);
+void        add_to_token_da(token_da* da, token_t val);
+void        init_token_da(token_da* da);
 
 #endif // CIAS_LEXER_H_

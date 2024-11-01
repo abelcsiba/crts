@@ -14,7 +14,6 @@ typedef struct {
     uint64_t        curr;
     bool            had_error;
     token_list_t*   tokens;
-    //arena_t*        arena;
 } parser_t;
 
 typedef ast_exp_t* (*prefix_t)(arena_t*, parser_t*, token_t);

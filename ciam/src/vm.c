@@ -176,7 +176,7 @@ void    ciam_vm_run(ciam_vm_t *vm)
 
     /* We shouldn't reach here, so better abort now. */
     printf("We shouldn't reach this point. Aborting...\n");
-    exit(1);
+    exit(EXIT_FAILURE);
 
 #undef CODE
 #undef DISPATCH

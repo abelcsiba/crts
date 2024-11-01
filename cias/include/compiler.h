@@ -11,9 +11,9 @@ typedef struct {
     code_da*    code_da;
 } compiler_t;
 
-void compile_ast(compiler_t* compiler, ast_stmt_t* stmt);
-void init_module(compiler_t* compiler);
+void        compile_ast(compiler_t* compiler, ast_stmt_t* stmt);
+void        init_module(compiler_t* compiler);
 
-module_t* transfer_module(compiler_t* compiler);
+module_t*   transfer_module(compiler_t* compiler);
 
 #endif // CIAS_COMPILER_H_

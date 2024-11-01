@@ -45,56 +45,56 @@ typedef enum {
     UNKNOWN
 } expr_type_t;
 
-typedef struct ast_exp_t        ast_exp_t;
-typedef struct ast_stmt_t       ast_stmt_t;
+typedef struct ast_exp_t    ast_exp_t;
+typedef struct ast_stmt_t   ast_stmt_t;
 
 struct token_t;
 
 struct ast_exp_t {
-    expr_kind_t                 kind;
-    expr_type_t                 type_info;
-    struct token_t*             token;
+    expr_kind_t             kind;
+    expr_type_t             type_info;
+    struct token_t*         token;
 
     union {
         struct ast_number {
-            int8_t      I8;
-            int16_t     I16;
-            int32_t     I32;
-            int64_t     I64;
-            double      DOUBLE;
+            int8_t          I8;
+            int16_t         I16;
+            int32_t         I32;
+            int64_t         I64;
+            double          DOUBLE;
         } as_num;
 
         struct ast_string {
-            char*       STRING;
+            char*           STRING;
         } as_str;
 
         struct ast_char {
-            char        CHAR;
+            char            CHAR;
         } as_char;
 
         struct ast_bool {
-            bool        BOOL;
+            bool            BOOL;
         } as_bool;
 
         struct ast_var {
-            char*       name;
+            char*           name;
         } as_var;
 
         struct ast_binary {
-            ast_exp_t*  left;
-            ast_exp_t*  right;
-            const char* op;
+            ast_exp_t*      left;
+            ast_exp_t*      right;
+            const char*     op;
         } as_bin;
 
         struct ast_ternary {
-            ast_exp_t*  cond;
-            ast_exp_t*  op1;
-            ast_exp_t* op2;
+            ast_exp_t*      cond;
+            ast_exp_t*      op1;
+            ast_exp_t*      op2;
         } as_ter;
 
         struct ast_unary {
-            ast_exp_t*  expr;
-            const char* op;
+            ast_exp_t*      expr;
+            const char*     op;
         } as_un;
     };
 };

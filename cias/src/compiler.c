@@ -9,21 +9,21 @@ static int const_index = 0;
 
 opcode_t get_binary_opcode(const char op_c)
 {
-    if (op_c == '+') return ADD;
+    if      (op_c == '+') return ADD;
     else if (op_c == '-') return SUB;
     else if (op_c == '*') return MUL;
-    else return DIV;
+    else                  return DIV;
 }
 
 static num_const_t emit_num_const(ast_exp_t* exp)
 {
     num_const_t num = {0};
     num.type = exp->type_info;
-    if (num.type == DOUBLE) memcpy(&num.value, &exp->as_num.DOUBLE, sizeof(double));
-    else if (num.type == I8) memcpy(&num.value, &exp->as_num.I8, sizeof(int8_t));      
-    else if (num.type == I16) memcpy(&num.value, &exp->as_num.I16, sizeof(int16_t));
-    else if (num.type == I32) memcpy(&num.value, &exp->as_num.I32, sizeof(int32_t));
-    else if (num.type == I64) memcpy(&num.value, &exp->as_num.I64, sizeof(int64_t));
+    if      (num.type == DOUBLE)    memcpy(&num.value, &exp->as_num.DOUBLE, sizeof(double));
+    else if (num.type == I8)        memcpy(&num.value, &exp->as_num.I8,     sizeof(int8_t));      
+    else if (num.type == I16)       memcpy(&num.value, &exp->as_num.I16,    sizeof(int16_t));
+    else if (num.type == I32)       memcpy(&num.value, &exp->as_num.I32,    sizeof(int32_t));
+    else if (num.type == I64)       memcpy(&num.value, &exp->as_num.I64,    sizeof(int64_t));
 
     return num;
 }
