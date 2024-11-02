@@ -5,18 +5,6 @@
 #include <string.h>
 #include <stdio.h>
 
-static const char* token_labels[] = {
-#define X(type, val, label) label,
-    TOKEN_LIST
-#undef X
-};
-
-
-static const char* token_ty2label(token_ty_t type)
-{
-    return token_labels[type];
-}
-
 void init_lexer(lexer_t* lexer, const char* source)
 {
     lexer->start = source;
@@ -258,22 +246,9 @@ token_t lex_token(lexer_t* lexer)
 Errno lex(lexer_t* lexer, const char* source)
 {
     init_lexer(lexer, source);
-    pos_t line = -1;
     while (true)
     {
         token_t token = lex_token(lexer);
-        if (token.line_no != line)
-        {
-            printf("| 0x%04lX |", token.line_no);
-            line = token.line_no;
-        }
-        else
-        {
-            printf("|        |");
-        }
-
-        printf(" 0x%02d | %-20.20s |", token.type, token_ty2label(token.type));
-        printf(" %-17.*s|\n", (int)token.length, token.start);
 
         add_to_token_da(&lexer->tokens, token);
 

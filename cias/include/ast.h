@@ -42,7 +42,8 @@ typedef enum {
     CHAR,
     STRING,
     VOID,
-    UNKNOWN
+    UNKNOWN,
+    ERROR
 } expr_type_t;
 
 typedef struct ast_exp_t    ast_exp_t;
@@ -97,10 +98,6 @@ struct ast_exp_t {
             const char*     op;
         } as_un;
     };
-};
-
-struct ast_callable_t {
-    
 };
 
 typedef struct stmt_list_t stmt_list_t;
@@ -168,6 +165,5 @@ struct ast_stmt_t {
 };
 
 ast_exp_t* new_exp(arena_t* arena, ast_exp_t exp);
-
 
 #endif // CIAS_AST_H

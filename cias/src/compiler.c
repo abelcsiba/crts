@@ -51,14 +51,64 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
             code.op = get_binary_opcode(*exp->as_bin.op);
             break;
         default:
-            code.op = HLT;
+            printf("Unrecognized expression\n");
+            exit(EXIT_FAILURE);
+            break;
     }
     add_to_code_da(compiler->code_da, code);
 }
 
-void compile_ast(compiler_t* compiler, ast_stmt_t* stmt)
+static void compile_stmt(compiler_t* compiler, ast_stmt_t* stmt)
 {
-    compile_expr(compiler, stmt->as_callable.body->as_block.stmts->data->as_expr.exp); // TODO: proper compilation needed
+    switch (stmt->kind)
+    {
+        case EXPR_STMT:
+            compile_expr(compiler, stmt->as_expr.exp);
+            break;
+        case VAR_DECL:
+            compile_expr(compiler, stmt->as_decl.exp);
+            break;
+        case IF_STMT:
+            // TODO: IF compile
+            break;
+        case LOOP_STMT:
+            // TODO: loop compile
+            break;
+        case BLOCK_STMT:
+            stmt_list_t* element = stmt->as_block.stmts;
+            for (;element != NULL; element = element->next)
+                compile_stmt(compiler, element->data);
+            break;
+        case RETURN_STMT:
+            compile_expr(compiler, stmt->as_expr.exp);
+            break;
+        case ENTRY_STMT:
+            compile_stmt(compiler, stmt->as_callable.body);
+            break;
+        case PURE_STMT:
+            compile_stmt(compiler, stmt->as_callable.body);
+            break;
+        case PROC_STMT:
+            // TODO: PROC compile
+            break;
+        default:
+
+            break;
+    }
+}
+
+void compile_ast(compiler_t* compiler, cu_t* cu)
+{
+    if (NULL != cu->pures->data)
+    {
+        stmt_list_t* element = cu->pures;
+        for (;element != NULL; element = element->next)
+            compile_stmt(compiler, element->data);
+    }
+
+    if (NULL != cu->entry)
+        compile_stmt(compiler,  cu->entry->as_callable.body);
+    
     add_to_code_da(compiler->code_da, (code_t){ .op = HLT, .opnd1 = 0x00 });
     compiler->compiled_m->code_size = compiler->code_da->count;
     compiler->compiled_m->code = compiler->code_da->data;

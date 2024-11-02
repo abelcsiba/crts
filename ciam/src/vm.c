@@ -1,6 +1,7 @@
 
 #include "vm.h"
 #include "util.h"
+#include "macros.h"
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -16,6 +17,12 @@ struct ciam_vm_t {
     u32                 num_threads;
 
     module_t*           module;
+};
+
+static char* op_label[] = {
+#define X(kind, id, has_operand, label) [id] = label,
+    OPCODE_LIST
+#undef X
 };
 
 static void init_main_thread(ciam_vm_t* vm)
@@ -96,88 +103,96 @@ void ciam_vm_load(ciam_vm_t* vm, module_t* module)
     vm->module = module;
 }
 
-void    ciam_vm_run(ciam_vm_t *vm)
+void ciam_vm_run(ciam_vm_t *vm)
 {
-#define PC vm->threads[0].ip
-#define PUSH(X) do { push_stack(&vm->threads[0].stack, X); } while (false)
-#define POP() pop_stack(&vm->threads[0].stack)
-#define POP_TOP pop_top_stack(&vm->threads[0].stack)
-#define DISPATCH() do { if(PC >= vm->module->code_size) return; goto *jump_table[vm->module->code[PC].op]; } while (false)
-#define CODE() vm->module->code[PC]
+#define PC                          vm->threads[0].ip
+#define PUSH(X)                     do { push_stack(&vm->threads[0].stack, X); } while (false)
+#define POP()                       pop_stack(&vm->threads[0].stack)
+#define POP_TOP                     pop_top_stack(&vm->threads[0].stack)
+#define DISPATCH()                  do { if(PC >= vm->module->code_size) return; goto *jump_table[vm->module->code[PC].op]; } while (false)
+#define CODE()                      vm->module->code[PC]
+#define PRINT_DEBUG(op)             do { if (DEBUG) printf("  0x%02lX | %-14s |\n", PC, op); } while(false)
+#define PRINT_DEBUG_WIDE(op, opnd)  do { if (DEBUG) printf("  0x%02lX | %-14s | %ld\n", PC, op, opnd); } while (false)
+#define CURRENT_CODE                op_label[vm->module->code[PC].op]
     
     static void* jump_table[] = { 
-    #define X(kind, id, has_operand) &&OP_##kind,
+    #define X(kind, id, has_operand, label) &&OP_##kind,
         OPCODE_LIST
     #undef X
     };
 
-    display_init_message(vm);
+    if (DEBUG)
+        display_init_message(vm);
+    
     code_t code;
     DISPATCH();
 
     OP_LOAD_CONST:
         code = CODE();
+        PRINT_DEBUG_WIDE(CURRENT_CODE, code.opnd1);
         PUSH(DOUBLE_VAL(code.opnd1));
-        printf("  0x%02lX | %-14s | %ld\n", PC, "LOAD_CONST", code.opnd1);
         PC++;
         DISPATCH();
     OP_NOP:
         DISPATCH();
     OP_PUSH:
         code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
         PUSH(DOUBLE_VAL(code.opnd1));
-        printf("  0x%02lX | %-14s |\n", PC, "OP_PUSH");
         PC++;
         DISPATCH();
     OP_POP_TOP:
         code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
         POP();
-        printf("  0x%02lX | %-14s |\n", PC, "OP_POP");
         PC++;
         DISPATCH();
     OP_TOS:
         code = CODE();
-        printf("  0x%02lX | %-14s |\n", PC, "OP_TOS");
+        PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
     OP_ADD:
         code = CODE();
-        printf("  0x%02lX | %-14s |\n", PC, "OP_ADD");
+        PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
     OP_SUB:
         code = CODE();
-        printf("  0x%02lX | %-14s |\n", PC, "OP_SUB");
+        PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
     OP_MUL:
         code = CODE();
-        printf("  0x%02lX | %-14s |\n", PC, "OP_MUL");
+        PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
     OP_DIV:
         code = CODE();
-        printf("  0x%02lX | %-14s |\n", PC, "OP_DIV");
+        PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
-    OP_HLT:
-        printf("  0x%02lX | %-14s |\n", PC, "HLT");
-        return;
     OP_LOAD_IMM:
         code = CODE();
-        printf("  0x%02lX | %-14s | %ld\n", PC, "LOAD_IMM", code.opnd1);
+        PRINT_DEBUG_WIDE(CURRENT_CODE, code.opnd1);
         PC++;
         DISPATCH();
     OP_LOAD_NULL:
         code = CODE();
-        printf("  0x%02lX | %-14s |\n", PC, "LOAD_NULL");
+        PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
+    OP_HLT:
+        PRINT_DEBUG(CURRENT_CODE);
+        return;
 
     /* We shouldn't reach here, so better abort now. */
     printf("We shouldn't reach this point. Aborting...\n");
     exit(EXIT_FAILURE);
 
+#undef CURRENT_CODE
+#undef PRINT_DEBUG_WIDE
+#undef PRINT_DEBUG
 #undef CODE
 #undef DISPATCH
 #undef POP_TOP

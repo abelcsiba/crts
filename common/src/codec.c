@@ -3,7 +3,7 @@
 
 
 static int op_has_operand[] = {
-#define X(kind, id, has_operand) [id] = has_operand,
+#define X(kind, id, has_operand, label) [id] = has_operand,
     OPCODE_LIST
 #undef X
 };

@@ -1,6 +1,6 @@
 
 CC=gcc
-CFLAGS= -fPIC -Iinclude -I../ciam/include/
+CFLAGS= -fPIC -Iinclude -I../ciam/include/ -I../cias/include/
 WFLAGS=-Wall -Wextra
 
 LDFLAGS=-shared

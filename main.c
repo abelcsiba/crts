@@ -10,6 +10,7 @@
 
 #include "ast.h"
 #include "codec.h"
+#include "debug.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -19,28 +20,13 @@
 #include <float.h>
 #include <math.h>
 
-void print_header()
-{
-  printf("================ Launching CIAM Compiler ==================\n");
-  printf("|                                                         |\n");
-  printf("|                      LEXER OUTPUT                       |\n");
-  printf("|                                                         |\n");
-  printf("|---------------------------------------------------------|\n");
-  printf("| LineNo |  ID  | TokenName            | Token Lit. Value |\n");
-  printf("|---------------------------------------------------------|\n");
-}
-
-void print_footer()
-{
-  printf("|---------------------------------------------------------|\n");
-}
 
 int main(int argc, char** argv)
 {
   char *src;
   if (argc < 2)
   {
-    fprintf(stderr, "Missing input file, using default '%s'", "./test/expr.isl");
+    fprintf(stderr, "Missing input file, using default '%s'\n", "./test/expr.isl");
     src = "./test/expr3.isl";
   }
   else src = argv[1];
@@ -59,11 +45,19 @@ int main(int argc, char** argv)
   fread(buff, sizeof(char), length, fp);
 
   lexer_t lexer;
-  //const char* buff = "5 + 4 + 7 * 9.3 + 6 / 155.67 + 14";
-  printf("\n\n");
-  print_header();
+  if (DEBUG)
+  {
+    printf("\n\n");
+    print_header();
+  }
+
   lex(&lexer, buff);
-  print_footer();
+
+  if (DEBUG)
+  {
+    print_tokens(&lexer.tokens);
+    print_footer();
+  }
 
   arena_t arena = {0};
   init_arena(&arena, ARENA_DEFAULT_BLOCK_SIZE);
@@ -74,18 +68,12 @@ int main(int argc, char** argv)
 
   if (NULL == cu) goto closure;
 
-  printf("\n\nCompiled statements:\n");
-  print_cu(stdout, cu);
-  // if (stmt->kind ==  EXPR_STMT) 
-  // {
-  //   printf("\n\nCompiled expression: ");
-  //   print_ast_exp(stdout, stmt->as_expr.exp);
-  // }
-  printf("\n");
+  if (DEBUG)
+    print_cu(stdout, cu);
 
   compiler_t compiler;
   init_module(&compiler);
-  compile_ast(&compiler, cu->entry);
+  compile_ast(&compiler, cu);
 
   module_t* module = transfer_module(&compiler);
 

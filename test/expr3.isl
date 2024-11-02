@@ -1,24 +1,13 @@
 
 
-pure div() {
-    return 5 % 42;
-}
-
-pure sum(a: bool,b : i16, c : float) -> i8
-{
-    return 42;
+pure add(a: i8, b: i8) -> i8 {
+    return 1 + 2;
 }
 
 entry {
-    3 + 4;
-    5 + 6;
-    var tmp : i16 = 4 % 6;
-    if (1 + 4)
-	1 + 2;
-    else
-        5 * 6;
-    loop (4 ^ 3)
-	4 % 2;
-
-    return tmp;
+    2 + 4;
+    5 * 3;
+    var a : i8 = 5;
+    var b : i8 = 4;
+    return 4 + 3 - 12 * (12 + 1);
 }
