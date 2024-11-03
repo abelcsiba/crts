@@ -45,19 +45,17 @@ int main(int argc, char** argv)
   fread(buff, sizeof(char), length, fp);
 
   lexer_t lexer;
-  if (DEBUG)
-  {
+  #if DEBUG
     printf("\n\n");
     print_header();
-  }
+  #endif
 
   lex(&lexer, buff);
 
-  if (DEBUG)
-  {
+  #if DEBUG
     print_tokens(&lexer.tokens);
     print_footer();
-  }
+  #endif
 
   arena_t arena = {0};
   init_arena(&arena, ARENA_DEFAULT_BLOCK_SIZE);
@@ -68,9 +66,10 @@ int main(int argc, char** argv)
 
   if (NULL == cu) goto closure;
 
-  if (DEBUG)
+  #if DEBUG
     print_cu(stdout, cu);
-
+  #endif
+  
   compiler_t compiler;
   init_module(&compiler);
   compile_ast(&compiler, cu);
