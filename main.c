@@ -4,6 +4,7 @@
 #include "code.h"
 #include "lexer.h"
 #include "compiler.h"
+#include "analyzer.h"
 
 #include "parser.h"
 #include "data.h"
@@ -20,14 +21,15 @@
 #include <float.h>
 #include <math.h>
 
+char default_source[] = "./test/expr3.isl";
 
 int main(int argc, char** argv)
 {
   char *src;
   if (argc < 2)
   {
-    fprintf(stderr, "Missing input file, using default '%s'\n", "./test/expr.isl");
-    src = "./test/expr3.isl";
+    fprintf(stderr, "Missing input file, using default '%s'\n", default_source);
+    src = default_source;
   }
   else src = argv[1];
   
@@ -65,6 +67,13 @@ int main(int argc, char** argv)
   cu_t* cu = parse(&arena, &parser);
 
   if (NULL == cu) goto closure;
+
+  analyzer_t analyzer = {0};
+  init_global_scope(&analyzer);
+
+  check_stmt(&analyzer, cu->entry);
+
+  free(analyzer.scope); // This should be dealt with later. Right now, free shit manually.
 
   #if DEBUG
     print_cu(stdout, cu);

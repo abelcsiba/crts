@@ -2,6 +2,9 @@
 #include "parser.h"
 
 #include <string.h>
+#include <errno.h>
+#include <limits.h>
+#include <float.h>
 
 static parse_rule_t parse_table[] = {
     [TOKEN_ASTERISK]        = { .prec = PREC_FACTOR,        .prefix = NULL,     .infix = binary     },
@@ -118,6 +121,55 @@ ast_exp_t* group(arena_t* arena, parser_t* parser, token_t /*token*/)
     return exp;
 }
 
+typedef struct {
+    expr_type_t     type;
+    union {
+        int8_t      i8;
+        int16_t     i16;
+        int32_t     i32;
+        int64_t     i64;
+        float       flt;
+        double      dbl;
+    };
+} num_val_t;
+
+num_val_t parse_int(const char *str) {
+    char *endptr;
+    errno = 0;
+
+    long long llval = strtoll(str, &endptr, 10);
+    if (errno == 0 && *endptr == '\0') {
+        if (llval >= INT8_MIN && llval <= INT8_MAX) {
+            return (num_val_t){ .type = I8, .i8 = (int8_t)llval };
+        } else if (llval >= INT16_MIN && llval <= INT16_MAX) {
+            return (num_val_t){ .type = I16, .i16 = (int16_t)llval };
+        } else if (llval >= INT32_MIN && llval <= INT32_MAX) {
+            return (num_val_t){ .type = I32, .i32 = (int32_t)llval };
+        } else {
+            return (num_val_t){ .type = I64, .i64 = (int64_t)llval };
+        }
+    }
+
+    // If it doesn't parse as a number
+    return (num_val_t){ .type = ERROR, .i64 = (int64_t)0x00 };
+}
+
+num_val_t parse_float(const char *str) {
+    char *endptr;
+    
+    errno = 0;
+    double dval = strtod(str, &endptr);
+    if (errno == 0 && *endptr == '\0') {
+        if (dval >= -FLT_MAX && dval <= FLT_MAX) {
+            return (num_val_t){ .type = FLOAT, .flt = (float)dval };
+        } else {
+            return (num_val_t){ .type = DOUBLE, .dbl = (double)dval };
+        }
+    }
+
+    return (num_val_t){ .type = ERROR, .i64 = (int64_t)0x00 };
+}
+
 ast_exp_t* number(arena_t* arena, parser_t* /*parser*/, token_t token)
 {
 #define NUM_VAL(value, type) new_exp(arena, (ast_exp_t){ .kind = NUM_LITERAL, .type_info = type, .as_num = (struct ast_number){ .type = value }})
@@ -125,14 +177,37 @@ ast_exp_t* number(arena_t* arena, parser_t* /*parser*/, token_t token)
     sprintf(temp, "%.*s", (int)token.length, token.start);
     bool is_float = false;
 
-    for (size_t i = 0; i < token.length + 1; i++) 
-        if (token.start[i] == '.') 
+    for (size_t i = 0; i < token.length + 1; i++)
+        if (token.start[i] == '.')
             is_float = true;
 
-    temp[token.length] = '\0';
-    double val;
-    sscanf(temp, "%lf", &val);
-    ast_exp_t* expr = (is_float) ? NUM_VAL(val, DOUBLE) : NUM_VAL(val, I64);
+    num_val_t num = (is_float) ? parse_float(temp) : parse_int(temp);
+    ast_exp_t* expr = NULL;
+    switch (num.type) // This switch could be replaced by macro magic
+    {
+        case I8:
+            expr = NUM_VAL(num.i8, I8);
+            break;
+        case I16:
+            expr = NUM_VAL(num.i16, I16);
+            break;
+        case I32:
+            expr = NUM_VAL(num.i32, I32);
+            break;
+        case I64:
+            expr = NUM_VAL(num.i64, I64);
+            break;
+        case FLOAT:
+            expr = NUM_VAL(num.flt, FLOAT);
+            break;
+        case DOUBLE:
+            expr = NUM_VAL(num.dbl, DOUBLE);
+            break;
+        default:
+            // TODO: error logging
+            return NULL;
+    }
+
     return expr;
 #undef NUM_VAL
 }

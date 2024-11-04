@@ -63,6 +63,7 @@ struct ast_exp_t {
             int32_t         I32;
             int64_t         I64;
             double          DOUBLE;
+            float           FLOAT;
         } as_num;
 
         struct ast_string {

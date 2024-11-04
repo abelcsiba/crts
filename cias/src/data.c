@@ -2,6 +2,7 @@
 #include "data.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 block_t* create_block(size_t capacity)
 {
@@ -15,6 +16,7 @@ block_t* create_block(size_t capacity)
     block->capacity = capacity;
     block->count = 0;
     block->data = malloc(capacity);
+    memset(block->data, '\0', capacity);
     if (NULL == block->data)
     {
         fprintf(stderr, "failed to init block data\n");

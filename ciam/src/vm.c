@@ -19,11 +19,13 @@ struct ciam_vm_t {
     module_t*           module;
 };
 
+#if DEBUG
 static char* op_label[] = {
 #define X(kind, id, has_operand, label) [id] = label,
     OPCODE_LIST
 #undef X
 };
+#endif
 
 static void init_main_thread(ciam_vm_t* vm)
 {
@@ -111,8 +113,13 @@ void ciam_vm_run(ciam_vm_t *vm)
 #define POP_TOP                     pop_top_stack(&vm->threads[0].stack)
 #define DISPATCH()                  do { if(PC >= vm->module->code_size) return; goto *jump_table[vm->module->code[PC].op]; } while (false)
 #define CODE()                      vm->module->code[PC]
-#define PRINT_DEBUG(op)             do { if (DEBUG) printf("  0x%02lX | %-14s |\n", PC, op); } while(false)
-#define PRINT_DEBUG_WIDE(op, opnd)  do { if (DEBUG) printf("  0x%02lX | %-14s | %ld\n", PC, op, opnd); } while (false)
+#if DEBUG
+#define PRINT_DEBUG(op)             do { printf("  0x%02lX | %-14s |\n", PC, op); } while(false)
+#define PRINT_DEBUG_WIDE(op, opnd)  do { printf("  0x%02lX | %-14s | %ld\n", PC, op, opnd); } while (false)
+#else
+# define PRINT_DEBUG(op)             do {  } while(false)
+# define PRINT_DEBUG_WIDE(op, opnd)  do {  } while (false)
+#endif
 #define CURRENT_CODE                op_label[vm->module->code[PC].op]
     
     static void* jump_table[] = { 

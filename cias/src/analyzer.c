@@ -6,21 +6,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-static enum {
-    PLUS        = '+',
-    MINUS       = '-',
-    SLASH       = '/',
-    STAR        = '*',
-    MODULO      = '%',
-    BIT_AND     = '&',
-    BIT_OR      = '|',
-    LT          = '<',
-    GT          = '>',
-    XOR         = '^',
-    BANG        = '!',
-    TILDE       = '~'
-};
 
+#define     PLUS         '+'
+#define     MINUS        '-'
+#define     SLASH        '/'
+#define     STAR         '*'
+#define     MODULO       '%'
+#define     BIT_AND      '&'
+#define     BIT_OR       '|'
+#define     LT           '<'
+#define     GT           '>'
+#define     XOR          '^'
+#define     BANG         '!'
+#define     TILDE        '~'
 
 int max(int a, int b)
 {
@@ -94,7 +92,7 @@ expr_type_t resolve_exp_type(analyzer_t* analyzer, ast_exp_t* exp)
 #define ERROR_CHECK(X) do { if (X == ERROR) { fprintf(stderr, "Invalid type at "); print_ast_exp(stderr, exp); exit(EXIT_FAILURE); } } while (false)
     switch (exp->kind)
     {
-        case NULL_LITERAL:
+        case NUM_LITERAL:
             return exp->type_info;
         case STRING_LITERAL:
             return STRING;
@@ -123,4 +121,137 @@ expr_type_t resolve_exp_type(analyzer_t* analyzer, ast_exp_t* exp)
             break;
     }
 #undef ERROR_CHECK
+}
+
+void init_global_scope(analyzer_t* analyzer)
+{
+    analyzer->scope = (scope_t*)malloc(sizeof(scope_t));
+    analyzer->scope->parent = NULL;
+}
+
+bool var_exists(scope_t* scope, char* name)
+{
+    for (symtable_t* sym = scope->symtable; sym != NULL; sym = sym->next)
+    {
+        if (strlen(sym->var_name) == strlen(name) && strcmp(sym->var_name, name) == 0)
+            return true;
+    }
+    return false;
+}
+
+void add_to_scope(scope_t* scope, char* name, expr_type_t type)
+{
+    int index = 0;
+    typeinfo_t tinfo = { .type = type, .mem_type = LVALUE, .is_const = false, .is_ptr = false };
+
+    if (scope->symtable == NULL)
+    {
+        scope->symtable = (symtable_t*)malloc(sizeof(symtable_t));
+        scope->symtable->index = index;
+        scope->symtable->ty_info = tinfo;
+        scope->symtable->var_name = name;
+        scope->symtable->next = NULL;
+        return;
+    }
+
+    symtable_t* sym = scope->symtable;
+    for (; sym->next != NULL; sym = sym->next)
+    {
+        index++;
+    }
+
+    sym->next = (symtable_t*)malloc(sizeof(symtable_t));
+    sym->next->index = index + 1;
+    sym->next->ty_info = tinfo;
+    sym->next->var_name = name;
+    sym->next->next = NULL;
+}
+
+void free_symtable(symtable_t* symtable)
+{
+    symtable_t* current = symtable;
+    symtable_t* next;
+
+    while (current != NULL)
+    {
+        next = current->next;
+        free(current); // WARNING! No not free the var_name as it comes from an arena
+        current = next;
+    }
+}
+
+void enter_scope(analyzer_t* analyzer)
+{
+    scope_t* scope = (scope_t*)malloc(sizeof(scope_t));
+    memset(scope, '\0', sizeof(scope_t));
+    scope->parent = analyzer->scope;
+    analyzer->scope = scope;
+}
+
+void exit_scope(analyzer_t* analyzer)
+{
+    scope_t* scope = analyzer->scope->parent;
+    free_symtable(analyzer->scope->symtable);
+    free(analyzer->scope);
+    analyzer->scope = scope;
+}
+
+bool check_stmt(analyzer_t* analyzer, ast_stmt_t* stmt)
+{
+    if (stmt == NULL) return false;
+
+    switch (stmt->kind)
+    {
+        case EXPR_STMT:
+            return (resolve_exp_type(analyzer, stmt->as_expr.exp) != ERROR);
+        case VAR_DECL:
+            expr_type_t type = resolve_exp_type(analyzer, stmt->as_decl.exp);
+            if (type == ERROR) return false;
+            if (type == stmt->as_decl.type) // TODO: check to possibility if implicit cast here
+            {
+                if (!var_exists(analyzer->scope, stmt->as_decl.name))
+                {
+                    add_to_scope(analyzer->scope, stmt->as_decl.name, type);
+                    return true;
+                }
+                else
+                {
+                    fprintf(stderr, "Redeclaration of variable '%s'\n", stmt->as_decl.name);
+                    return false;
+                }
+            }
+            else return false;
+            break;
+        case IF_STMT:
+            expr_type_t cond_type = resolve_exp_type(analyzer, stmt->as_if.cond);
+            if (cond_type != BOOL) // TODO: consider implicit cast to bool
+                return false;
+            bool verdict = check_stmt(analyzer, stmt->as_if.then_b);
+            if (stmt->as_if.then_b != NULL)
+                verdict = verdict && check_stmt(analyzer, stmt->as_if.then_b);
+            return verdict;
+        case LOOP_STMT:
+            return false; // TODO: implement
+        case BLOCK_STMT:
+            enter_scope(analyzer);
+            stmt_list_t* entry = stmt->as_block.stmts;
+            for (;entry != NULL; entry = entry->next)
+                if (!check_stmt(analyzer, entry->data))
+                    return false;
+            exit_scope(analyzer);
+            return true;
+            break;
+        case RETURN_STMT:
+            return resolve_exp_type(analyzer, stmt->as_expr.exp) != ERROR;
+        case ENTRY_STMT:
+            return check_stmt(analyzer, stmt->as_callable.body);
+        case PURE_STMT:
+            return check_stmt(analyzer, stmt->as_callable.body);
+        case PROC_STMT:
+            return false; // TODO: implement
+        default:
+
+            break;
+    }
+    return false;
 }
