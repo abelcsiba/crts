@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-void print_values(value_t val) {
+void print_value(value_t val) {
     switch (val.type) 
     {
         case VAL_I8: // Assuming all integer types use %d

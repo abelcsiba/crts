@@ -6,7 +6,7 @@
 
 #include <stdarg.h>
 
-void print_values(value_t val);
+void print_value(value_t val);
 
 
 #endif

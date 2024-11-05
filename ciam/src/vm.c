@@ -274,9 +274,9 @@ void ciam_vm_run(ciam_vm_t *vm)
         {
             int64_t a_val = 0;
             int64_t b_val = 0;
-            BINARY_I(a, a_val, -);
-            BINARY_I(b, b_val, -);
-            PUSH(I8_VAL((int8_t)(a_val - b_val)));
+            BINARY_I(a, a_val, +);
+            BINARY_I(b, b_val, +);
+            PUSH(I8_VAL((int8_t)(b_val - a_val)));
             DEC_SP(1);
         }
         PC++;
@@ -287,9 +287,9 @@ void ciam_vm_run(ciam_vm_t *vm)
         {
             int64_t a_val = 0;
             int64_t b_val = 0;
-            BINARY_I(a, a_val, -);
-            BINARY_I(b, b_val, -);
-            PUSH(I16_VAL((int16_t)(a_val - b_val)));
+            BINARY_I(a, a_val, +);
+            BINARY_I(b, b_val, +);
+            PUSH(I16_VAL((int16_t)(b_val - a_val)));
             DEC_SP(1);
         }
         PC++;
@@ -300,9 +300,9 @@ void ciam_vm_run(ciam_vm_t *vm)
         {
             int64_t a_val = 0;
             int64_t b_val = 0;
-            BINARY_I(a, a_val, -);
-            BINARY_I(b, b_val, -);
-            PUSH(I32_VAL((int32_t)(a_val - b_val)));
+            BINARY_I(a, a_val, +);
+            BINARY_I(b, b_val, +);
+            PUSH(I32_VAL((int32_t)(b_val - a_val)));
             DEC_SP(1);
         }
         PC++;
@@ -313,9 +313,9 @@ void ciam_vm_run(ciam_vm_t *vm)
         {
             int64_t a_val = 0;
             int64_t b_val = 0;
-            BINARY_I(a, a_val, -);
-            BINARY_I(b, b_val, -);
-            PUSH(I64_VAL(a_val - b_val));
+            BINARY_I(a, a_val, +);
+            BINARY_I(b, b_val, +);
+            PUSH(I64_VAL(b_val - a_val));
             DEC_SP(1);
         }
         PC++;
@@ -400,13 +400,23 @@ void ciam_vm_run(ciam_vm_t *vm)
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
-    OP_PRINT:
+    OP_PRINT: // TODO: This is quite clumsy right now. Need to figure out a better way to print multiple values.
         code = CODE();
         PRINT_DEBUG(CURRENT_CODE);
         {
-            value_t val = POP(); // TODO: Replace this with the print_values func from helpers once strings are supported.
-            print_values(val);
-            DEC_SP(1);
+            int64_t index = code.opnd1 - 1;
+            value_t vals[code.opnd1];
+            while (index >= 0)
+            {
+                vals[index] = POP(); 
+                DEC_SP(1);
+                index--;
+            }
+            for (uint64_t i = 0; i < code.opnd1; i++)
+            {
+                if (i != 0) printf(" ");
+                print_value(vals[i]); // TODO: Replace this with the print_values func from helpers once strings are supported.
+            }
         }
         PC++;
         DISPATCH();

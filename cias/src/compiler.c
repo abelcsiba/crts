@@ -71,8 +71,16 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
         case CALLABLE:
             if (strcmp(exp->as_call.callee_name->as_var.name, "print") == 0)
             {
-                compile_expr(compiler, exp->as_call.args->exp);
+                arg_list_t* head = exp->as_call.args;
+                int64_t arg_num = 0;
+                while (head != NULL)
+                {
+                    compile_expr(compiler, head->exp);
+                    head = head->next;
+                    arg_num++;
+                }
                 code.op = PRINT;
+                code.opnd1 = arg_num;
             }
             break;
         default:

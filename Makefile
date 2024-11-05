@@ -13,7 +13,7 @@ OBJ_DIR=obj
 
 OBJ=$(SRC:%.c=$(OBJ_DIR)/%.o)
 
-EXEC=irtn
+EXEC=oizys
 
 .PHONY: all clean
 
