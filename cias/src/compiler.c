@@ -69,7 +69,7 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
             code.op = get_binary_opcode(*exp->as_bin.op, exp);
             break;
         case CALLABLE:
-            if (strcmp(exp->as_call.var_name->as_var.name, "print") == 0)
+            if (strcmp(exp->as_call.callee_name->as_var.name, "print") == 0)
             {
                 compile_expr(compiler, exp->as_call.args->exp);
                 code.op = PRINT;
