@@ -20,6 +20,20 @@ struct ciam_vm_t {
     module_t*           module;
 };
 
+static void dump_stack(ciam_vm_t* vm)
+{
+    int64_t index = vm->threads[0].stack.count - 1;
+    printf("||> STACK BEGIN\n");
+    while (index >= 0)
+    {
+        printf("| %2ld | ", index);
+        print_value(vm->threads[0].stack.slots[index]);
+        printf(" |\n");
+        index--;
+    }
+    printf("||> STACK END\n");
+}
+
 #if DEBUG
 static char* op_label[] = {
 #define X(kind, id, has_operand, label) [id] = label,
@@ -36,8 +50,8 @@ static char* op_label[] = {
 #define DISPATCH()                  do { if(PC >= vm->module->code_size) return; goto *jump_table[vm->module->code[PC].op]; } while (false)
 #define CODE()                      vm->module->code[PC]
 #if DEBUG
-#define PRINT_DEBUG(op)             do { printf("  0x%02lX | %-14s |\n", PC, op); } while(false)
-#define PRINT_DEBUG_WIDE(op, opnd)  do { printf("  0x%02lX | %-14s | %ld\n", PC, op, opnd); } while (false)
+#define PRINT_DEBUG(op)             do { /*printf("  0x%02lX | %-14s |\n", PC, op);*/ dump_stack(vm); } while(false)
+#define PRINT_DEBUG_WIDE(op, opnd)  do { /*printf("  0x%02lX | %-14s | %ld\n", PC, op, opnd);*/ dump_stack(vm); } while (false)
 #else
 # define PRINT_DEBUG(op)             do {  } while(false)
 # define PRINT_DEBUG_WIDE(op, opnd)  do {  } while (false)
@@ -415,7 +429,7 @@ void ciam_vm_run(ciam_vm_t *vm)
             for (uint64_t i = 0; i < code.opnd1; i++)
             {
                 if (i != 0) printf(" ");
-                print_value(vals[i]); // TODO: Replace this with the print_values func from helpers once strings are supported.
+                print_value(vals[i]);
             }
         }
         PC++;

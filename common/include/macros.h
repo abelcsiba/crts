@@ -2,7 +2,7 @@
 #ifndef COMMON_MACROS_H_
 #define COMMON_MACROS_H_
 
-#define DEBUG               0
+#define DEBUG               1
 
 #define CIAM_VER_MAJOR      0x00
 #define CIAM_VER_MINOR      0x01
