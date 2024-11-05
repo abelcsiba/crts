@@ -7,11 +7,11 @@
 #include <float.h>
 
 static parse_rule_t parse_table[] = {
-    [TOKEN_ASTERISK]        = { .prec = PREC_FACTOR,        .prefix = NULL,     .infix = binary     },
+    [TOKEN_ASTERISK]        = { .prec = PREC_FACTOR,        .prefix = unary,    .infix = binary     },
     [TOKEN_AND]             = { .prec = PREC_AND,           .prefix = NULL,     .infix = binary     },
     [TOKEN_BANG]            = { .prec = PREC_NONE,          .prefix = unary,    .infix = NULL       },
     [TOKEN_BANG_EQUAL]      = { .prec = PREC_EQUALITY,      .prefix = NULL,     .infix = binary     },
-    [TOKEN_BIT_AND]         = { .prec = PREC_BIT_AND,       .prefix = NULL,     .infix = binary     },
+    [TOKEN_BIT_AND]         = { .prec = PREC_BIT_AND,       .prefix = unary,    .infix = binary     },
     [TOKEN_BIT_OR]          = { .prec = PREC_BIT_OR,        .prefix = NULL,     .infix = binary     },
     [TOKEN_CHAR]            = { .prec = PREC_NONE,          .prefix = chr_,     .infix = NULL       },
     [TOKEN_COMMA]           = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL       },
@@ -27,7 +27,7 @@ static parse_rule_t parse_table[] = {
     [TOKEN_LESS]            = { .prec = PREC_COMPARISON,    .prefix = NULL,     .infix = binary     },
     [TOKEN_LESS_EQUAL]      = { .prec = PREC_COMPARISON,    .prefix = NULL,     .infix = binary     },
     [TOKEN_LBRACE]          = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL       },
-    [TOKEN_LPAREN]          = { .prec = PREC_NONE,          .prefix = group,    .infix = call       },
+    [TOKEN_LPAREN]          = { .prec = PREC_CALL,          .prefix = group,    .infix = call       },
     [TOKEN_MINUS]           = { .prec = PREC_TERM,          .prefix = unary,    .infix = binary     },
     [TOKEN_MODULO]          = { .prec = PREC_FACTOR,        .prefix = NULL,     .infix = binary     },
     [TOKEN_NUMBER]          = { .prec = PREC_NONE,          .prefix = number,   .infix = NULL       },
@@ -49,6 +49,7 @@ static parse_rule_t parse_table[] = {
 static void     consume(parser_t* parser, token_ty_t type, const char* message);
 static token_t  previous(parser_t* parser);
 static token_t  peek(parser_t* parser);
+static token_t  advance(parser_t* parser);
 
 static ast_stmt_t*  parse_block_stmt(arena_t* arena, parser_t* parser);
 static ast_stmt_t*  parse_exp_stmt(arena_t* arena, parser_t* parser);
@@ -242,7 +243,7 @@ ast_exp_t* unary(arena_t* arena, parser_t* parser, token_t token)
 {
     char* op = (char*)arena_alloc(arena, token.length + 1);
     sprintf(op, "%.*s", (int)token.length, token.start);
-    ast_exp_t* expr = parse_expression(arena, parser, parse_table[token.type].prec);
+    ast_exp_t* expr = parse_expression(arena, parser, PREC_UNARY);
     if (NULL == expr) return NULL;
     return new_exp(arena, (ast_exp_t) 
             { 
@@ -256,10 +257,48 @@ ast_exp_t* unary(arena_t* arena, parser_t* parser, token_t token)
             });
 }
 
-ast_exp_t* call(arena_t* /*arena*/, parser_t* /*parser*/, ast_exp_t* /*left*/, bool /*can_assign*/)
+ast_exp_t* call(arena_t* arena, parser_t* parser, ast_exp_t* left, bool /*can_assign*/)
 {
-    // TODO
-    return NULL;
+    token_t token = previous(parser);
+    token = peek(parser);
+    arg_list_t* args = (arg_list_t*)arena_alloc(arena, sizeof(arg_list_t));
+    arg_list_t* head = args;
+    while (TOKEN_EOF != token.type && TOKEN_RPAREN != token.type)
+    {
+        ast_exp_t* exp = parse_expression(arena, parser, PREC_NONE);
+        if (!exp)
+        {
+            error_exp(parser, "Invalid expression as call argument");
+            return NULL;
+        }
+        args->exp = exp;
+        token = peek(parser);
+        if (TOKEN_COMMA == token.type) 
+        {
+            advance(parser);        // Eat the comma
+            token = peek(parser);   // And set to the next token
+            args->next = (arg_list_t*)arena_alloc(arena, sizeof(arg_list_t));
+            args = args->next;
+        }
+    }
+
+    if (TOKEN_EOF == token.type)
+    {
+        error_exp(parser, "Missing closing ')' symbol at the end of a call");
+        return NULL;
+    }
+    else advance(parser); // Eat the closing ')' symbol
+
+    return new_exp(arena, (ast_exp_t) 
+            { 
+              .kind = CALLABLE, 
+              .type_info = UNKNOWN, 
+              .as_call = (struct ast_callable)
+                            { 
+                              .args = head,
+                              .callee_name = left
+                            }
+            });
 }
 
 ast_exp_t* invoke(arena_t* /*arena*/, parser_t* /*parser*/, ast_exp_t* /*left*/, bool /*can_assign*/)

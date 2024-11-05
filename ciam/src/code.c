@@ -41,17 +41,77 @@ void print_code(FILE* out, code_t* code, int count)
             case LOAD_CONST:
                 fprintf(out, "LOAD_CONST %ld\n", code[i].opnd1);
                 break;
-            case ADD:
-                fprintf(out, "ADD\n");
+            case ADD_I8:
+                fprintf(out, "ADD_I8\n");
                 break;
-            case SUB:
-                fprintf(out, "SUB\n");
+            case ADD_I16:
+                fprintf(out, "ADD_I16\n");
                 break;
-            case MUL:
-                fprintf(out, "MUL\n");
+            case ADD_I32:
+                fprintf(out, "ADD_I32\n");
                 break;
-            case DIV:
-                fprintf(out, "DIV\n");
+            case ADD_I64:
+                fprintf(out, "ADD_I64\n");
+                break;
+            case ADD_F:
+                fprintf(out, "ADD_F\n");
+                break;
+            case ADD_D:
+                fprintf(out, "ADD_D\n");
+                break;
+            case SUB_I8:
+                fprintf(out, "SUB_I8\n");
+                break;
+            case SUB_I16:
+                fprintf(out, "SUB_I16\n");
+                break;
+            case SUB_I32:
+                fprintf(out, "SUB_I32\n");
+                break;
+            case SUB_I64:
+                fprintf(out, "SUB_I64\n");
+                break;
+            case SUB_F:
+                fprintf(out, "SUB_F\n");
+                break;
+            case SUB_D:
+                fprintf(out, "SUB_D\n");
+                break;
+            case MUL_I8:
+                fprintf(out, "MUL_I8\n");
+                break;
+            case MUL_I16:
+                fprintf(out, "MUL_I16\n");
+                break;
+            case MUL_I32:
+                fprintf(out, "MUL_I32\n");
+                break;
+            case MUL_I64:
+                fprintf(out, "MUL_I64\n");
+                break;
+            case MUL_F:
+                fprintf(out, "MUL_F\n");
+                break;
+            case MUL_D:
+                fprintf(out, "MUL_D\n");
+                break;
+            case DIV_I8:
+                fprintf(out, "DIV_I8\n");
+                break;
+            case DIV_I16:
+                fprintf(out, "DIV_I16\n");
+                break;
+            case DIV_I32:
+                fprintf(out, "DIV_I32\n");
+                break;
+            case DIV_I64:
+                fprintf(out, "DIV_I64\n");
+                break;
+            case DIV_F:
+                fprintf(out, "DIV_F\n");
+                break;
+            case DIV_D:
+                fprintf(out, "DIV_D\n");
                 break;
         }
     }

@@ -4,6 +4,7 @@
 
 #include "memory.h"
 #include "code.h"
+#include "macros.h"
 
 #include <stdint.h>
 

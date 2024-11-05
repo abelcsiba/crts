@@ -26,7 +26,7 @@ typedef struct {
 
 typedef struct {
     uint8_t             type;
-    uint64_t            value;
+    int64_t             value;
 } num_const_t;
 
 typedef struct {

@@ -55,10 +55,18 @@ void print_ast_exp(FILE* out, ast_exp_t *exp)
     switch (exp->kind)
     {
         case NUM_LITERAL:
-            if (exp->type_info == I64)
+            if (exp->type_info == I8)
+                fprintf(out, "%d", exp->as_num.I8);
+            else if (exp->type_info == I16) 
+                fprintf(out, "%d", exp->as_num.I16);
+            else if (exp->type_info == I32) 
+                fprintf(out, "%d", exp->as_num.I32);
+            else if (exp->type_info == I64) 
                 fprintf(out, "%ld", exp->as_num.I64);
+            else if (exp->type_info == FLOAT)
+                fprintf(out, "%f", exp->as_num.FLOAT);
             else if (exp->type_info == DOUBLE)
-                fprintf(out, "%.2f", (double)exp->as_num.DOUBLE);
+                fprintf(out, "%.2lf", (double)exp->as_num.DOUBLE);
             break;
         case STRING_LITERAL:
             fprintf(out, "\"%s\"", exp->as_str.STRING);
@@ -77,6 +85,19 @@ void print_ast_exp(FILE* out, ast_exp_t *exp)
             print_ast_exp(out, exp->as_bin.left);
             fprintf(out, " %s ", exp->as_bin.op);
             print_ast_exp(out, exp->as_bin.right);
+            fprintf(out, ")");
+            break;
+        case CALLABLE:
+            print_ast_exp(out, exp->as_call.callee_name);
+            fprintf(out, "(");
+            arg_list_t* head = exp->as_call.args;
+            fprintf(out, " ");
+            while (head != NULL)
+            {
+                print_ast_exp(out, head->exp);
+                fprintf(out, " ");
+                head = head->next;
+            }
             fprintf(out, ")");
             break;
         case VARIABLE:

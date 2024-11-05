@@ -109,6 +109,7 @@ expr_type_t resolve_exp_type(analyzer_t* analyzer, ast_exp_t* exp)
             expr_type_t rht     = resolve_exp_type(analyzer, exp->as_bin.right);
             expr_type_t et_bin  = resolve_bin_type(analyzer, exp->as_bin.op, lht, rht);
             ERROR_CHECK(et_bin);
+            exp->target_type = et_bin;
             return et_bin;
         case UNARY_OP:
             expr_type_t et_un   = resolve_exp_type(analyzer, exp->as_un.expr);
@@ -136,6 +137,10 @@ bool var_exists(scope_t* scope, char* name)
         if (strlen(sym->var_name) == strlen(name) && strcmp(sym->var_name, name) == 0)
             return true;
     }
+
+    if (scope->parent != NULL)
+        return var_exists(scope->parent, name);
+
     return false;
 }
 
@@ -175,7 +180,7 @@ void free_symtable(symtable_t* symtable)
     while (current != NULL)
     {
         next = current->next;
-        free(current); // WARNING! No not free the var_name as it comes from an arena
+        free(current); // WARNING! Do not free the var_name as it comes from an arena
         current = next;
     }
 }
@@ -207,7 +212,7 @@ bool check_stmt(analyzer_t* analyzer, ast_stmt_t* stmt)
         case VAR_DECL:
             expr_type_t type = resolve_exp_type(analyzer, stmt->as_decl.exp);
             if (type == ERROR) return false;
-            if (type == stmt->as_decl.type) // TODO: check to possibility if implicit cast here
+            if (type == stmt->as_decl.type) 
             {
                 if (!var_exists(analyzer->scope, stmt->as_decl.name))
                 {
@@ -220,7 +225,7 @@ bool check_stmt(analyzer_t* analyzer, ast_stmt_t* stmt)
                     return false;
                 }
             }
-            else return false;
+            else return false; // TODO: check to possibility if implicit cast
             break;
         case IF_STMT:
             expr_type_t cond_type = resolve_exp_type(analyzer, stmt->as_if.cond);

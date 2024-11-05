@@ -3,6 +3,7 @@
 #define COMMON_CODEC_H_
 
 #include "memory.h"
+#include "macros.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -10,10 +11,6 @@
 #include <time.h>
 
 #define CIAM_MAGIC_NUM      0x6c6562c1
-#define CIAM_VER_MAJOR      0x00
-#define CIAM_VER_MINOR      0x01
-#define CIAM_VER_PATCH      0x00
-#define CIAM_VER_REV        0x00
 
 #define ENCODE_CIAM_VERSION(version) (version | ((uint32_t)CIAM_VER_MAJOR << 3 * 8) |   \
                                                 ((uint32_t)CIAM_VER_MINOR << 2 * 8) |   \

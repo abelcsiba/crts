@@ -21,6 +21,7 @@
 #include <float.h>
 #include <math.h>
 
+
 char default_source[] = "./test/expr3.isl";
 
 int main(int argc, char** argv)
@@ -68,17 +69,18 @@ int main(int argc, char** argv)
 
   if (NULL == cu) goto closure;
 
+  #if DEBUG
+    print_cu(stdout, cu);
+  #endif
+
+/*
   analyzer_t analyzer = {0};
   init_global_scope(&analyzer);
 
   check_stmt(&analyzer, cu->entry);
 
   free(analyzer.scope); // This should be dealt with later. Right now, free shit manually.
-
-  #if DEBUG
-    print_cu(stdout, cu);
-  #endif
-  
+*/
   compiler_t compiler;
   init_module(&compiler);
   compile_ast(&compiler, cu);

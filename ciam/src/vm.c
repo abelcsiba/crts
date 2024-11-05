@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <assert.h>
-
+#include <string.h>
 
 static int thread_counter = 1;
 
@@ -26,6 +26,65 @@ static char* op_label[] = {
 #undef X
 };
 #endif
+
+#define PC                          vm->threads[0].ip
+#define PUSH(X)                     do { push_stack(&vm->threads[0].stack, X); vm->threads[0].sp++; } while (false)
+#define POP()                       pop_stack(&vm->threads[0].stack)
+#define DEC_SP(X)                   do { vm->threads[0].sp -= X; } while (false)
+#define POP_TOP                     pop_top_stack(&vm->threads[0].stack)
+#define DISPATCH()                  do { if(PC >= vm->module->code_size) return; goto *jump_table[vm->module->code[PC].op]; } while (false)
+#define CODE()                      vm->module->code[PC]
+#if DEBUG
+#define PRINT_DEBUG(op)             do { printf("  0x%02lX | %-14s |\n", PC, op); } while(false)
+#define PRINT_DEBUG_WIDE(op, opnd)  do { printf("  0x%02lX | %-14s | %ld\n", PC, op, opnd); } while (false)
+#else
+# define PRINT_DEBUG(op)             do {  } while(false)
+# define PRINT_DEBUG_WIDE(op, opnd)  do {  } while (false)
+#endif
+#define CURRENT_CODE                op_label[vm->module->code[PC].op]
+#define LOAD()                      do {                            \
+    num_const_t c = vm->module->pool.numbers.nums[code.opnd1];      \
+    switch (c.type)                                                 \
+    {                                                               \
+        case 0:                                                     \
+            PUSH(I8_VAL((int8_t)c.value));                          \
+            break;                                                  \
+        case 1:                                                     \
+            PUSH(I16_VAL((int16_t)c.value));                        \
+            break;                                                  \
+        case 2:                                                     \
+            PUSH(I32_VAL((int32_t)c.value));                        \
+            break;                                                  \
+        case 3:                                                     \
+            PUSH(I64_VAL((int64_t)c.value));                        \
+            break;                                                  \
+        default:                                                    \
+            fprintf(stderr, "Invalid num type\n");                  \
+            exit(1);                                                \
+    }                                                               \
+} while (false)                                                     
+#define BINARY_I(var, val, op) do {                                 \
+    value_t var##_tmp = POP();                                      \
+    switch (var##_tmp.type)                                         \
+    {                                                               \
+        case VAL_I8:                                                \
+            val op##= var##_tmp.as.i8;                              \
+            break;                                                  \
+        case VAL_I16:                                               \
+            val op##= var##_tmp.as.i16;                             \
+            break;                                                  \
+        case VAL_I32:                                               \
+            val op##= var##_tmp.as.i32;                             \
+            break;                                                  \
+        case VAL_I64:                                               \
+            val op##= var##_tmp.as.i64;                             \
+            break;                                                  \
+        default:                                                    \
+            fprintf(stderr, "Invalid num type\n");                  \
+            exit(1);                                                \
+    }                                                               \
+} while (false)                                                     \
+
 
 static void init_main_thread(ciam_vm_t* vm)
 {
@@ -106,22 +165,7 @@ void ciam_vm_load(ciam_vm_t* vm, module_t* module)
 }
 
 void ciam_vm_run(ciam_vm_t *vm)
-{
-#define PC                          vm->threads[0].ip
-#define PUSH(X)                     do { push_stack(&vm->threads[0].stack, X); } while (false)
-#define POP()                       pop_stack(&vm->threads[0].stack)
-#define POP_TOP                     pop_top_stack(&vm->threads[0].stack)
-#define DISPATCH()                  do { if(PC >= vm->module->code_size) return; goto *jump_table[vm->module->code[PC].op]; } while (false)
-#define CODE()                      vm->module->code[PC]
-#if DEBUG
-#define PRINT_DEBUG(op)             do { printf("  0x%02lX | %-14s |\n", PC, op); } while(false)
-#define PRINT_DEBUG_WIDE(op, opnd)  do { printf("  0x%02lX | %-14s | %ld\n", PC, op, opnd); } while (false)
-#else
-# define PRINT_DEBUG(op)             do {  } while(false)
-# define PRINT_DEBUG_WIDE(op, opnd)  do {  } while (false)
-#endif
-#define CURRENT_CODE                op_label[vm->module->code[PC].op]
-    
+{   
     static void* jump_table[] = { 
     #define X(kind, id, has_operand, label) &&OP_##kind,
         OPCODE_LIST
@@ -136,13 +180,14 @@ void ciam_vm_run(ciam_vm_t *vm)
 
     OP_LOAD_CONST:
         code = CODE();
+        LOAD();
         PRINT_DEBUG_WIDE(CURRENT_CODE, code.opnd1);
-        PUSH(DOUBLE_VAL(code.opnd1));
         PC++;
         DISPATCH();
     OP_NOP:
+        PC++;
         DISPATCH();
-    OP_PUSH:
+    OP_PUSH: // Is this necessary? If so, I would prob need typed instructions.
         code = CODE();
         PRINT_DEBUG(CURRENT_CODE);
         PUSH(DOUBLE_VAL(code.opnd1));
@@ -152,29 +197,194 @@ void ciam_vm_run(ciam_vm_t *vm)
         code = CODE();
         PRINT_DEBUG(CURRENT_CODE);
         POP();
+        DEC_SP(1);
         PC++;
         DISPATCH();
-    OP_TOS:
+    OP_TOS: // Is this necessary? Prob not.
         code = CODE();
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
-    OP_ADD:
+    OP_ADD_I8:
+        code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
+        {
+            int64_t a_val = 0;
+            int64_t b_val = 0;
+            BINARY_I(a, a_val, +);
+            BINARY_I(b, b_val, +);
+            PUSH(I8_VAL((int8_t)(a_val + b_val)));
+            DEC_SP(1);
+        }
+        PC++;
+        DISPATCH();
+    OP_ADD_I16:
+        code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
+        {
+            int64_t a_val = 0;
+            int64_t b_val = 0;
+            BINARY_I(a, a_val, +);
+            BINARY_I(b, b_val, +);
+            PUSH(I16_VAL((int16_t)(a_val + b_val)));
+            DEC_SP(1);
+        }
+        PC++;
+        DISPATCH();
+    OP_ADD_I32:
+        code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
+        {
+            int64_t a_val = 0;
+            int64_t b_val = 0;
+            BINARY_I(a, a_val, +);
+            BINARY_I(b, b_val, +);
+            PUSH(I32_VAL((int32_t)(a_val + b_val)));
+            DEC_SP(1);
+        }
+        PC++;
+        DISPATCH();
+    OP_ADD_I64:
+        code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
+        {
+            int64_t a_val = 0;
+            int64_t b_val = 0;
+            BINARY_I(a, a_val, +);
+            BINARY_I(b, b_val, +);
+            PUSH(I64_VAL(a_val + b_val));
+            DEC_SP(1);
+        }
+        PC++;
+        DISPATCH();
+    OP_ADD_F:
         code = CODE();
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
-    OP_SUB:
+    OP_ADD_D:
         code = CODE();
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
-    OP_MUL:
+    OP_SUB_I8:
+        code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
+        {
+            int64_t a_val = 0;
+            int64_t b_val = 0;
+            BINARY_I(a, a_val, -);
+            BINARY_I(b, b_val, -);
+            PUSH(I8_VAL((int8_t)(a_val - b_val)));
+            DEC_SP(1);
+        }
+        PC++;
+        DISPATCH();
+    OP_SUB_I16:
+        code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
+        {
+            int64_t a_val = 0;
+            int64_t b_val = 0;
+            BINARY_I(a, a_val, -);
+            BINARY_I(b, b_val, -);
+            PUSH(I16_VAL((int16_t)(a_val - b_val)));
+            DEC_SP(1);
+        }
+        PC++;
+        DISPATCH();
+    OP_SUB_I32:
+        code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
+        {
+            int64_t a_val = 0;
+            int64_t b_val = 0;
+            BINARY_I(a, a_val, -);
+            BINARY_I(b, b_val, -);
+            PUSH(I32_VAL((int32_t)(a_val - b_val)));
+            DEC_SP(1);
+        }
+        PC++;
+        DISPATCH();
+    OP_SUB_I64:
+        code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
+        {
+            int64_t a_val = 0;
+            int64_t b_val = 0;
+            BINARY_I(a, a_val, -);
+            BINARY_I(b, b_val, -);
+            PUSH(I64_VAL(a_val - b_val));
+            DEC_SP(1);
+        }
+        PC++;
+        DISPATCH();
+    OP_SUB_F:
         code = CODE();
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
-    OP_DIV:
+    OP_SUB_D:
+        code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_MUL_I8:
+        code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_MUL_I16:
+        code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_MUL_I32:
+        code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_MUL_I64:
+        code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_MUL_F:
+        code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_MUL_D:
+        code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_DIV_I8:
+        code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_DIV_I16:
+        code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_DIV_I32:
+        code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_DIV_I64:
+        code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_DIV_F:
+        code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_DIV_D:
         code = CODE();
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
@@ -189,6 +399,14 @@ void ciam_vm_run(ciam_vm_t *vm)
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
+    OP_PRINT:
+        code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
+        value_t val = POP();
+        printf("%d\n", val.as.i8);
+        DEC_SP(1);
+        PC++;
+        DISPATCH();
     OP_HLT:
         PRINT_DEBUG(CURRENT_CODE);
         return;
@@ -196,16 +414,6 @@ void ciam_vm_run(ciam_vm_t *vm)
     /* We shouldn't reach here, so better abort now. */
     printf("We shouldn't reach this point. Aborting...\n");
     exit(EXIT_FAILURE);
-
-#undef CURRENT_CODE
-#undef PRINT_DEBUG_WIDE
-#undef PRINT_DEBUG
-#undef CODE
-#undef DISPATCH
-#undef POP_TOP
-#undef POP
-#undef PUSH
-#undef PC
 }
 
 void display_init_message(ciam_vm_t* vm)
@@ -219,6 +427,11 @@ void display_init_message(ciam_vm_t* vm)
     printf("%-22s |", buffer);
     printf("\n");
     printf("|------------------|------------------------|\n");
+    char name[200];
+    memset(name, '\0', 200);
+    sprintf(name, "%d.%d.%d-%d", CIAM_VER_MAJOR, CIAM_VER_MINOR, CIAM_VER_PATCH, CIAM_VER_REV);
+    printf("| CIAM Version     | %-22.20s |\n", name);
+    printf("|------------------|------------------------|\n");
     printf("| Const value size | %-22d |\n", vm->module->pool.numbers.count);
     printf("|------------------|------------------------|\n");
     printf("| File name:       | %-22.20s |\n", vm->module->file_name);
@@ -229,3 +442,16 @@ void display_init_message(ciam_vm_t* vm)
     printf("  Addr | CIAM Instruct. | Operand\n");
     printf("---------------------------------\n");
 }
+
+#undef BINARY_I
+#undef LOAD
+#undef CURRENT_CODE
+#undef PRINT_DEBUG_WIDE
+#undef PRINT_DEBUG
+#undef CODE
+#undef DISPATCH
+#undef POP_TOP
+#undef DEC_SP
+#undef POP
+#undef PUSH
+#undef PC

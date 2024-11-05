@@ -16,7 +16,8 @@ typedef enum {
     BOOL_LITERAL,
     VARIABLE,
     BINARY_OP,
-    UNARY_OP
+    UNARY_OP,
+    CALLABLE
 } expr_kind_t;
 
 typedef enum {
@@ -51,10 +52,16 @@ typedef struct ast_stmt_t   ast_stmt_t;
 
 struct token_t;
 
+typedef struct arg_list_t {
+    ast_exp_t*              exp;
+    struct arg_list_t*      next;
+} arg_list_t;
+
 struct ast_exp_t {
     expr_kind_t             kind;
     expr_type_t             type_info;
     struct token_t*         token;
+    expr_type_t             target_type;
 
     union {
         struct ast_number {
@@ -98,6 +105,12 @@ struct ast_exp_t {
             ast_exp_t*      expr;
             const char*     op;
         } as_un;
+
+        struct ast_callable {
+            arg_list_t*     args;
+            ast_exp_t*      callee_name;
+            expr_type_t     ret_type;
+        } as_call;
     };
 };
 

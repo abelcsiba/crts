@@ -9,13 +9,34 @@
     X(PUSH,         2, 0,   "OP_PUSH"       )   \
     X(POP_TOP,      3, 0,   "OP_OPO_TOP"    )   \
     X(TOS,          4, 0,   "OP_TOS"        )   \
-    X(ADD,          5, 0,   "OP_ADD"        )   \
-    X(SUB,          6, 0,   "OP_SUB"        )   \
-    X(MUL,          7, 0,   "OP_MUL"        )   \
-    X(DIV,          8, 0,   "OP_DIV"        )   \
-    X(HLT,          9, 0,   "OP_HLT"        )   \
-    X(LOAD_IMM,    10, 1,   "OP_LOAD_IMM"   )   \
-    X(LOAD_NULL,   11, 0,   "OP_LOAD_NULL"  )   \
+    X(ADD_I8,       5, 0,   "OP_ADD_I8"     )   \
+    X(ADD_I16,      6, 0,   "OP_ADD_I16"    )   \
+    X(ADD_I32,      7, 0,   "OP_ADD_I32"    )   \
+    X(ADD_I64,      8, 0,   "OP_ADD_I64"    )   \
+    X(ADD_F,        9, 0,   "OP_ADD_F"      )   \
+    X(ADD_D,       10, 0,   "OP_ADD_D"      )   \
+    X(SUB_I8,      11, 0,   "OP_SUB_I8"     )   \
+    X(SUB_I16,     12, 0,   "OP_SUB_I16"    )   \
+    X(SUB_I32,     13, 0,   "OP_SUB_I32"    )   \
+    X(SUB_I64,     14, 0,   "OP_SUB_I64"    )   \
+    X(SUB_F,       15, 0,   "OP_SUB_F"      )   \
+    X(SUB_D,       16, 0,   "OP_SUB_D"      )   \
+    X(MUL_I8,      17, 0,   "OP_MUL_I8"     )   \
+    X(MUL_I16,     18, 0,   "OP_MUL_I16"    )   \
+    X(MUL_I32,     19, 0,   "OP_MUL_I32"    )   \
+    X(MUL_I64,     20, 0,   "OP_MUL_I64"    )   \
+    X(MUL_F,       21, 0,   "OP_MUL_F"      )   \
+    X(MUL_D,       22, 0,   "OP_MUL_D"      )   \
+    X(DIV_I8,      23, 0,   "OP_DIV_I8"     )   \
+    X(DIV_I16,     24, 0,   "OP_DIV_I16"    )   \
+    X(DIV_I32,     25, 0,   "OP_DIV_I32"    )   \
+    X(DIV_I64,     26, 0,   "OP_DIV_I64"    )   \
+    X(DIV_F,       27, 0,   "OP_DIV_F"      )   \
+    X(DIV_D,       28, 0,   "OP_DIV_D"      )   \
+    X(HLT,         29, 0,   "OP_HLT"        )   \
+    X(LOAD_IMM,    30, 1,   "OP_LOAD_IMM"   )   \
+    X(LOAD_NULL,   31, 0,   "OP_LOAD_NULL"  )   \
+    X(PRINT,       32, 0,   "PRINT"         )   \
 
 typedef enum {
 #define X(kind, id, has_operand, label) kind = id,

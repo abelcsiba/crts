@@ -7,12 +7,30 @@
 static int const_index = 0;
 
 
-opcode_t get_binary_opcode(const char op_c)
+opcode_t get_binary_opcode(const char op_c, ast_exp_t* exp)
 {
-    if      (op_c == '+') return ADD;
-    else if (op_c == '-') return SUB;
-    else if (op_c == '*') return MUL;
-    else                  return DIV;
+#define BINARY(oper) do {                               \
+    switch (exp->target_type)                           \
+    {                                                   \
+        case I8:     return oper##_I8;                  \
+        case I16:    return oper##_I16;                 \
+        case I32:    return oper##_I32;                 \
+        case I64:    return oper##_I64;                 \
+        case FLOAT:  return oper##_F;                   \
+        case DOUBLE: return oper##_D;                   \
+        default:                                        \
+            fprintf(stderr, "We shouldn't reach here"); \
+            exit(EXIT_FAILURE);                         \
+            break;                                      \
+    }                                                   \
+} while (false)                                         \
+
+    if      (op_c == '+') BINARY(ADD);
+    else if (op_c == '-') BINARY(SUB);
+    else if (op_c == '*') BINARY(MUL);
+    else                  BINARY(DIV);
+
+#undef BINARY
 }
 
 static num_const_t emit_num_const(ast_exp_t* exp)
@@ -48,7 +66,14 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
         case BINARY_OP:
             compile_expr(compiler, exp->as_bin.left);
             compile_expr(compiler, exp->as_bin.right);
-            code.op = get_binary_opcode(*exp->as_bin.op);
+            code.op = get_binary_opcode(*exp->as_bin.op, exp);
+            break;
+        case CALLABLE:
+            if (strcmp(exp->as_call.var_name->as_var.name, "print") == 0)
+            {
+                compile_expr(compiler, exp->as_call.args->exp);
+                code.op = PRINT;
+            }
             break;
         default:
             printf("Unrecognized expression\n");
