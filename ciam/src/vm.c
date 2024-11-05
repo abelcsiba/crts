@@ -2,6 +2,7 @@
 #include "vm.h"
 #include "util.h"
 #include "macros.h"
+#include "helpers.h"
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -402,9 +403,11 @@ void ciam_vm_run(ciam_vm_t *vm)
     OP_PRINT:
         code = CODE();
         PRINT_DEBUG(CURRENT_CODE);
-        value_t val = POP();
-        printf("%d\n", val.as.i8);
-        DEC_SP(1);
+        {
+            value_t val = POP(); // TODO: Replace this with the print_values func from helpers once strings are supported.
+            print_values(val);
+            DEC_SP(1);
+        }
         PC++;
         DISPATCH();
     OP_HLT:

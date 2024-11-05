@@ -87,9 +87,29 @@ expr_type_t resolve_un_type(analyzer_t* /*analyzer*/, const char* op, expr_type_
     }
 }
 
+void init_global_scope(analyzer_t* analyzer)
+{
+    analyzer->scope = (scope_t*)malloc(sizeof(scope_t));
+    analyzer->scope->parent = NULL;
+}
+
+expr_type_t var_exists(scope_t* scope, char* name)
+{
+    for (symtable_t* sym = scope->symtable; sym != NULL; sym = sym->next)
+    {
+        if (strlen(sym->var_name) == strlen(name) && strcmp(sym->var_name, name) == 0)
+            return sym->ty_info.type;
+    }
+
+    if (scope->parent != NULL)
+        return var_exists(scope->parent, name);
+
+    return ERROR;
+}
+
 expr_type_t resolve_exp_type(analyzer_t* analyzer, ast_exp_t* exp)
 {
-#define ERROR_CHECK(X) do { if (X == ERROR) { fprintf(stderr, "Invalid type at "); print_ast_exp(stderr, exp); exit(EXIT_FAILURE); } } while (false)
+#define ERROR_CHECK(X) do { if (X == ERROR) { fprintf(stderr, "Invalid type at "); print_ast_exp(stderr, exp); fprintf(stderr, "\n"); exit(EXIT_FAILURE); } } while (false)
     switch (exp->kind)
     {
         case NUM_LITERAL:
@@ -102,8 +122,13 @@ expr_type_t resolve_exp_type(analyzer_t* analyzer, ast_exp_t* exp)
         case BOOL_LITERAL:
             return BOOL;
         case VARIABLE:
-            // TODO: lookup variable
-            return I8;
+        expr_type_t var_ty = var_exists(analyzer->scope, exp->as_var.name);
+            if (ERROR != var_ty)
+            {
+                fprintf(stderr, "Undeclared variable usage\n");
+                exit(EXIT_FAILURE);
+            }
+            return var_ty;
         case BINARY_OP:
             expr_type_t lht     = resolve_exp_type(analyzer, exp->as_bin.left);
             expr_type_t rht     = resolve_exp_type(analyzer, exp->as_bin.right);
@@ -116,32 +141,15 @@ expr_type_t resolve_exp_type(analyzer_t* analyzer, ast_exp_t* exp)
             expr_type_t rt      = resolve_un_type(analyzer, exp->as_un.op, et_un);
             ERROR_CHECK(rt);
             return rt;
+        case CALLABLE:
+            resolve_exp_type(analyzer, exp->as_call.args->exp);
+            return VOID;
         default:
             fprintf(stderr, "Unknown expression kind\n");
             exit(EXIT_FAILURE);
             break;
     }
 #undef ERROR_CHECK
-}
-
-void init_global_scope(analyzer_t* analyzer)
-{
-    analyzer->scope = (scope_t*)malloc(sizeof(scope_t));
-    analyzer->scope->parent = NULL;
-}
-
-bool var_exists(scope_t* scope, char* name)
-{
-    for (symtable_t* sym = scope->symtable; sym != NULL; sym = sym->next)
-    {
-        if (strlen(sym->var_name) == strlen(name) && strcmp(sym->var_name, name) == 0)
-            return true;
-    }
-
-    if (scope->parent != NULL)
-        return var_exists(scope->parent, name);
-
-    return false;
 }
 
 void add_to_scope(scope_t* scope, char* name, expr_type_t type)
@@ -214,7 +222,7 @@ bool check_stmt(analyzer_t* analyzer, ast_stmt_t* stmt)
             if (type == ERROR) return false;
             if (type == stmt->as_decl.type) 
             {
-                if (!var_exists(analyzer->scope, stmt->as_decl.name))
+                if (ERROR != var_exists(analyzer->scope, stmt->as_decl.name))
                 {
                     add_to_scope(analyzer->scope, stmt->as_decl.name, type);
                     return true;

@@ -73,14 +73,13 @@ int main(int argc, char** argv)
     print_cu(stdout, cu);
   #endif
 
-/*
   analyzer_t analyzer = {0};
   init_global_scope(&analyzer);
 
   check_stmt(&analyzer, cu->entry);
 
   free(analyzer.scope); // This should be dealt with later. Right now, free shit manually.
-*/
+
   compiler_t compiler;
   init_module(&compiler);
   compile_ast(&compiler, cu);
