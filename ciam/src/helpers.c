@@ -32,6 +32,11 @@ void print_value(value_t val) {
         case VAL_CHAR:
             printf("%c", val.as.chr);
             break;
+        case VAL_OBJECT:
+            if (OBJ_STRING != val.as.obj->obj_type) printf("OBJ");
+            obj_string_t* str = (obj_string_t*)val.as.obj;
+            printf("%.*s", (int)str->length, str->chars);
+            break;
         default:
             printf("Unsupported format type");
             break;

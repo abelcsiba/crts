@@ -16,6 +16,7 @@ struct ciam_vm_t {
     ciam_thread_t*      last_thread;
     u32                 current_thread_id;
     u32                 num_threads;
+    obj_t*              heap;
 
     module_t*           module;
 };
@@ -444,6 +445,21 @@ void ciam_vm_run(ciam_vm_t *vm)
             }
             printf("\n");
         }
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_LOAD_STRING:
+        code = CODE();
+        string_const_t str = vm->module->pool.strings.strings[code.opnd1];
+        obj_string_t* obj_str = (obj_string_t*)malloc(sizeof(obj_string_t));
+        obj_str->chars = (char*)malloc(sizeof(char) * str.length);
+        memcpy(obj_str->chars, str.chars, str.length);
+        obj_str->chars[str.length] = '\0';
+        obj_t* obj = (obj_t*)obj_str;
+        obj->obj_type = OBJ_STRING;
+        obj->marked = false;
+        obj->next = NULL;
+        PUSH(OBJ_VAL(obj));
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();

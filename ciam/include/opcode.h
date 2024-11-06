@@ -37,6 +37,7 @@
     X(LOAD_IMM,    30, 1,   "OP_LOAD_IMM"   )   \
     X(LOAD_NULL,   31, 0,   "OP_LOAD_NULL"  )   \
     X(PRINT,       32, 0,   "PRINT"         )   \
+    X(LOAD_STRING, 33, 0,   "LOAD_STRING"   )   \
 
 typedef enum {
 #define X(kind, id, has_operand, label) kind = id,

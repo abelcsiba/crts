@@ -113,6 +113,9 @@ void print_code(FILE* out, code_t* code, int count)
             case DIV_D:
                 fprintf(out, "DIV_D\n");
                 break;
+            case LOAD_STRING:
+                fprintf(out, "LOAD_STRING\n");
+                break;
         }
     }
 }

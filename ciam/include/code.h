@@ -30,12 +30,23 @@ typedef struct {
 } num_const_t;
 
 typedef struct {
+    uint32_t            length; // 2^32 num of chars is the upper limit
+    char*               chars;
+} string_const_t;
+
+typedef struct {
+    string_const_t*     strings;
+    uint16_t            count;
+} const_str_table_t;
+
+typedef struct {
     num_const_t*        nums;
     uint16_t            count;
 } const_num_table_t;
 
 typedef struct {
     const_num_table_t   numbers;
+    const_str_table_t   strings;
 } const_pool_t;
 
 void init_code(code_t* code, size_t length);

@@ -4,7 +4,8 @@
 
 #include <string.h>
 
-static int const_index = 0;
+static int const_num_index = 0;
+static int const_str_index = 0;
 
 
 opcode_t get_binary_opcode(const char op_c, ast_exp_t* exp)
@@ -49,6 +50,14 @@ static num_const_t emit_num_const(ast_exp_t* exp)
     return num;
 }
 
+static string_const_t emit_string_const(ast_exp_t* exp)
+{
+    string_const_t str = {0};
+    str.length = strlen(exp->as_str.STRING);
+    str.chars = exp->as_str.STRING;
+    return str;
+}
+
 static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
 {
     code_t code = {0};
@@ -56,21 +65,26 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
     {
         case NUM_LITERAL:
             code.op = LOAD_CONST;
-            code.opnd1 = (opnd_t)const_index;
-            compiler->compiled_m->pool.numbers.nums[const_index++] = emit_num_const(exp);
+            code.opnd1 = (opnd_t)const_num_index;
+            compiler->compiled_m->pool.numbers.nums[const_num_index++] = emit_num_const(exp);
             break;
         case BOOL_LITERAL:
             code.op = LOAD_CONST;
-            code.opnd1 = (opnd_t)const_index;
-            compiler->compiled_m->pool.numbers.nums[const_index++] = emit_num_const(exp);
+            code.opnd1 = (opnd_t)const_num_index;
+            compiler->compiled_m->pool.numbers.nums[const_num_index++] = emit_num_const(exp);
             break;
         case CHAR_LITERAL:
             code.op = LOAD_CONST;
-            code.opnd1 = (opnd_t)const_index;
-            compiler->compiled_m->pool.numbers.nums[const_index++] = emit_num_const(exp);
+            code.opnd1 = (opnd_t)const_num_index;
+            compiler->compiled_m->pool.numbers.nums[const_num_index++] = emit_num_const(exp);
             break;
         case NULL_LITERAL:
             code.op = LOAD_NULL;
+            break;
+        case STRING_LITERAL:
+            code.op = LOAD_STRING;
+            code.opnd1 = (opnd_t)const_str_index;
+            compiler->compiled_m->pool.strings.strings[const_str_index++] = emit_string_const(exp);
             break;
         case BINARY_OP:
             compile_expr(compiler, exp->as_bin.left);
@@ -154,14 +168,16 @@ void compile_ast(compiler_t* compiler, cu_t* cu)
     add_to_code_da(compiler->code_da, (code_t){ .op = HLT, .opnd1 = 0x00 });
     compiler->compiled_m->code_size = compiler->code_da->count;
     compiler->compiled_m->code = compiler->code_da->data;
-    compiler->compiled_m->pool.numbers.count = const_index;
+    compiler->compiled_m->pool.numbers.count = const_num_index;
+    compiler->compiled_m->pool.strings.count = const_str_index;
     free(compiler->code_da);
 }
 
 void init_module(compiler_t* compiler)
 {
     compiler->compiled_m = (module_t*)calloc(1, sizeof(module_t));
-    compiler->compiled_m->pool.numbers.nums = (num_const_t*)calloc(15, sizeof(num_const_t));
+    compiler->compiled_m->pool.numbers.nums = (num_const_t*)calloc(15, sizeof(num_const_t)); // TODO: hardcoded. fix it!
+    compiler->compiled_m->pool.strings.strings = (string_const_t*)calloc(15, sizeof(string_const_t));
     compiler->code_da = (code_da*)calloc(1, sizeof(code_da));
     init_code_da(compiler->code_da);
 }

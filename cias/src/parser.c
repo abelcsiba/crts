@@ -273,6 +273,12 @@ ast_exp_t* call(arena_t* arena, parser_t* parser, ast_exp_t* left, bool /*can_as
         }
         head->exp = exp;
         token = peek(parser);
+        if (token.type != TOKEN_COMMA && token.type != TOKEN_RPAREN)
+        {
+            error_exp(parser, "Invalid argument list");
+            return NULL;
+        }
+
         if (TOKEN_COMMA == token.type) 
         {
             advance(parser);        // Eat the comma
