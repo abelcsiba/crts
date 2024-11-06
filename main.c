@@ -69,9 +69,9 @@ int main(int argc, char** argv)
 
   if (NULL == cu) goto closure;
 
-  #if DEBUG
-    print_cu(stdout, cu);
-  #endif
+#if DEBUG
+  print_cu(stdout, cu);
+ #endif
 
   analyzer_t analyzer = {0};
   init_global_scope(&analyzer);
@@ -86,7 +86,9 @@ int main(int argc, char** argv)
 
   module_t* module = transfer_module(&compiler);
 
-  //print_code(stdout, module->code, module->code_size);
+#if DEBUG
+  print_code(stdout, module->code, module->code_size);
+#endif
 
   module->file_name = src;
   time_t current_time;

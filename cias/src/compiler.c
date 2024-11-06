@@ -38,10 +38,13 @@ static num_const_t emit_num_const(ast_exp_t* exp)
     num_const_t num = {0};
     num.type = exp->type_info;
     if      (num.type == DOUBLE)    memcpy(&num.value, &exp->as_num.DOUBLE, sizeof(double));
+    else if (num.type == FLOAT)     memcpy(&num.value, &exp->as_num.FLOAT,  sizeof(float));
     else if (num.type == I8)        memcpy(&num.value, &exp->as_num.I8,     sizeof(int8_t));      
     else if (num.type == I16)       memcpy(&num.value, &exp->as_num.I16,    sizeof(int16_t));
     else if (num.type == I32)       memcpy(&num.value, &exp->as_num.I32,    sizeof(int32_t));
     else if (num.type == I64)       memcpy(&num.value, &exp->as_num.I64,    sizeof(int64_t));
+    else if (num.type == CHAR)      memcpy(&num.value, &exp->as_char.CHAR,  sizeof(char));
+    else if (num.type == BOOL)      memcpy(&num.value, &exp->as_bool.BOOL,  sizeof(bool));
 
     return num;
 }
@@ -57,8 +60,14 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
             compiler->compiled_m->pool.numbers.nums[const_index++] = emit_num_const(exp);
             break;
         case BOOL_LITERAL:
-            code.op = LOAD_IMM;
-            code.opnd1 = (opnd_t)((exp->as_bool.BOOL) ? 1 : 0);
+            code.op = LOAD_CONST;
+            code.opnd1 = (opnd_t)const_index;
+            compiler->compiled_m->pool.numbers.nums[const_index++] = emit_num_const(exp);
+            break;
+        case CHAR_LITERAL:
+            code.op = LOAD_CONST;
+            code.opnd1 = (opnd_t)const_index;
+            compiler->compiled_m->pool.numbers.nums[const_index++] = emit_num_const(exp);
             break;
         case NULL_LITERAL:
             code.op = LOAD_NULL;

@@ -271,14 +271,15 @@ ast_exp_t* call(arena_t* arena, parser_t* parser, ast_exp_t* left, bool /*can_as
             error_exp(parser, "Invalid expression as call argument");
             return NULL;
         }
-        args->exp = exp;
+        head->exp = exp;
         token = peek(parser);
         if (TOKEN_COMMA == token.type) 
         {
             advance(parser);        // Eat the comma
             token = peek(parser);   // And set to the next token
-            args->next = (arg_list_t*)arena_alloc(arena, sizeof(arg_list_t));
-            args = args->next;
+            head = (arg_list_t*)arena_alloc(arena, sizeof(arg_list_t));
+            head->next = args; 
+            args = head;
         }
     }
 

@@ -142,8 +142,16 @@ expr_type_t resolve_exp_type(analyzer_t* analyzer, ast_exp_t* exp)
             ERROR_CHECK(rt);
             return rt;
         case CALLABLE:
-            resolve_exp_type(analyzer, exp->as_call.args->exp);
+            expr_type_t res = UNKNOWN;
+            arg_list_t *args = exp->as_call.args;
+            while (args != NULL)
+            {
+                res = resolve_exp_type(analyzer, args->exp);
+                if (ERROR == res) return res;
+                args = args->next;
+            }
             return VOID;
+            // return exp->as_call.ret_type; // TODO: Change this to the exact return type
         default:
             fprintf(stderr, "Unknown expression kind\n");
             exit(EXIT_FAILURE);

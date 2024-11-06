@@ -20,19 +20,23 @@ struct ciam_vm_t {
     module_t*           module;
 };
 
+#if DEBUG
 static void dump_stack(ciam_vm_t* vm)
 {
     int64_t index = vm->threads[0].stack.count - 1;
-    printf("||> STACK BEGIN\n");
+    printf("        _________________  \n");
+    printf("       |   STACK BEGIN   |  \n");
     while (index >= 0)
     {
-        printf("| %2ld | ", index);
+        printf("  0x%02lX |     ", index);
         print_value(vm->threads[0].stack.slots[index]);
-        printf(" |\n");
+        printf("\n");
         index--;
     }
-    printf("||> STACK END\n");
+    printf("       |XXXXXXXXXXXXXXXXX|  \n");
+    printf("\n");
 }
+#endif
 
 #if DEBUG
 static char* op_label[] = {
@@ -50,8 +54,8 @@ static char* op_label[] = {
 #define DISPATCH()                  do { if(PC >= vm->module->code_size) return; goto *jump_table[vm->module->code[PC].op]; } while (false)
 #define CODE()                      vm->module->code[PC]
 #if DEBUG
-#define PRINT_DEBUG(op)             do { /*printf("  0x%02lX | %-14s |\n", PC, op);*/ dump_stack(vm); } while(false)
-#define PRINT_DEBUG_WIDE(op, opnd)  do { /*printf("  0x%02lX | %-14s | %ld\n", PC, op, opnd);*/ dump_stack(vm); } while (false)
+#define PRINT_DEBUG(op)             do { printf("  0x%02lX | %-14s |\n", PC, op); dump_stack(vm); } while(false)
+#define PRINT_DEBUG_WIDE(op, opnd)  do { printf("  0x%02lX | %-14s | %ld\n", PC, op, opnd); dump_stack(vm); } while (false)
 #else
 # define PRINT_DEBUG(op)             do {  } while(false)
 # define PRINT_DEBUG_WIDE(op, opnd)  do {  } while (false)
@@ -72,6 +76,18 @@ static char* op_label[] = {
             break;                                                  \
         case 3:                                                     \
             PUSH(I64_VAL((int64_t)c.value));                        \
+            break;                                                  \
+        case 4:                                                     \
+            PUSH(FLOAT_VAL((float)c.value));                        \
+            break;                                                  \
+        case 5:                                                     \
+            PUSH(DOUBLE_VAL((double)c.value));                      \
+            break;                                                  \
+        case 6:                                                     \
+            PUSH(BOOL_VAL((bool)c.value));                          \
+            break;                                                  \
+        case 7:                                                     \
+            PUSH(CHAR_VAL((char)c.value));                          \
             break;                                                  \
         default:                                                    \
             fprintf(stderr, "Invalid num type\n");                  \
@@ -222,7 +238,6 @@ void ciam_vm_run(ciam_vm_t *vm)
         DISPATCH();
     OP_ADD_I8:
         code = CODE();
-        PRINT_DEBUG(CURRENT_CODE);
         {
             int64_t a_val = 0;
             int64_t b_val = 0;
@@ -231,11 +246,11 @@ void ciam_vm_run(ciam_vm_t *vm)
             PUSH(I8_VAL((int8_t)(a_val + b_val)));
             DEC_SP(1);
         }
+        PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
     OP_ADD_I16:
         code = CODE();
-        PRINT_DEBUG(CURRENT_CODE);
         {
             int64_t a_val = 0;
             int64_t b_val = 0;
@@ -244,11 +259,11 @@ void ciam_vm_run(ciam_vm_t *vm)
             PUSH(I16_VAL((int16_t)(a_val + b_val)));
             DEC_SP(1);
         }
+        PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
     OP_ADD_I32:
         code = CODE();
-        PRINT_DEBUG(CURRENT_CODE);
         {
             int64_t a_val = 0;
             int64_t b_val = 0;
@@ -256,12 +271,12 @@ void ciam_vm_run(ciam_vm_t *vm)
             BINARY_I(b, b_val, +);
             PUSH(I32_VAL((int32_t)(a_val + b_val)));
             DEC_SP(1);
+            PRINT_DEBUG(CURRENT_CODE);
         }
         PC++;
         DISPATCH();
     OP_ADD_I64:
         code = CODE();
-        PRINT_DEBUG(CURRENT_CODE);
         {
             int64_t a_val = 0;
             int64_t b_val = 0;
@@ -270,6 +285,7 @@ void ciam_vm_run(ciam_vm_t *vm)
             PUSH(I64_VAL(a_val + b_val));
             DEC_SP(1);
         }
+        PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
     OP_ADD_F:
@@ -284,7 +300,6 @@ void ciam_vm_run(ciam_vm_t *vm)
         DISPATCH();
     OP_SUB_I8:
         code = CODE();
-        PRINT_DEBUG(CURRENT_CODE);
         {
             int64_t a_val = 0;
             int64_t b_val = 0;
@@ -293,11 +308,11 @@ void ciam_vm_run(ciam_vm_t *vm)
             PUSH(I8_VAL((int8_t)(b_val - a_val)));
             DEC_SP(1);
         }
+        PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
     OP_SUB_I16:
         code = CODE();
-        PRINT_DEBUG(CURRENT_CODE);
         {
             int64_t a_val = 0;
             int64_t b_val = 0;
@@ -306,11 +321,11 @@ void ciam_vm_run(ciam_vm_t *vm)
             PUSH(I16_VAL((int16_t)(b_val - a_val)));
             DEC_SP(1);
         }
+        PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
     OP_SUB_I32:
         code = CODE();
-        PRINT_DEBUG(CURRENT_CODE);
         {
             int64_t a_val = 0;
             int64_t b_val = 0;
@@ -319,11 +334,11 @@ void ciam_vm_run(ciam_vm_t *vm)
             PUSH(I32_VAL((int32_t)(b_val - a_val)));
             DEC_SP(1);
         }
+        PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
     OP_SUB_I64:
         code = CODE();
-        PRINT_DEBUG(CURRENT_CODE);
         {
             int64_t a_val = 0;
             int64_t b_val = 0;
@@ -332,6 +347,7 @@ void ciam_vm_run(ciam_vm_t *vm)
             PUSH(I64_VAL(b_val - a_val));
             DEC_SP(1);
         }
+        PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
     OP_SUB_F:
@@ -416,22 +432,19 @@ void ciam_vm_run(ciam_vm_t *vm)
         DISPATCH();
     OP_PRINT: // TODO: This is quite clumsy right now. Need to figure out a better way to print multiple values.
         code = CODE();
-        PRINT_DEBUG(CURRENT_CODE);
         {
             int64_t index = code.opnd1 - 1;
-            value_t vals[code.opnd1];
             while (index >= 0)
             {
-                vals[index] = POP(); 
+                value_t val = POP();
+                if (index != (int64_t)(code.opnd1 - 1)) printf(" ");
+                print_value(val);
                 DEC_SP(1);
                 index--;
             }
-            for (uint64_t i = 0; i < code.opnd1; i++)
-            {
-                if (i != 0) printf(" ");
-                print_value(vals[i]);
-            }
+            printf("\n");
         }
+        PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
     OP_HLT:
