@@ -3,6 +3,7 @@
 #ifndef CIAM_OPCODE_H_
 #define CIAM_OPCODE_H_
 
+
 #define OPCODE_LIST                             \
     X(LOAD_CONST,   0, 1,   "LOAD_CONST"    )   \
     X(NOP,          1, 0,   "OP_NOP"        )   \
@@ -36,14 +37,13 @@
     X(HLT,         29, 0,   "OP_HLT"        )   \
     X(LOAD_IMM,    30, 1,   "OP_LOAD_IMM"   )   \
     X(LOAD_NULL,   31, 0,   "OP_LOAD_NULL"  )   \
-    X(PRINT,       32, 0,   "PRINT"         )   \
-    X(LOAD_STRING, 33, 0,   "LOAD_STRING"   )   \
+    X(LOAD_STRING, 32, 0,   "LOAD_STRING"   )   \
+    X(CALL,        33, 1,   "CALL"          )   \
 
 typedef enum {
 #define X(kind, id, has_operand, label) kind = id,
     OPCODE_LIST
 #undef X
 } opcode_const_t;
-
 
 #endif // CIAM_OPCODE_H_

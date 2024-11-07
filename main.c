@@ -19,7 +19,6 @@
 #include <time.h>
 #include <string.h>
 #include <float.h>
-#include <math.h>
 
 
 char default_source[] = "./test/expr3.isl";

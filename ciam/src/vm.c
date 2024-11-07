@@ -3,6 +3,7 @@
 #include "util.h"
 #include "macros.h"
 #include "helpers.h"
+#include "native.h"
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -115,7 +116,10 @@ static char* op_label[] = {
             fprintf(stderr, "Invalid num type\n");                  \
             exit(1);                                                \
     }                                                               \
-} while (false)                                                     \
+} while (false)                                                     
+
+#define CALL_MASK   0x0FFFFFFFFFFFFFFF
+                    
 
 
 static void init_main_thread(ciam_vm_t* vm)
@@ -431,35 +435,54 @@ void ciam_vm_run(ciam_vm_t *vm)
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
-    OP_PRINT: // TODO: This is quite clumsy right now. Need to figure out a better way to print multiple values.
-        code = CODE();
-        {
-            int64_t index = code.opnd1 - 1;
-            while (index >= 0)
-            {
-                value_t val = POP();
-                if (index != (int64_t)(code.opnd1 - 1)) printf(" ");
-                print_value(val);
-                DEC_SP(1);
-                index--;
-            }
-            printf("\n");
-        }
-        PRINT_DEBUG(CURRENT_CODE);
-        PC++;
-        DISPATCH();
-    OP_LOAD_STRING:
+    OP_LOAD_STRING: // This needs refactoring to compose allocation and make obj handling more generic
         code = CODE();
         string_const_t str = vm->module->pool.strings.strings[code.opnd1];
-        obj_string_t* obj_str = (obj_string_t*)malloc(sizeof(obj_string_t));
-        obj_str->chars = (char*)malloc(sizeof(char) * str.length);
+        obj_string_t* obj_str = (obj_string_t*)calloc(1, sizeof(obj_string_t));
+        obj_str->chars = (char*)calloc(str.length, sizeof(char));
+        obj_str->length = str.length;
         memcpy(obj_str->chars, str.chars, str.length);
-        obj_str->chars[str.length] = '\0';
         obj_t* obj = (obj_t*)obj_str;
         obj->obj_type = OBJ_STRING;
         obj->marked = false;
         obj->next = NULL;
+        if (NULL != vm->heap)
+            obj->next = vm->heap;
+        vm->heap = obj;
         PUSH(OBJ_VAL(obj));
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_CALL: // This needs a refactoring to support generic call mechinasm (and not just for native calls)
+        code = CODE();
+        // int8_t const_idx = (int8_t)(code.opnd1 & ((~CALL_MASK) >> 60)); Will be used to index the cont pool
+        int64_t arg_count = code.opnd1 & CALL_MASK;
+        value_t val = POP();
+        DEC_SP(1);
+        if (VAL_OBJECT == val.type)
+        {
+            if (val.as.obj->obj_type == OBJ_STRING)
+            {
+                obj_string_t* obj_str = (obj_string_t*)val.as.obj;
+
+                native_ptr_t nat_ptr = get_native(obj_str->chars);
+                if (!nat_ptr)
+                {
+                    fprintf(stderr, "Unknown native! Aborting...\n");
+                    exit(EXIT_FAILURE);
+                }
+
+                value_t vals[arg_count];
+
+                int64_t index = 0;
+                while (index < arg_count)
+                {
+                    vals[index++] = POP();
+                    DEC_SP(1);
+                }
+                nat_ptr(vm, vals, (size_t)arg_count);
+            }
+        }
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
@@ -499,6 +522,7 @@ void display_init_message(ciam_vm_t* vm)
     printf("---------------------------------\n");
 }
 
+#undef CALL_MASK
 #undef BINARY_I
 #undef LOAD
 #undef CURRENT_CODE

@@ -1,4 +1,4 @@
 
 entry {
-    print("Hello, Sailor!");
+    print("Hello, Sailor!" );
 }

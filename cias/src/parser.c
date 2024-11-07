@@ -296,6 +296,11 @@ ast_exp_t* call(arena_t* arena, parser_t* parser, ast_exp_t* left, bool /*can_as
     }
     else advance(parser); // Eat the closing ')' symbol
 
+    char* calle_name = left->as_var.name;
+    memset(left, '\0', sizeof(ast_exp_t));
+    left->kind = STRING_LITERAL;
+    left->as_str.STRING = calle_name;
+
     return new_exp(arena, (ast_exp_t) 
             { 
               .kind = CALLABLE, 

@@ -60,7 +60,7 @@ struct obj_t {
 
 struct obj_string_t {
     obj_t               obj;
-    size_t              length;
+    uint32_t            length;
     char*               chars;
 };
 

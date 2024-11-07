@@ -6,6 +6,10 @@
 #include "ast.h"
 
 
+#define NATIVE_LIST     \
+    X("print")          \
+    
+
 typedef struct {
     module_t*   compiled_m;
     code_da*    code_da;

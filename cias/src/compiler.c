@@ -50,11 +50,11 @@ static num_const_t emit_num_const(ast_exp_t* exp)
     return num;
 }
 
-static string_const_t emit_string_const(ast_exp_t* exp)
+static string_const_t emit_string_exp(ast_exp_t* exp)
 {
     string_const_t str = {0};
     str.length = strlen(exp->as_str.STRING);
-    str.chars = exp->as_str.STRING;
+    str.chars = exp->as_str.STRING; // This comes from an arena in case of vars
     return str;
 }
 
@@ -84,7 +84,7 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
         case STRING_LITERAL:
             code.op = LOAD_STRING;
             code.opnd1 = (opnd_t)const_str_index;
-            compiler->compiled_m->pool.strings.strings[const_str_index++] = emit_string_const(exp);
+            compiler->compiled_m->pool.strings.strings[const_str_index++] = emit_string_exp(exp);
             break;
         case BINARY_OP:
             compile_expr(compiler, exp->as_bin.left);
@@ -92,7 +92,7 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
             code.op = get_binary_opcode(*exp->as_bin.op, exp);
             break;
         case CALLABLE:
-            if (strcmp(exp->as_call.callee_name->as_var.name, "print") == 0)
+            if (strcmp(exp->as_call.callee_name->as_str.STRING, "print") == 0)
             {
                 arg_list_t* head = exp->as_call.args;
                 int64_t arg_num = 0;
@@ -102,8 +102,9 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
                     head = head->next;
                     arg_num++;
                 }
-                code.op = PRINT;
-                code.opnd1 = arg_num;
+                compile_expr(compiler, exp->as_call.callee_name);
+                code.op = CALL;
+                code.opnd1 = arg_num | ((uint64_t)0xF << 60);
             }
             break;
         default:
@@ -177,7 +178,7 @@ void init_module(compiler_t* compiler)
 {
     compiler->compiled_m = (module_t*)calloc(1, sizeof(module_t));
     compiler->compiled_m->pool.numbers.nums = (num_const_t*)calloc(15, sizeof(num_const_t)); // TODO: hardcoded. fix it!
-    compiler->compiled_m->pool.strings.strings = (string_const_t*)calloc(15, sizeof(string_const_t));
+    compiler->compiled_m->pool.strings.strings = (string_const_t*)calloc(15, sizeof(string_const_t)); // TODO: hardcoded. fix it!
     compiler->code_da = (code_da*)calloc(1, sizeof(code_da));
     init_code_da(compiler->code_da);
 }
