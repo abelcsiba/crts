@@ -50,8 +50,7 @@ static char* op_label[] = {
 
 #define PC                          vm->threads[0].ip
 #define PUSH(X)                     do { push_stack(&vm->threads[0].stack, X); vm->threads[0].sp++; } while (false)
-#define POP()                       pop_stack(&vm->threads[0].stack)
-#define DEC_SP(X)                   do { vm->threads[0].sp -= X; } while (false)
+#define POP()                       (vm->threads[0].sp--, pop_stack(&vm->threads[0].stack))
 #define POP_TOP                     pop_top_stack(&vm->threads[0].stack)
 #define DISPATCH()                  do { if(PC >= vm->module->code_size) return; goto *jump_table[vm->module->code[PC].op]; } while (false)
 #define CODE()                      vm->module->code[PC]
@@ -233,7 +232,6 @@ void ciam_vm_run(ciam_vm_t *vm)
         code = CODE();
         PRINT_DEBUG(CURRENT_CODE);
         POP();
-        DEC_SP(1);
         PC++;
         DISPATCH();
     OP_TOS: // Is this necessary? Prob not.
@@ -249,7 +247,6 @@ void ciam_vm_run(ciam_vm_t *vm)
             BINARY_I(a, a_val, +);
             BINARY_I(b, b_val, +);
             PUSH(I8_VAL((int8_t)(a_val + b_val)));
-            DEC_SP(1);
         }
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
@@ -262,7 +259,6 @@ void ciam_vm_run(ciam_vm_t *vm)
             BINARY_I(a, a_val, +);
             BINARY_I(b, b_val, +);
             PUSH(I16_VAL((int16_t)(a_val + b_val)));
-            DEC_SP(1);
         }
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
@@ -275,7 +271,6 @@ void ciam_vm_run(ciam_vm_t *vm)
             BINARY_I(a, a_val, +);
             BINARY_I(b, b_val, +);
             PUSH(I32_VAL((int32_t)(a_val + b_val)));
-            DEC_SP(1);
             PRINT_DEBUG(CURRENT_CODE);
         }
         PC++;
@@ -288,7 +283,6 @@ void ciam_vm_run(ciam_vm_t *vm)
             BINARY_I(a, a_val, +);
             BINARY_I(b, b_val, +);
             PUSH(I64_VAL(a_val + b_val));
-            DEC_SP(1);
         }
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
@@ -311,7 +305,6 @@ void ciam_vm_run(ciam_vm_t *vm)
             BINARY_I(a, a_val, +);
             BINARY_I(b, b_val, +);
             PUSH(I8_VAL((int8_t)(b_val - a_val)));
-            DEC_SP(1);
         }
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
@@ -324,7 +317,6 @@ void ciam_vm_run(ciam_vm_t *vm)
             BINARY_I(a, a_val, +);
             BINARY_I(b, b_val, +);
             PUSH(I16_VAL((int16_t)(b_val - a_val)));
-            DEC_SP(1);
         }
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
@@ -337,7 +329,6 @@ void ciam_vm_run(ciam_vm_t *vm)
             BINARY_I(a, a_val, +);
             BINARY_I(b, b_val, +);
             PUSH(I32_VAL((int32_t)(b_val - a_val)));
-            DEC_SP(1);
         }
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
@@ -350,7 +341,6 @@ void ciam_vm_run(ciam_vm_t *vm)
             BINARY_I(a, a_val, +);
             BINARY_I(b, b_val, +);
             PUSH(I64_VAL(b_val - a_val));
-            DEC_SP(1);
         }
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
@@ -458,7 +448,6 @@ void ciam_vm_run(ciam_vm_t *vm)
         // int8_t const_idx = (int8_t)(code.opnd1 & ((~CALL_MASK) >> 60)); Will be used to index the cont pool
         int64_t arg_count = code.opnd1 & CALL_MASK;
         value_t val = POP();
-        DEC_SP(1);
         if (VAL_OBJECT == val.type)
         {
             if (val.as.obj->obj_type == OBJ_STRING)
@@ -476,13 +465,27 @@ void ciam_vm_run(ciam_vm_t *vm)
 
                 int64_t index = 0;
                 while (index < arg_count)
-                {
                     vals[index++] = POP();
-                    DEC_SP(1);
+
+                value_t ret = nat_ptr(vm, vals, (size_t)arg_count);
+                if (VAL_VOID != ret.type)
+                {
+                    if (VAL_OBJECT == ret.type)
+                    {
+                        ret.as.obj->next = vm->heap;
+                        vm->heap = ret.as.obj;
+                    }
+                    PUSH(ret);
                 }
-                nat_ptr(vm, vals, (size_t)arg_count);
             }
         }
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_ASSIGN:
+        code = CODE();
+        int64_t rel_idx = code.opnd1;
+        vm->threads[0].stack.slots[vm->threads[0].bp + rel_idx] = POP();
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();

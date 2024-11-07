@@ -1,4 +1,5 @@
 
 entry {
-    print("Hello, Sailor!" );
+    read("What's your name?");
+    print("Hello, darling!");
 }

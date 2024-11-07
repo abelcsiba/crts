@@ -16,6 +16,8 @@
     X(VAL_BOOL,     "BOOL")     \
     X(VAL_CHAR,     "CHAR")     \
     X(VAL_OBJECT,   "OBJECT")   \
+    X(VAL_VOID,     "VOID")     \
+    
 
 typedef enum {
     #define X(type, str) type,

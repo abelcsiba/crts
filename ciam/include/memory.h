@@ -13,7 +13,7 @@ typedef uint64_t              u64;
 typedef int64_t               i64;
 
 #define MAX_THREAD_COUNT      8
-#define STACK_MAX_SIZE        10 * 1000 * 1000 // TODO: Change hardcoded stack size to dynamic realloc
+#define STACK_MAX_SIZE        10 * 1000 * 1000 // TODO: Change hardcoded stack size
 #define MAX_WORKER_STACK      1000
 
 typedef struct {

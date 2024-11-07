@@ -17,7 +17,7 @@ static parse_rule_t parse_table[] = {
     [TOKEN_COMMA]           = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL       },
     [TOKEN_DOT]             = { .prec = PREC_CALL,          .prefix = NULL,     .infix = invoke     },
     [TOKEN_EOF]             = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL       },
-    [TOKEN_EQUAL]           = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL       },
+    [TOKEN_EQUAL]           = { .prec = PREC_NONE,          .prefix = NULL,     .infix = assign     },
     [TOKEN_EQUAL_EQUAL]     = { .prec = PREC_EQUALITY,      .prefix = NULL,     .infix = binary     },
     [TOKEN_FALSE]           = { .prec = PREC_NONE,          .prefix = boolean,  .infix = NULL       },
     [TOKEN_GREATER]         = { .prec = PREC_COMPARISON,    .prefix = NULL,     .infix = binary     },
@@ -226,6 +226,12 @@ ast_exp_t* boolean(arena_t* arena, parser_t* /*parser*/, token_t token)
             });
 }
 
+ast_exp_t* assign(arena_t* /*arena*/, parser_t* /*parser*/, ast_exp_t* /*left*/, bool /*can_assign*/)
+{
+    // TODO: Implement
+    return NULL;
+}
+
 ast_exp_t* null_(arena_t* arena, parser_t* /*parser*/, token_t /*token*/)
 {
      return new_exp(arena, (ast_exp_t)
@@ -307,7 +313,7 @@ ast_exp_t* call(arena_t* arena, parser_t* parser, ast_exp_t* left, bool /*can_as
               .type_info = UNKNOWN, 
               .as_call = (struct ast_callable)
                             { 
-                              .args = head,
+                              .args = (head->exp != NULL ) ? head : NULL,
                               .callee_name = left
                             }
             });

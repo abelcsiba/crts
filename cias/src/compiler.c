@@ -106,6 +106,20 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
                 code.op = CALL;
                 code.opnd1 = arg_num | ((uint64_t)0xF << 60);
             }
+            if (strcmp(exp->as_call.callee_name->as_str.STRING, "read") == 0)
+            {
+                arg_list_t* head = exp->as_call.args;
+                int64_t arg_num = 0;
+                while (head != NULL)
+                {
+                    compile_expr(compiler, head->exp);
+                    head = head->next;
+                    arg_num++;
+                }
+                compile_expr(compiler, exp->as_call.callee_name);
+                code.op = CALL;
+                code.opnd1 = arg_num | ((uint64_t)0xF << 60);
+            }
             break;
         default:
             printf("Unrecognized expression\n");

@@ -70,7 +70,7 @@ int main(int argc, char** argv)
 
 #if DEBUG
   print_cu(stdout, cu);
- #endif
+#endif
 
   analyzer_t analyzer = {0};
   init_global_scope(&analyzer);

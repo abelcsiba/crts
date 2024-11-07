@@ -31,5 +31,5 @@ $(LIB_DIR) $(OBJ_DIR):
 	mkdir -p $@
 
 clean:
-	@$(RM) -rv $(LIB_DIR) $(OBJ_DIR)
+	@$(RM) -rfv $(LIB_DIR) $(OBJ_DIR)
 
