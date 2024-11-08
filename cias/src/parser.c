@@ -17,7 +17,7 @@ static parse_rule_t parse_table[] = {
     [TOKEN_COMMA]           = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL       },
     [TOKEN_DOT]             = { .prec = PREC_CALL,          .prefix = NULL,     .infix = invoke     },
     [TOKEN_EOF]             = { .prec = PREC_NONE,          .prefix = NULL,     .infix = NULL       },
-    [TOKEN_EQUAL]           = { .prec = PREC_NONE,          .prefix = NULL,     .infix = assign     },
+    [TOKEN_EQUAL]           = { .prec = PREC_ASSIGNMENT,    .prefix = NULL,     .infix = assign     },
     [TOKEN_EQUAL_EQUAL]     = { .prec = PREC_EQUALITY,      .prefix = NULL,     .infix = binary     },
     [TOKEN_FALSE]           = { .prec = PREC_NONE,          .prefix = boolean,  .infix = NULL       },
     [TOKEN_GREATER]         = { .prec = PREC_COMPARISON,    .prefix = NULL,     .infix = binary     },
@@ -226,10 +226,33 @@ ast_exp_t* boolean(arena_t* arena, parser_t* /*parser*/, token_t token)
             });
 }
 
-ast_exp_t* assign(arena_t* /*arena*/, parser_t* /*parser*/, ast_exp_t* /*left*/, bool /*can_assign*/)
+ast_exp_t* assign(arena_t* arena, parser_t* parser, ast_exp_t* left, bool /*can_assign*/)
 {
-    // TODO: Implement
-    return NULL;
+    if (VARIABLE != left->kind)
+    {
+        error_exp(parser, "Invalid assignment. Only variable as left hand value allowed");
+        return NULL;
+    }
+    ast_exp_t* right = parse_expression(arena, parser, parse_table[TOKEN_EQUAL].prec);
+    if (NULL == right) 
+    {
+        error_exp(parser, "Invalid expression");
+        return NULL;
+    }
+    char* op = (char*)arena_alloc(arena, 2);
+    op[0] = '=';
+    op[1] = '\0';
+    return new_exp(arena, (ast_exp_t) 
+            { 
+              .kind = ASSIGNMENT, 
+              .type_info = UNKNOWN, 
+              .as_bin = (struct ast_binary)
+                            { 
+                              .op = op, 
+                              .left = left, 
+                              .right = right
+                            }
+            });
 }
 
 ast_exp_t* null_(arena_t* arena, parser_t* /*parser*/, token_t /*token*/)

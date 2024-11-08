@@ -41,6 +41,12 @@ void print_code(FILE* out, code_t* code, int count)
             case LOAD_CONST:
                 fprintf(out, "LOAD_CONST %ld\n", code[i].opnd1);
                 break;
+            case LOAD_LOCAL:
+                fprintf(out, "LOAD_LOCAL %ld\n", code[i].opnd1);
+                break;
+            case STORE_LOCAL:
+                fprintf(out, "STORE LOCAL %ld\n", code[i].opnd1);
+                break;
             case ADD_I8:
                 fprintf(out, "ADD_I8\n");
                 break;

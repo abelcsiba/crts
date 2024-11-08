@@ -8,7 +8,7 @@
     X(LOAD_CONST,   0, 1,   "LOAD_CONST"    )   \
     X(NOP,          1, 0,   "OP_NOP"        )   \
     X(PUSH,         2, 0,   "OP_PUSH"       )   \
-    X(POP_TOP,      3, 0,   "OP_OPO_TOP"    )   \
+    X(POP_TOP,      3, 0,   "OP_POP_TOP"    )   \
     X(TOS,          4, 0,   "OP_TOS"        )   \
     X(ADD_I8,       5, 0,   "OP_ADD_I8"     )   \
     X(ADD_I16,      6, 0,   "OP_ADD_I16"    )   \
@@ -39,7 +39,9 @@
     X(LOAD_NULL,   31, 0,   "OP_LOAD_NULL"  )   \
     X(LOAD_STRING, 32, 0,   "LOAD_STRING"   )   \
     X(CALL,        33, 1,   "CALL"          )   \
-    X(ASSIGN,      34, 1,   "ASSIGN"        )   \
+    X(STORE_LOCAL, 34, 1,   "STORE_LOCAL"   )   \
+    X(LOAD_LOCAL,  35, 1,   "LOAD_LOCAL"    )   \
+
 
 typedef enum {
 #define X(kind, id, has_operand, label) kind = id,

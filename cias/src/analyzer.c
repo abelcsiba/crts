@@ -122,20 +122,29 @@ expr_type_t resolve_exp_type(analyzer_t* analyzer, ast_exp_t* exp)
         case BOOL_LITERAL:
             return BOOL;
         case VARIABLE:
-        expr_type_t var_ty = var_exists(analyzer->scope, exp->as_var.name);
+            expr_type_t var_ty = var_exists(analyzer->scope, exp->as_var.name);
             if (ERROR != var_ty)
             {
                 fprintf(stderr, "Undeclared variable usage\n");
                 exit(EXIT_FAILURE);
             }
             return var_ty;
-        case BINARY_OP:
+        case BINARY_OP: {
             expr_type_t lht     = resolve_exp_type(analyzer, exp->as_bin.left);
             expr_type_t rht     = resolve_exp_type(analyzer, exp->as_bin.right);
             expr_type_t et_bin  = resolve_bin_type(analyzer, exp->as_bin.op, lht, rht);
             ERROR_CHECK(et_bin);
             exp->target_type = et_bin;
             return et_bin;
+        }
+        case ASSIGNMENT: {
+            expr_type_t lht     = resolve_exp_type(analyzer, exp->as_bin.left);
+            expr_type_t rht     = resolve_exp_type(analyzer, exp->as_bin.right);
+            expr_type_t et_asn  = resolve_bin_type(analyzer, exp->as_bin.op, lht, rht);
+            ERROR_CHECK(et_asn);
+            exp->target_type = et_asn;
+            return et_asn;
+        }
         case UNARY_OP:
             expr_type_t et_un   = resolve_exp_type(analyzer, exp->as_un.expr);
             expr_type_t rt      = resolve_un_type(analyzer, exp->as_un.op, et_un);
@@ -230,7 +239,7 @@ bool check_stmt(analyzer_t* analyzer, ast_stmt_t* stmt)
             if (type == ERROR) return false;
             if (type == stmt->as_decl.type) 
             {
-                if (ERROR != var_exists(analyzer->scope, stmt->as_decl.name))
+                if (ERROR != var_exists(analyzer->scope, stmt->as_decl.name)) // TODO: Consider shadowing
                 {
                     add_to_scope(analyzer->scope, stmt->as_decl.name, type);
                     return true;

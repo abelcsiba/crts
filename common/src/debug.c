@@ -108,6 +108,11 @@ void print_ast_exp(FILE* out, ast_exp_t *exp)
             print_ast_exp(out, exp->as_un.expr);
             fprintf(out, ")");
             break;
+        case ASSIGNMENT:
+            print_ast_exp(out, exp->as_bin.left);
+            fprintf(out, " = ");
+            print_ast_exp(out, exp->as_bin.right);
+            break;
         default:
             fprintf(out, "UNKNOWN");
             break;

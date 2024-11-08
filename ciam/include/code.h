@@ -11,7 +11,7 @@
 #include <stdio.h>
 
 typedef uint8_t opcode_t;
-typedef uint64_t opnd_t;
+typedef int64_t opnd_t;
 
 typedef struct {
     opcode_t            op;

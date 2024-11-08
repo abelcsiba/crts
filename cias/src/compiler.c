@@ -7,8 +7,80 @@
 static int const_num_index = 0;
 static int const_str_index = 0;
 
+static void enter_scope(compiler_t* compiler)
+{
+    compiler->scope_depth++;
+}
 
-opcode_t get_binary_opcode(const char op_c, ast_exp_t* exp)
+static void exit_scope(compiler_t* compiler)
+{
+    compiler->scope_depth--;
+
+    code_t code = {0};
+    while (compiler->local_count > 0 && compiler->locals[compiler->local_count - 1].depth > compiler->scope_depth)
+    {
+        compiler->local_count--;
+        code.op = POP_TOP;
+        code.opnd1 = 0x00;
+        add_to_code_da(compiler->code_da, code);
+    }
+}
+
+static void add_local(compiler_t* compiler, char* const name)
+{
+    if (compiler->local_count == UINT16_COUNT)
+    {
+        fprintf(stderr, "Too many local variables defined\n");
+        exit(EXIT_FAILURE);
+    }
+    local_t* local = &compiler->locals[compiler->local_count++];
+    local->name = name;
+    local->depth = compiler->scope_depth;
+}
+
+static bool id_eq(const char* const a, const char* const b)
+{
+    if (strlen(a) != strlen(b))
+        return false;
+
+    return (memcmp(a, b, strlen(a)) == 0);
+}
+
+static void decl_var(compiler_t* compiler, char* const name)
+{
+    if (compiler->scope_depth == 0) return;
+
+    for (int i = compiler->local_count - 1; i >=0 ; i--)
+    {
+        local_t* local = &compiler->locals[i];
+        if (local->depth != -1 && local->depth < compiler->scope_depth)
+        {
+            break;
+        }
+
+        if (id_eq(name, local->name))
+        {
+            fprintf(stderr, "Variable already declared in this scope\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    add_local(compiler, name);
+}
+
+static int64_t resolve_local(compiler_t* compiler, char* const name)
+{
+    for (int64_t i = compiler->local_count - 1; i >=0; i--)
+    {
+        local_t* local = &compiler->locals[i];
+        if (id_eq(name, local->name))
+            return i;
+    }
+
+    return -1;
+}
+
+static opcode_t get_binary_opcode(const char op_c, ast_exp_t* exp)
 {
 #define BINARY(oper) do {                               \
     switch (exp->target_type)                           \
@@ -78,6 +150,29 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
             code.opnd1 = (opnd_t)const_num_index;
             compiler->compiled_m->pool.numbers.nums[const_num_index++] = emit_num_const(exp);
             break;
+        case VARIABLE: {
+            code.op = LOAD_LOCAL;
+            int64_t local_idx = resolve_local(compiler, exp->as_var.name);
+            // if (local_idx == -1) // TODO: Remove this test when the analyzer declaration check is done
+            // {
+            //     fprintf(stderr, "Cannot compile undeclared var '%s'\n", exp->as_var.name);
+            //     exit(EXIT_FAILURE);
+            // }
+            code.opnd1 = local_idx;
+            break;
+        }
+        case ASSIGNMENT: {
+            compile_expr(compiler, exp->as_bin.right);
+            code.op = STORE_LOCAL;
+            int64_t local_idx = resolve_local(compiler, exp->as_bin.left->as_var.name);
+            // if (local_idx == -1) // TODO: Remove this test when the analyzer declaration check is done
+            // {
+            //     fprintf(stderr, "Cannot compile undeclared var '%s'\n", exp->as_var.name);
+            //     exit(EXIT_FAILURE);
+            // }
+            code.opnd1 = local_idx;
+            break;
+        }
         case NULL_LITERAL:
             code.op = LOAD_NULL;
             break;
@@ -122,7 +217,7 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
             }
             break;
         default:
-            printf("Unrecognized expression\n");
+            fprintf(stderr, "Unrecognized expression\n");
             exit(EXIT_FAILURE);
             break;
     }
@@ -137,6 +232,7 @@ static void compile_stmt(compiler_t* compiler, ast_stmt_t* stmt)
             compile_expr(compiler, stmt->as_expr.exp);
             break;
         case VAR_DECL:
+            decl_var(compiler, stmt->as_decl.name);
             compile_expr(compiler, stmt->as_decl.exp);
             break;
         case IF_STMT:
@@ -147,8 +243,10 @@ static void compile_stmt(compiler_t* compiler, ast_stmt_t* stmt)
             break;
         case BLOCK_STMT:
             stmt_list_t* element = stmt->as_block.stmts;
+            enter_scope(compiler);
             for (;element != NULL; element = element->next)
                 compile_stmt(compiler, element->data);
+            exit_scope(compiler);
             break;
         case RETURN_STMT:
             compile_expr(compiler, stmt->as_expr.exp);
@@ -193,6 +291,8 @@ void init_module(compiler_t* compiler)
     compiler->compiled_m = (module_t*)calloc(1, sizeof(module_t));
     compiler->compiled_m->pool.numbers.nums = (num_const_t*)calloc(15, sizeof(num_const_t)); // TODO: hardcoded. fix it!
     compiler->compiled_m->pool.strings.strings = (string_const_t*)calloc(15, sizeof(string_const_t)); // TODO: hardcoded. fix it!
+    compiler->local_count = 0;
+    compiler->scope_depth = 0;
     compiler->code_da = (code_da*)calloc(1, sizeof(code_da));
     init_code_da(compiler->code_da);
 }

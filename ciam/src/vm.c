@@ -479,14 +479,25 @@ void ciam_vm_run(ciam_vm_t *vm)
                 }
             }
         }
-        PRINT_DEBUG(CURRENT_CODE);
+        PRINT_DEBUG_WIDE(CURRENT_CODE, arg_count);
         PC++;
         DISPATCH();
-    OP_ASSIGN:
+    OP_STORE_LOCAL:
         code = CODE();
-        int64_t rel_idx = code.opnd1;
-        vm->threads[0].stack.slots[vm->threads[0].bp + rel_idx] = POP();
-        PRINT_DEBUG(CURRENT_CODE);
+        {
+            int64_t rel_idx = code.opnd1;
+            vm->threads[0].stack.slots[vm->threads[0].bp + rel_idx] = POP();
+        }
+        PRINT_DEBUG_WIDE(CURRENT_CODE, code.opnd1);
+        PC++;
+        DISPATCH();
+    OP_LOAD_LOCAL:
+        code = CODE();
+        {
+            int64_t rel_idx = code.opnd1;
+            PUSH(vm->threads[0].stack.slots[vm->threads[0].bp + rel_idx]);
+        }
+        PRINT_DEBUG_WIDE(CURRENT_CODE, code.opnd1);
         PC++;
         DISPATCH();
     OP_HLT:

@@ -16,6 +16,7 @@ typedef enum {
     BOOL_LITERAL,
     VARIABLE,
     BINARY_OP,
+    ASSIGNMENT,
     UNARY_OP,
     CALLABLE
 } expr_kind_t;
@@ -159,6 +160,7 @@ struct ast_stmt_t {
             char*           name;
             expr_type_t     type;
             ast_exp_t*      exp;
+            int             index;
         } as_decl;
 
         struct {
