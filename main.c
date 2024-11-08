@@ -47,17 +47,17 @@ int main(int argc, char** argv)
   fread(buff, sizeof(char), length, fp);
 
   lexer_t lexer;
-  #if DEBUG
-    printf("\n\n");
-    print_header();
-  #endif
+#if DEBUG
+  printf("\n\n");
+  print_header();
+#endif
 
   lex(&lexer, buff);
 
-  #if DEBUG
-    print_tokens(&lexer.tokens);
-    print_footer();
-  #endif
+#if DEBUG
+  print_tokens(&lexer.tokens);
+  print_footer();
+#endif
 
   arena_t arena = {0};
   init_arena(&arena, ARENA_DEFAULT_BLOCK_SIZE);
@@ -97,7 +97,11 @@ int main(int argc, char** argv)
 
   ciam_vm_t *vm = ciam_vm_new();
   ciam_vm_load(vm, module);
-  ciam_vm_run(vm);
+  ciam_result_t rc = ciam_vm_run(vm);
+
+#if DEBUG
+  fprintf(stdout, "VM Execution result: %s\n", (rc == 0) ? "SUCCESS" : "FAILURE");
+#endif
 
   ciam_destroy_vm(vm);
   free(module->code);
@@ -111,5 +115,5 @@ closure:
   fclose(fp);
   free(buff);
   
-  return EXIT_SUCCESS;
+  return rc;
 }

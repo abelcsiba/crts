@@ -13,10 +13,15 @@ typedef uint32_t            u32;
 
 typedef struct ciam_vm_t    ciam_vm_t;
 
+typedef enum {
+    VM_SUCCESS  = 0,
+    VM_ERROR    = 1
+} ciam_result_t;
+
 // VM Management
 ciam_vm_t*      ciam_vm_new();
 void            ciam_vm_load(ciam_vm_t* vm, module_t* module);
-void            ciam_vm_run(ciam_vm_t *vm);
+ciam_result_t   ciam_vm_run(ciam_vm_t *vm);
 void            ciam_destroy_vm(ciam_vm_t* vm);
 
 // Misc

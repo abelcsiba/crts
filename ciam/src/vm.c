@@ -42,24 +42,24 @@ static void dump_stack(ciam_vm_t* vm)
 
 #if DEBUG
 static char* op_label[] = {
-#define X(kind, id, has_operand, label) [id] = label,
+#  define X(kind, id, has_operand, label) [id] = label,
     OPCODE_LIST
-#undef X
+#  undef X
 };
 #endif
 
 #define PC                          vm->threads[0].ip
 #define PUSH(X)                     do { push_stack(&vm->threads[0].stack, X); vm->threads[0].sp++; } while (false)
 #define POP()                       (vm->threads[0].sp--, pop_stack(&vm->threads[0].stack))
-#define POP_TOP                     pop_top_stack(&vm->threads[0].stack)
-#define DISPATCH()                  do { if(PC >= vm->module->code_size) return; goto *jump_table[vm->module->code[PC].op]; } while (false)
+#define POP_TOP                     (vm->threads[0].sp--, pop_top_stack(&vm->threads[0].stack))
+#define DISPATCH()                  do { if(PC >= vm->module->code_size) return VM_ERROR; goto *jump_table[vm->module->code[PC].op]; } while (false)
 #define CODE()                      vm->module->code[PC]
 #if DEBUG
-#define PRINT_DEBUG(op)             do { printf("  0x%02lX | %-14s |\n", PC, op); dump_stack(vm); } while(false)
-#define PRINT_DEBUG_WIDE(op, opnd)  do { printf("  0x%02lX | %-14s | %ld\n", PC, op, opnd); dump_stack(vm); } while (false)
+#  define PRINT_DEBUG(op)             do { printf("  0x%02lX | %-14s |\n", PC, op); dump_stack(vm); } while (false)
+#  define PRINT_DEBUG_WIDE(op, opnd)  do { printf("  0x%02lX | %-14s | %ld\n", PC, op, opnd); dump_stack(vm); } while (false)
 #else
-# define PRINT_DEBUG(op)             do {  } while(false)
-# define PRINT_DEBUG_WIDE(op, opnd)  do {  } while (false)
+#  define PRINT_DEBUG(op)             do {  } while (false)
+#  define PRINT_DEBUG_WIDE(op, opnd)  do {  } while (false)
 #endif
 #define CURRENT_CODE                op_label[vm->module->code[PC].op]
 #define LOAD()                      do {                            \
@@ -92,7 +92,7 @@ static char* op_label[] = {
             break;                                                  \
         default:                                                    \
             fprintf(stderr, "Invalid num type\n");                  \
-            exit(1);                                                \
+            return VM_ERROR;                                        \
     }                                                               \
 } while (false)                                                     
 #define BINARY_I(var, val, op) do {                                 \
@@ -113,13 +113,11 @@ static char* op_label[] = {
             break;                                                  \
         default:                                                    \
             fprintf(stderr, "Invalid num type\n");                  \
-            exit(1);                                                \
+            return VM_ERROR;                                        \
     }                                                               \
 } while (false)                                                     
 
 #define CALL_MASK   0x0FFFFFFFFFFFFFFF
-                    
-
 
 static void init_main_thread(ciam_vm_t* vm)
 {
@@ -199,7 +197,7 @@ void ciam_vm_load(ciam_vm_t* vm, module_t* module)
     vm->module = module;
 }
 
-void ciam_vm_run(ciam_vm_t *vm)
+ciam_result_t ciam_vm_run(ciam_vm_t *vm)
 {   
     static void* jump_table[] = { 
     #define X(kind, id, has_operand, label) &&OP_##kind,
@@ -458,7 +456,7 @@ void ciam_vm_run(ciam_vm_t *vm)
                 if (!nat_ptr)
                 {
                     fprintf(stderr, "Unknown native! Aborting...\n");
-                    exit(EXIT_FAILURE);
+                    return VM_ERROR;
                 }
 
                 value_t vals[arg_count];
@@ -502,11 +500,11 @@ void ciam_vm_run(ciam_vm_t *vm)
         DISPATCH();
     OP_HLT:
         PRINT_DEBUG(CURRENT_CODE);
-        return;
+        return VM_SUCCESS;
 
     /* We shouldn't reach here, so better abort now. */
     printf("We shouldn't reach this point. Aborting...\n");
-    exit(EXIT_FAILURE);
+    return VM_ERROR;
 }
 
 void display_init_message(ciam_vm_t* vm)
