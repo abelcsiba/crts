@@ -1,9 +1,9 @@
 CC=gcc
 CFLAGS=-Wall -Wextra -MMD -MP
 INCLUDES=-Iciam/include -Icias/include -Icommon/include
-LDFLAGS=-Lciam/lib/ -Lcias/lib/ -Lcommon/lib/
+LDFLAGS=-Lciam/lib/ -Lcias/lib/ -Lcommon/lib/ -Lcore/lib/
 
-LIBS=-lciam -lcias -lcommon -lm
+LIBS=-lciam -lcias -lcommon -lcore -lm
 
 SRC=main.c
 
@@ -17,11 +17,13 @@ CIAM_SRC=$(wildcard ciam/src/*.c)
 CIAS_SRC=$(wildcard cias/src/*.c)
 COMMON_SRC=$(wildcard common/src/*.c)
 
+CORE_SRC=$(wildcard core/src/*.c)
+
 DEPS=$(OBJ:.o=.d)
 
 .PHONY: all clean
 
-all: ciam/lib/libciam.so cias/lib/libcias.so common/lib/libcommon.so $(EXEC)
+all: ciam/lib/libciam.so cias/lib/libcias.so core/lib/libcore.so common/lib/libcommon.so $(EXEC)
 
 ciam/lib/libciam.so: $(CIAM_SRC)
 	$(MAKE) -C ciam
@@ -31,6 +33,9 @@ cias/lib/libcias.so: $(CIAS_SRC)
 
 common/lib/libcommon.so: $(COMMON_SRC)
 	$(MAKE) -C common
+
+core/lib/libcore.so: $(CORE_SRC)
+	$(MAKE) -C core
 
 $(EXEC): $(OBJ)
 	$(CC) $(OBJ) $(LDFLAGS) $(INCLUDES) $(LIBS) -o $@
