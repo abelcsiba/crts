@@ -41,6 +41,7 @@
     X(CALL,        33, 1,   "CALL"          )   \
     X(STORE_LOCAL, 34, 1,   "STORE_LOCAL"   )   \
     X(LOAD_LOCAL,  35, 1,   "LOAD_LOCAL"    )   \
+    X(TRAP,        36, 0,   "TRAP"          )   \
 
 
 typedef enum {

@@ -18,9 +18,15 @@ struct ciam_vm_t {
     u32                 current_thread_id;
     u32                 num_threads;
     obj_t*              heap;
+    cdb_cb_t            cb;
 
     module_t*           module;
 };
+
+void ciam_set_cbg(ciam_vm_t* vm, cdb_cb_t cb)
+{
+    vm->cb = cb;
+}
 
 #if DEBUG
 static void dump_stack(ciam_vm_t* vm)
@@ -498,6 +504,10 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         PRINT_DEBUG_WIDE(CURRENT_CODE, code.opnd1);
         PC++;
         DISPATCH();
+    OP_TRAP:
+        code = CODE();
+        CODE().op = vm->cb(vm);
+        DISPATCH();
     OP_HLT:
         PRINT_DEBUG(CURRENT_CODE);
         return VM_SUCCESS;
@@ -505,6 +515,13 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
     /* We shouldn't reach here, so better abort now. */
     printf("We shouldn't reach this point. Aborting...\n");
     return VM_ERROR;
+}
+
+opcode_t ciam_trap(ciam_vm_t* vm, u64 bp_addr)
+{
+    opcode_t orig_op = vm->module->code[bp_addr].op;
+    vm->module->code[bp_addr].op = TRAP;
+    return orig_op;
 }
 
 void display_init_message(ciam_vm_t* vm)

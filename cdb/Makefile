@@ -14,7 +14,7 @@ OBJECT_FILES=$(SOURCE_FILES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 RM=rm
 
-TARGET=$(LIB_DIR)/libciam.so
+TARGET=$(LIB_DIR)/libcdb.so
 
 .PHONY: all clean
 
@@ -31,4 +31,3 @@ $(LIB_DIR) $(OBJ_DIR):
 
 clean:
 	@$(RM) -rfv $(LIB_DIR) $(OBJ_DIR)
-
