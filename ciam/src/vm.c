@@ -432,8 +432,8 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
     OP_LOAD_STRING: // This needs refactoring to compose allocation and make obj handling more generic
         code = CODE();
         string_const_t str = vm->module->pool.strings.strings[code.opnd1];
-        obj_string_t* obj_str = (obj_string_t*)calloc(1, sizeof(obj_string_t));
-        obj_str->chars = (char*)calloc(str.length, sizeof(char));
+        obj_string_t* obj_str = (obj_string_t*)calloc(1, sizeof(obj_string_t)); // TODO: move to a centralized allocator for GC
+        obj_str->chars = (char*)calloc(str.length, sizeof(char)); // TODO: move to a centralized allocator for GC
         obj_str->length = str.length;
         memcpy(obj_str->chars, str.chars, str.length);
         obj_t* obj = (obj_t*)obj_str;
@@ -447,7 +447,7 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
-    OP_CALL: // This needs a refactoring to support generic call mechinasm (and not just for native calls)
+    OP_CALL: // This needs a refactoring to support generic call mechanism (and not just for native/core calls)
         code = CODE();
         // int8_t const_idx = (int8_t)(code.opnd1 & ((~CALL_MASK) >> 60)); Will be used to index the cont pool
         int64_t arg_count = code.opnd1 & CALL_MASK;

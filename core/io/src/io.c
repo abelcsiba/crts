@@ -16,5 +16,6 @@ value_t max(struct ciam_vm_t* /*vm*/, value_t* values, size_t argc)
         fprintf(stderr, "Type conversion is not allowed yet\n");
         exit(EXIT_FAILURE);
     }
+    
     return (a.as.i16 > b.as.i16) ? a : b;
 }
