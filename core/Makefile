@@ -3,19 +3,23 @@ CC=gcc
 CFLAGS= -fPIC -Iinclude/ -I../common/include/ -I../ciam/include/
 WFLAGS=-Wall -Wextra
 
+MODULE_DIRS=io
 TARGET=core
 
 .PHONY: all clean io
 
 all: $(TARGET)
 
-$(TARGET): io
+$(TARGET): $(MODULE_DIRS)
 	@echo "Compiling core modules"
 
-io:
+$(MODULE_DIRS):
 	@echo "Compiling io module"
-	$(MAKE) -C io all
+	$(MAKE) -C $@ all
 	@echo "Compiled io module"
 
 clean:
-	$(MAKE) -C io clean
+	@for mod_dir in $(MODULE_DIRS); do 		\
+		$(MAKE) -C $$mod_dir clean;			\
+	done
+
