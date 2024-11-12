@@ -1,5 +1,5 @@
 
-CC=gcc
+CC=cc
 CFLAGS= -fPIC -Iinclude -I../ciam/include/ -I../cias/include/
 WFLAGS=-Wall -Wextra
 

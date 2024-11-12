@@ -1,4 +1,4 @@
-CC=gcc
+CC=cc
 CFLAGS=-Wall -Wextra -MMD -MP
 INCLUDES=-Iciam/include -Icias/include -Icommon/include
 LDFLAGS=-Lciam/lib/ -Lcias/lib/ -Lcommon/lib/
