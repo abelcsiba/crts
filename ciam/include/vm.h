@@ -13,7 +13,7 @@ typedef uint32_t            u32;
 
 typedef struct ciam_vm_t    ciam_vm_t;
 
-typedef opcode_t (*cdb_cb_t)(ciam_vm_t*);
+typedef opcode_t (*cdb_cb_t)(ciam_vm_t*, i64 addr);
 
 typedef enum {
     VM_SUCCESS  = 0,

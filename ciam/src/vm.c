@@ -54,11 +54,12 @@ static char* op_label[] = {
 };
 #endif
 
+#define ERROR(Msg)                  do { fprintf(stderr, Msg "\n"); return VM_ERROR; } while (false)
 #define PC                          vm->threads[0].ip
 #define PUSH(X)                     do { push_stack(&vm->threads[0].stack, X); vm->threads[0].sp++; } while (false)
 #define POP()                       (vm->threads[0].sp--, pop_stack(&vm->threads[0].stack))
 #define POP_TOP                     (vm->threads[0].sp--, pop_top_stack(&vm->threads[0].stack))
-#define DISPATCH()                  do { if(PC >= vm->module->code_size) return VM_ERROR; goto *jump_table[vm->module->code[PC].op]; } while (false)
+#define DISPATCH()                  do { if(PC >= vm->module->code_size) ERROR("Invalid address"); goto *jump_table[vm->module->code[PC].op]; } while (false)
 #define CODE()                      vm->module->code[PC]
 #if DEBUG
 #  define PRINT_DEBUG(op)             do { printf("  0x%02lX | %-14s |\n", PC, op); dump_stack(vm); } while (false)
@@ -97,11 +98,10 @@ static char* op_label[] = {
             PUSH(CHAR_VAL((char)c.value));                          \
             break;                                                  \
         default:                                                    \
-            fprintf(stderr, "Invalid num type\n");                  \
-            return VM_ERROR;                                        \
+            ERROR("Invalid number type");                           \
     }                                                               \
 } while (false)                                                     
-#define BINARY_I(var, val, op) do {                                 \
+#define BINARY(var, val, op) do {                                   \
     value_t var##_tmp = POP();                                      \
     switch (var##_tmp.type)                                         \
     {                                                               \
@@ -117,9 +117,14 @@ static char* op_label[] = {
         case VAL_I64:                                               \
             val op##= var##_tmp.as.i64;                             \
             break;                                                  \
+        case VAL_FLOAT:                                             \
+            val op##= var##_tmp.as.flt;                             \
+            break;                                                  \
+        case VAL_DOUBLE:                                            \
+            val op##= var##_tmp.as.dbl;                             \
+            break;                                                  \
         default:                                                    \
-            fprintf(stderr, "Invalid num type\n");                  \
-            return VM_ERROR;                                        \
+            ERROR("Invalid number type");                           \
     }                                                               \
 } while (false)                                                     
 
@@ -248,8 +253,8 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         {
             int64_t a_val = 0;
             int64_t b_val = 0;
-            BINARY_I(a, a_val, +);
-            BINARY_I(b, b_val, +);
+            BINARY(a, a_val, +);
+            BINARY(b, b_val, +);
             PUSH(I8_VAL((int8_t)(a_val + b_val)));
         }
         PRINT_DEBUG(CURRENT_CODE);
@@ -260,8 +265,8 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         {
             int64_t a_val = 0;
             int64_t b_val = 0;
-            BINARY_I(a, a_val, +);
-            BINARY_I(b, b_val, +);
+            BINARY(a, a_val, +);
+            BINARY(b, b_val, +);
             PUSH(I16_VAL((int16_t)(a_val + b_val)));
         }
         PRINT_DEBUG(CURRENT_CODE);
@@ -272,8 +277,8 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         {
             int64_t a_val = 0;
             int64_t b_val = 0;
-            BINARY_I(a, a_val, +);
-            BINARY_I(b, b_val, +);
+            BINARY(a, a_val, +);
+            BINARY(b, b_val, +);
             PUSH(I32_VAL((int32_t)(a_val + b_val)));
             PRINT_DEBUG(CURRENT_CODE);
         }
@@ -284,8 +289,8 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         {
             int64_t a_val = 0;
             int64_t b_val = 0;
-            BINARY_I(a, a_val, +);
-            BINARY_I(b, b_val, +);
+            BINARY(a, a_val, +);
+            BINARY(b, b_val, +);
             PUSH(I64_VAL(a_val + b_val));
         }
         PRINT_DEBUG(CURRENT_CODE);
@@ -293,11 +298,25 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         DISPATCH();
     OP_ADD_F:
         code = CODE();
+        {
+            double a_val = 0;
+            double b_val = 0;
+            BINARY(a, a_val, +);
+            BINARY(b, b_val, +);
+            PUSH(FLOAT_VAL(a_val + b_val));
+        }
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
     OP_ADD_D:
         code = CODE();
+        {
+            double a_val = 0;
+            double b_val = 0;
+            BINARY(a, a_val, +);
+            BINARY(b, b_val, +);
+            PUSH(DOUBLE_VAL(a_val + b_val));
+        }
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
@@ -306,8 +325,8 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         {
             int64_t a_val = 0;
             int64_t b_val = 0;
-            BINARY_I(a, a_val, +);
-            BINARY_I(b, b_val, +);
+            BINARY(a, a_val, +);
+            BINARY(b, b_val, +);
             PUSH(I8_VAL((int8_t)(b_val - a_val)));
         }
         PRINT_DEBUG(CURRENT_CODE);
@@ -318,8 +337,8 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         {
             int64_t a_val = 0;
             int64_t b_val = 0;
-            BINARY_I(a, a_val, +);
-            BINARY_I(b, b_val, +);
+            BINARY(a, a_val, +);
+            BINARY(b, b_val, +);
             PUSH(I16_VAL((int16_t)(b_val - a_val)));
         }
         PRINT_DEBUG(CURRENT_CODE);
@@ -330,8 +349,8 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         {
             int64_t a_val = 0;
             int64_t b_val = 0;
-            BINARY_I(a, a_val, +);
-            BINARY_I(b, b_val, +);
+            BINARY(a, a_val, +);
+            BINARY(b, b_val, +);
             PUSH(I32_VAL((int32_t)(b_val - a_val)));
         }
         PRINT_DEBUG(CURRENT_CODE);
@@ -342,8 +361,8 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         {
             int64_t a_val = 0;
             int64_t b_val = 0;
-            BINARY_I(a, a_val, +);
-            BINARY_I(b, b_val, +);
+            BINARY(a, a_val, +);
+            BINARY(b, b_val, +);
             PUSH(I64_VAL(b_val - a_val));
         }
         PRINT_DEBUG(CURRENT_CODE);
@@ -351,11 +370,25 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         DISPATCH();
     OP_SUB_F:
         code = CODE();
+        {
+            double a_val = 0;
+            double b_val = 0;
+            BINARY(a, a_val, +);
+            BINARY(b, b_val, +);
+            PUSH(FLOAT_VAL(b_val - a_val));
+        }
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
     OP_SUB_D:
         code = CODE();
+        {
+            double a_val = 0;
+            double b_val = 0;
+            BINARY(a, a_val, +);
+            BINARY(b, b_val, +);
+            PUSH(DOUBLE_VAL(b_val - a_val));
+        }
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
@@ -452,35 +485,28 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         // int8_t const_idx = (int8_t)(code.opnd1 & ((~CALL_MASK) >> 60)); Will be used to index the cont pool
         int64_t arg_count = code.opnd1 & CALL_MASK;
         value_t val = POP();
-        if (VAL_OBJECT == val.type)
+        if (VAL_OBJECT == val.type && OBJ_STRING == val.as.obj->obj_type)
         {
-            if (val.as.obj->obj_type == OBJ_STRING)
+            obj_string_t* obj_str = (obj_string_t*)val.as.obj;
+
+            native_ptr_t nat_ptr = get_native(obj_str->chars);
+            if (!nat_ptr) ERROR("Unknown native! Aborting...");
+
+            value_t vals[arg_count];
+
+            int64_t index = 0;
+            while (index < arg_count)
+                vals[index++] = POP();
+
+            value_t ret = nat_ptr(vm, vals, (size_t)arg_count);
+            if (VAL_VOID != ret.type)
             {
-                obj_string_t* obj_str = (obj_string_t*)val.as.obj;
-
-                native_ptr_t nat_ptr = get_native(obj_str->chars);
-                if (!nat_ptr)
+                if (VAL_OBJECT == ret.type)
                 {
-                    fprintf(stderr, "Unknown native! Aborting...\n");
-                    return VM_ERROR;
+                    ret.as.obj->next = vm->heap;
+                    vm->heap = ret.as.obj;
                 }
-
-                value_t vals[arg_count];
-
-                int64_t index = 0;
-                while (index < arg_count)
-                    vals[index++] = POP();
-
-                value_t ret = nat_ptr(vm, vals, (size_t)arg_count);
-                if (VAL_VOID != ret.type)
-                {
-                    if (VAL_OBJECT == ret.type)
-                    {
-                        ret.as.obj->next = vm->heap;
-                        vm->heap = ret.as.obj;
-                    }
-                    PUSH(ret);
-                }
+                PUSH(ret);
             }
         }
         PRINT_DEBUG_WIDE(CURRENT_CODE, arg_count);
@@ -506,7 +532,7 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         DISPATCH();
     OP_TRAP:
         code = CODE();
-        CODE().op = vm->cb(vm);
+        CODE().op = vm->cb(vm, PC);
         DISPATCH();
     OP_HLT:
         PRINT_DEBUG(CURRENT_CODE);
@@ -564,3 +590,4 @@ void display_init_message(ciam_vm_t* vm)
 #undef POP
 #undef PUSH
 #undef PC
+#undef ERROR

@@ -14,9 +14,8 @@ typedef struct {
     native_ptr_t    native;
 } native_entry_t;
 
-value_t print(struct ciam_vm_t* vm, value_t* value, size_t argc);
-
-native_ptr_t get_native(const char* name);
+value_t         print(struct ciam_vm_t* vm, value_t* value, size_t argc);
+native_ptr_t    get_native(const char* name);
 
 
 #endif // CIAM_NATIVE_H_

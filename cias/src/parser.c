@@ -134,14 +134,14 @@ typedef struct {
     };
 } num_val_t;
 
-num_val_t parse_int(const char *str) {
+static inline num_val_t parse_int(const char *str) {
     char *endptr;
     errno = 0;
 
     long long llval = strtoll(str, &endptr, 10);
     if (errno == 0 && *endptr == '\0') {
         if (llval >= INT8_MIN && llval <= INT8_MAX) {
-            return (num_val_t){ .type = I8, .i8 = (int8_t)llval };
+            return (num_val_t){ .type = I8,  .i8  = (int8_t)llval  };
         } else if (llval >= INT16_MIN && llval <= INT16_MAX) {
             return (num_val_t){ .type = I16, .i16 = (int16_t)llval };
         } else if (llval >= INT32_MIN && llval <= INT32_MAX) {
@@ -155,7 +155,7 @@ num_val_t parse_int(const char *str) {
     return (num_val_t){ .type = ERROR, .i64 = (int64_t)0x00 };
 }
 
-num_val_t parse_float(const char *str) {
+static inline num_val_t parse_float(const char *str) {
     char *endptr;
     
     errno = 0;
@@ -178,7 +178,7 @@ ast_exp_t* number(arena_t* arena, parser_t* /*parser*/, token_t token)
     sprintf(temp, "%.*s", (int)token.length, token.start);
     bool is_float = false;
 
-    for (size_t i = 0; i < token.length + 1; i++)
+    for (size_t i = 0; i < token.length + 1; i++) // TODO: deal with the # prefix for different bases
         if (token.start[i] == '.')
             is_float = true;
 
