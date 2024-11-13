@@ -46,21 +46,21 @@ static parse_rule_t parse_table[] = {
     [TOKEN_XOR]             = { .prec = PREC_BIT_XOR,       .prefix = NULL,     .infix = binary     },
 };
 
-static void     consume(parser_t* parser, token_ty_t type, const char* message);
-static token_t  previous(parser_t* parser);
-static token_t  peek(parser_t* parser);
-static token_t  advance(parser_t* parser);
+static void             consume(parser_t* parser, token_ty_t type, const char* message);
+static token_t          previous(parser_t* parser);
+static token_t          peek(parser_t* parser);
+static token_t          advance(parser_t* parser);
 
-static ast_stmt_t*  parse_block_stmt(arena_t* arena, parser_t* parser);
-static ast_stmt_t*  parse_exp_stmt(arena_t* arena, parser_t* parser);
-static ast_stmt_t*  parse_if_stmt(arena_t* arena, parser_t* parser);
-static ast_stmt_t*  parse_loop_stmt(arena_t* arena, parser_t* parser);
-static ast_stmt_t*  parse_declaration_stmt(arena_t* arena, parser_t* parser);
-static ast_stmt_t*  parse_return_stmt(arena_t* arena, parser_t* parser);
-static ast_stmt_t*  parse_entry_stmt(arena_t* arena, parser_t* parser);
-static ast_stmt_t*  parse_pure_stmt(arena_t* arena, parser_t* parser);
-static expr_type_t  parse_var_type(parser_t* parser);
-static type_list_t* parse_args(arena_t* arena, parser_t* parser); 
+static ast_stmt_t*      parse_block_stmt(arena_t* arena, parser_t* parser);
+static ast_stmt_t*      parse_exp_stmt(arena_t* arena, parser_t* parser);
+static ast_stmt_t*      parse_if_stmt(arena_t* arena, parser_t* parser);
+static ast_stmt_t*      parse_loop_stmt(arena_t* arena, parser_t* parser);
+static ast_stmt_t*      parse_declaration_stmt(arena_t* arena, parser_t* parser);
+static ast_stmt_t*      parse_return_stmt(arena_t* arena, parser_t* parser);
+static ast_stmt_t*      parse_entry_stmt(arena_t* arena, parser_t* parser);
+static ast_stmt_t*      parse_pure_stmt(arena_t* arena, parser_t* parser);
+static expr_type_t      parse_var_type(parser_t* parser);
+static f_arg_list_t*    parse_args(arena_t* arena, parser_t* parser); 
 
 static void error_at(parser_t* parser, token_t token, const char* message)
 {
@@ -551,6 +551,7 @@ static expr_type_t parse_var_type(parser_t* parser)
         case TOKEN_DOUBLE:  type_case(DOUBLE);
         case TOKEN_CHAR:    type_case(CHAR);
         case TOKEN_BOOL:    type_case(BOOL);
+        case TOKEN_STRING:  type_case(STRING);
         default:
             error_at(parser, peek(parser), "Unknown type");
             exit(EXIT_FAILURE);
@@ -621,10 +622,10 @@ static ast_stmt_t* parse_entry_stmt(arena_t* arena, parser_t* parser)
 #undef defer_error
 }
 
-static type_list_t* parse_args(arena_t* arena, parser_t* parser)
+static f_arg_list_t* parse_args(arena_t* arena, parser_t* parser)
 {
 #define defer_error(X) do { error_at(parser, token, X); exit(EXIT_FAILURE); } while (false)
-    type_list_t* args = (type_list_t*)arena_alloc(arena, sizeof(type_list_t));
+    f_arg_list_t* args = (f_arg_list_t*)arena_alloc(arena, sizeof(f_arg_list_t));
     args->type = UNKNOWN;
     args->next = NULL;
 
@@ -633,6 +634,10 @@ static type_list_t* parse_args(arena_t* arena, parser_t* parser)
     {
         if (TOKEN_IDENTIFIER != token.type) defer_error("Missing arg name");
 
+        char* arg_name = (char*)arena_alloc(arena, token.length + 1);
+        memcpy(arg_name, token.start, token.length);
+        arg_name[token.length] = '\0';
+
         token = advance(parser);
         if (TOKEN_COLON != token.type) defer_error("Missing ':' symbol in arg declaration");
 
@@ -640,14 +645,16 @@ static type_list_t* parse_args(arena_t* arena, parser_t* parser)
         if (UNKNOWN == args->type)
         {
             args->type = type;
+            args->name = arg_name;
         }
         else
         {
-            type_list_t* entry = args;
+            f_arg_list_t* entry = args;
             for (;entry->next != NULL; entry = entry->next)
                 ;
-            type_list_t* next = (type_list_t*)arena_alloc(arena, sizeof(type_list_t));
+            f_arg_list_t* next = (f_arg_list_t*)arena_alloc(arena, sizeof(f_arg_list_t));
             next->type = type;
+            next->name = arg_name;
             next->next = NULL;
             entry->next = next;
         }
@@ -688,9 +695,9 @@ static ast_stmt_t* parse_pure_stmt(arena_t* arena, parser_t* parser)
 
     if (TOKEN_RPAREN != peek(parser).type) 
     {
-        type_list_t* args = parse_args(arena, parser);
+        f_arg_list_t* args = parse_args(arena, parser);
         if (NULL == args) defer_error("Invalid argument declaration");
-        stmt->as_callable.arg_types = args;
+        stmt->as_callable.args = args;
         token = peek(parser);
     }
     else token = advance(parser);
@@ -698,7 +705,7 @@ static ast_stmt_t* parse_pure_stmt(arena_t* arena, parser_t* parser)
     if (TOKEN_RPAREN != token.type) defer_error("Missing ')' symbol");
     else token = peek(parser);
 
-    if (NULL != stmt->as_callable.arg_types)
+    if (NULL != stmt->as_callable.args)
     {
         advance(parser);
         token = peek(parser);
@@ -820,7 +827,7 @@ cu_t* parse(arena_t* arena, parser_t* parser)
     cu_t* cu = (cu_t*)arena_alloc(arena, sizeof(cu_t));
     cu->type = EXECUTABLE;
     cu->entry = NULL;
-    cu->pures = (stmt_list_t*)arena_alloc(arena, sizeof(stmt_list_t));
+    cu->pures = NULL;
     token_t token = peek(parser);
 
     while (TOKEN_EOF != token.type)
@@ -834,8 +841,9 @@ cu_t* parse(arena_t* arena, parser_t* parser)
                 break;
             case TOKEN_PURE:
                 ast_stmt_t* pure = parse_pure_stmt(arena, parser);
-                if (NULL == cu->pures->data)
+                if (NULL == cu->pures) 
                 {
+                    cu->pures = (stmt_list_t*)arena_alloc(arena, sizeof(stmt_list_t));
                     cu->pures->data = pure;
                 }
                 else

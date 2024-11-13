@@ -92,7 +92,7 @@ static opcode_t get_binary_opcode(const char op_c, ast_exp_t* exp)
         case FLOAT:  return oper##_F;                   \
         case DOUBLE: return oper##_D;                   \
         default:                                        \
-            fprintf(stderr, "We shouldn't reach here"); \
+            fprintf(stderr, "We shouldn't reach here %d", exp->target_type); \
             exit(EXIT_FAILURE);                         \
             break;                                      \
     }                                                   \
@@ -110,14 +110,15 @@ static num_const_t emit_num_const(ast_exp_t* exp)
 {
     num_const_t num = {0};
     num.type = exp->type_info;
-    if      (num.type == DOUBLE)    memcpy(&num.value, &exp->as_num.DOUBLE, sizeof(double));
-    else if (num.type == FLOAT)     memcpy(&num.value, &exp->as_num.FLOAT,  sizeof(float));
-    else if (num.type == I8)        memcpy(&num.value, &exp->as_num.I8,     sizeof(int8_t));      
-    else if (num.type == I16)       memcpy(&num.value, &exp->as_num.I16,    sizeof(int16_t));
-    else if (num.type == I32)       memcpy(&num.value, &exp->as_num.I32,    sizeof(int32_t));
-    else if (num.type == I64)       memcpy(&num.value, &exp->as_num.I64,    sizeof(int64_t));
-    else if (num.type == CHAR)      memcpy(&num.value, &exp->as_char.CHAR,  sizeof(char));
-    else if (num.type == BOOL)      memcpy(&num.value, &exp->as_bool.BOOL,  sizeof(bool));
+
+    if      ( num.type == DOUBLE )    memcpy(&num.value, &exp->as_num.DOUBLE, sizeof(double)    );
+    else if ( num.type == FLOAT  )    memcpy(&num.value, &exp->as_num.FLOAT,  sizeof(float)     );
+    else if ( num.type == I8     )    memcpy(&num.value, &exp->as_num.I8,     sizeof(int8_t)    );      
+    else if ( num.type == I16    )    memcpy(&num.value, &exp->as_num.I16,    sizeof(int16_t)   );
+    else if ( num.type == I32    )    memcpy(&num.value, &exp->as_num.I32,    sizeof(int32_t)   );
+    else if ( num.type == I64    )    memcpy(&num.value, &exp->as_num.I64,    sizeof(int64_t)   );
+    else if ( num.type == CHAR   )    memcpy(&num.value, &exp->as_char.CHAR,  sizeof(char)      );
+    else if ( num.type == BOOL   )    memcpy(&num.value, &exp->as_bool.BOOL,  sizeof(bool)      );
 
     return num;
 }
@@ -153,7 +154,7 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
         case VARIABLE: {
             code.op = LOAD_LOCAL;
             int64_t local_idx = resolve_local(compiler, exp->as_var.name);
-            // if (local_idx == -1) // TODO: Remove this test when the analyzer declaration check is done
+            // if (local_idx == -1) // TODO: Remove this test when the analyzer declaration check is done for funcs as well
             // {
             //     fprintf(stderr, "Cannot compile undeclared var '%s'\n", exp->as_var.name);
             //     exit(EXIT_FAILURE);
@@ -165,7 +166,7 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
             compile_expr(compiler, exp->as_bin.right);
             code.op = STORE_LOCAL;
             int64_t local_idx = resolve_local(compiler, exp->as_bin.left->as_var.name);
-            // if (local_idx == -1) // TODO: Remove this test when the analyzer declaration check is done
+            // if (local_idx == -1) // TODO: Remove this test when the analyzer declaration check is done for funcs as well
             // {
             //     fprintf(stderr, "Cannot compile undeclared var '%s'\n", exp->as_var.name);
             //     exit(EXIT_FAILURE);
@@ -255,7 +256,12 @@ static void compile_stmt(compiler_t* compiler, ast_stmt_t* stmt)
             compile_stmt(compiler, stmt->as_callable.body);
             break;
         case PURE_STMT:
+            enter_scope(compiler);
+            f_arg_list_t* arg = stmt->as_callable.args;
+            for (;arg != NULL; arg = arg->next)
+                decl_var(compiler, arg->name);
             compile_stmt(compiler, stmt->as_callable.body);
+            exit_scope(compiler);
             break;
         case PROC_STMT:
             // TODO: PROC compile
@@ -268,7 +274,7 @@ static void compile_stmt(compiler_t* compiler, ast_stmt_t* stmt)
 
 void compile_ast(compiler_t* compiler, cu_t* cu)
 {
-    if (NULL != cu->pures->data)
+    if (NULL != cu->pures)
     {
         stmt_list_t* element = cu->pures;
         for (;element != NULL; element = element->next)

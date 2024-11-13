@@ -31,3 +31,4 @@ $(LIB_DIR) $(OBJ_DIR):
 
 clean:
 	@$(RM) -rfv $(LIB_DIR) $(OBJ_DIR)
+	

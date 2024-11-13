@@ -34,14 +34,14 @@ typedef enum {
 } stmt_kind_t;
 
 typedef enum {
+    BOOL,
+    CHAR,
     I8,
     I16,
     I32,
     I64,
     FLOAT,
     DOUBLE,
-    BOOL,
-    CHAR,
     STRING,
     VOID,
     UNKNOWN,
@@ -122,11 +122,12 @@ struct stmt_list_t {
     stmt_list_t*            next;
 };
 
-typedef struct type_list_t type_list_t;
+typedef struct f_arg_list_t f_arg_list_t;
 
-struct type_list_t {
+struct f_arg_list_t {
     expr_type_t             type;
-    type_list_t*            next;
+    char*                   name;
+    f_arg_list_t*           next;
 };
 
 typedef enum {
@@ -147,7 +148,7 @@ struct ast_stmt_t {
         struct {
             expr_type_t     ret_type;
             size_t          arity;
-            type_list_t*    arg_types;
+            f_arg_list_t*   args;
             ast_stmt_t*     body;
             char*           name;
         } as_callable;

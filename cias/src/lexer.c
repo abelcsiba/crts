@@ -170,6 +170,7 @@ static token_ty_t identifier_type(lexer_t* lexer)
             }
             break;
         case 'r': return check_keyword(lexer, 1, 5, "eturn", TOKEN_RETURN);
+        case 's': return check_keyword(lexer, 1, 5, "tring", TOKEN_STRING);
         case 't': return check_keyword(lexer, 1, 3, "rue", TOKEN_TRUE);
         case 'v': 
             if (lexer->curr - lexer->start > 1)

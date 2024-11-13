@@ -130,6 +130,7 @@ static char* type2string(expr_type_t type)
         case FLOAT:   return "float";
         case DOUBLE:  return "double";
         case CHAR:    return "char";
+        case STRING:  return "string";
         case BOOL:    return "bool";
         case VOID:    return "void";
         default:      return "unknown";
@@ -195,9 +196,9 @@ static void print_ast_stmt(FILE* out, ast_stmt_t *stmt)
         break;
     case PURE_STMT:
         fprintf(out, "PURE %s (", stmt->as_callable.name);
-        if (NULL != stmt->as_callable.arg_types)
+        if (NULL != stmt->as_callable.args)
         {
-            type_list_t* entry = stmt->as_callable.arg_types;
+            f_arg_list_t* entry = stmt->as_callable.args;
             for (;entry != NULL; entry = entry->next)
                 fprintf(out, " %s", type2string(entry->type));
             fprintf(out, " ");
@@ -216,7 +217,7 @@ void print_cu(FILE* out, cu_t* cu)
 {
     printf("\n\nCompiled statements:\n");
     fprintf(out, "\n");
-    if (NULL != cu->pures->data)
+    if (NULL != cu->pures)
     {
         stmt_list_t* element = cu->pures;
         for (;element != NULL; element = element->next)

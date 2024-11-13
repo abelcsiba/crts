@@ -20,46 +20,85 @@
 #define     BANG         '!'
 #define     TILDE        '~'
 
-int max(int a, int b)
+#define PROMOTE_TO(exp, type, data)                                         \
+    do {                                                                    \
+        type val = 0;                                                       \
+        switch (exp->kind)                                                  \
+        {                                                                   \
+            case CHAR:                                                      \
+                val += exp->as_char.CHAR;                                   \
+                break;                                                      \
+            case BOOL:                                                      \
+                val += exp->as_bool.BOOL;                                   \
+                break;                                                      \
+            case I8:                                                        \
+                val += exp->as_num.I8;                                      \
+                break;                                                      \
+            case I16:                                                       \
+                val += exp->as_num.I16;                                     \
+                break;                                                      \
+            case I32:                                                       \
+                val += exp->as_num.I32;                                     \
+                break;                                                      \
+            case I64:                                                       \
+                val += exp->as_num.I64;                                     \
+                break;                                                      \
+            case FLOAT:                                                     \
+                val += exp->as_num.FLOAT;                                   \
+                break;                                                      \
+            default:                                                        \
+                fprintf(stderr, "Error promoting int, invalid type\n");     \
+                exit(EXIT_FAILURE);                                         \
+                break;                                                      \
+        }                                                                   \
+        exp->kind = data;                                                   \
+        exp->as_num.##data = val;                                           \
+    } while (false)                                                         \
+
+static inline int max(int a, int b)
 {
     return (a > b) ? a : b;
 }
 
-bool is_num_type(expr_type_t type)
+static inline bool is_num_type(expr_type_t type)
 {
-    return ( (type >= I8) && (type < BOOL) );
+    return ( (type >= I8) && (type < STRING) );
 }
 
-bool is_integral_type(expr_type_t type)
+static inline bool is_integral_type(expr_type_t type)
 {
     return ( (type >= I8) && (type < FLOAT) );
 }
 
-expr_type_t resolve_bin_type(analyzer_t* /*analyzer*/, const char* op, expr_type_t lht, expr_type_t rht)
+static inline expr_type_t arith(expr_type_t left, expr_type_t right)
 {
-    size_t len = strlen(op);
+    if ( DOUBLE == left || DOUBLE == right ) return DOUBLE;
+    if ( FLOAT  == left || FLOAT  == right ) return FLOAT;
+    
+    return max(left, right) < I32 ? I32 : max(left, right);
+}
 
-    if (len == 1)
+static expr_type_t resolve_bin_type(analyzer_t* /*analyzer*/, const char* op, expr_type_t lht, expr_type_t rht)
+{
+    if (op[0] == PLUS  || 
+        op[0] == MINUS || 
+        op[0] == STAR  || 
+        op[0] == SLASH )
     {
-        if (op[0] == PLUS || op[0] == MINUS || op[0] == STAR)
-        {
-            if (is_num_type(lht) && is_num_type(rht)) return max(lht, rht);
-            return ERROR;
-        }
-        if (op[0] == SLASH)
-        {
-            if (is_num_type(lht) && is_num_type(rht)) return max(lht, rht);
-            return ERROR;
-        }
+        return arith(lht, rht);
     }
-    else if (len == 2)
+    else if ( op[0] == MODULO  ) {}
+    else if ( op[0] == BIT_AND ) {} // TODO: check for op[1] for &&
+    else if ( op[0] == BIT_OR  ) {} // TODO: check for op[1] for ||
+    else if ( op[0] == LT      ) {}
+    else if ( op[0] == GT      ) {}
+    else if ( op[0] == XOR     ) {}
+    else 
     {
-
-    }
-    else
-    {
+        fprintf(stderr, "Unknown operator '%s'\n", op);
         return ERROR;
-    }
+    } // TODO: Unknown operator, burn brotha!
+
     // We shouldn't reach here
     return ERROR;
 }
@@ -122,8 +161,8 @@ expr_type_t resolve_exp_type(analyzer_t* analyzer, ast_exp_t* exp)
         case BOOL_LITERAL:
             return BOOL;
         case VARIABLE:
-            expr_type_t var_ty = var_exists(analyzer->scope, exp->as_var.name);
-            if (ERROR != var_ty)
+            expr_type_t var_ty  = var_exists(analyzer->scope, exp->as_var.name);
+            if (ERROR == var_ty)
             {
                 fprintf(stderr, "Undeclared variable usage\n");
                 exit(EXIT_FAILURE);
@@ -151,16 +190,15 @@ expr_type_t resolve_exp_type(analyzer_t* analyzer, ast_exp_t* exp)
             ERROR_CHECK(rt);
             return rt;
         case CALLABLE:
-            expr_type_t res = UNKNOWN;
-            arg_list_t *args = exp->as_call.args;
+            expr_type_t res     = UNKNOWN;
+            arg_list_t *args    = exp->as_call.args;
             while (args != NULL)
             {
                 res = resolve_exp_type(analyzer, args->exp);
                 if (ERROR == res) return res;
                 args = args->next;
             }
-            return VOID;
-            // return exp->as_call.ret_type; // TODO: Change this to the exact return type
+            return BOOL; // TODO: Change this to the exact return type
         default:
             fprintf(stderr, "Unknown expression kind\n");
             exit(EXIT_FAILURE);
@@ -237,11 +275,11 @@ bool check_stmt(analyzer_t* analyzer, ast_stmt_t* stmt)
         case VAR_DECL:
             expr_type_t type = resolve_exp_type(analyzer, stmt->as_decl.exp);
             if (type == ERROR) return false;
-            if (type == stmt->as_decl.type) 
+            if (type <= stmt->as_decl.type) 
             {
-                if (ERROR != var_exists(analyzer->scope, stmt->as_decl.name)) // TODO: Consider shadowing
+                if (ERROR == var_exists(analyzer->scope, stmt->as_decl.name)) // TODO: Consider shadowing
                 {
-                    add_to_scope(analyzer->scope, stmt->as_decl.name, type);
+                    add_to_scope(analyzer->scope, stmt->as_decl.name, stmt->as_decl.type);
                     return true;
                 }
                 else
@@ -250,7 +288,11 @@ bool check_stmt(analyzer_t* analyzer, ast_stmt_t* stmt)
                     return false;
                 }
             }
-            else return false; // TODO: check to possibility if implicit cast
+            else 
+            {
+                fprintf(stderr, "Invlid type conversion on declaration\n");
+                return false; // TODO: check to possibility if implicit cast
+            }
             break;
         case IF_STMT:
             expr_type_t cond_type = resolve_exp_type(analyzer, stmt->as_if.cond);
@@ -276,7 +318,13 @@ bool check_stmt(analyzer_t* analyzer, ast_stmt_t* stmt)
         case ENTRY_STMT:
             return check_stmt(analyzer, stmt->as_callable.body);
         case PURE_STMT:
-            return check_stmt(analyzer, stmt->as_callable.body);
+            enter_scope(analyzer);
+            f_arg_list_t* arg = stmt->as_callable.args;
+            for (;arg != NULL; arg = arg->next)
+                add_to_scope(analyzer->scope, arg->name, arg->type);
+            bool res = check_stmt(analyzer, stmt->as_callable.body);
+            exit_scope(analyzer);
+            return res;
         case PROC_STMT:
             return false; // TODO: implement
         default:

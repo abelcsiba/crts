@@ -75,7 +75,21 @@ int main(int argc, char** argv)
   analyzer_t analyzer = {0};
   init_global_scope(&analyzer);
 
-  check_stmt(&analyzer, cu->entry);
+  stmt_list_t* head = cu->pures;
+  for (;head != NULL; head = head->next)
+  {
+    if (!check_stmt(&analyzer, head->data))
+    {
+      fprintf(stderr, "Semantic error in pures\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  if (!check_stmt(&analyzer, cu->entry))
+  {
+    fprintf(stderr, "Semantic error in entry\n");
+    exit(EXIT_FAILURE);
+  }
 
   free(analyzer.scope); // This should be dealt with later. Right now, free shit manually.
 
