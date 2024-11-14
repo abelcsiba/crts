@@ -80,7 +80,7 @@ static token_t make_string(lexer_t* lexer, const char delimiter)
 {
     while (peek(lexer) != delimiter && !is_at_end(lexer))
     {
-        if (peek(lexer) == '\n') lexer->line_no++;
+        if (peek(lexer) == '\n') return make_token(lexer, TOKEN_ERROR); //lexer->line_no++;
         advance(lexer);
     }
 

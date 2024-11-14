@@ -122,6 +122,27 @@ void print_code(FILE* out, code_t* code, int count)
             case LOAD_STRING:
                 fprintf(out, "LOAD_STRING\n");
                 break;
+            case NEG:
+                fprintf(out, "NEG\n");
+                break;
+            case CALL:
+                fprintf(out, "CALL\n");
+                break;
+            case HLT:
+                fprintf(out, "HLT\n");
+                break;
+            case POP_TOP:
+                fprintf(out, "POP_TOP\n");
+                break;
+            case JMP_IF_FALSE:
+                fprintf(out, "JMP_IF_FALSE\n");
+                break;
+            case JMP:
+                fprintf(out, "JMP");
+                break;
+            default:
+                fprintf(out, "UNKNOWN_OP %d\n", code[i].op);
+                break;
         }
     }
 }

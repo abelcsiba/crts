@@ -9,6 +9,9 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <math.h>
+
+#define EPSILON 1e-12
 
 static int thread_counter = 1;
 
@@ -26,6 +29,35 @@ struct ciam_vm_t {
 void ciam_set_cbg(ciam_vm_t* vm, cdb_cb_t cb)
 {
     vm->cb = cb;
+}
+
+static inline bool is_zero(double value, double epsilon)
+{
+    return fabs(value) < epsilon;
+}
+
+static inline bool is_turthy(value_t val)
+{
+    switch (val.type)
+    {
+        case VAL_BOOL:      return val.as.boolean;
+        case VAL_CHAR:      return val.as.chr != 0;
+        case VAL_DOUBLE:    return is_zero(val.as.dbl, EPSILON);
+        case VAL_FLOAT:     return is_zero(val.as.flt, EPSILON);
+        case VAL_I8:        return val.as.i8  != 0;
+        case VAL_I16:       return val.as.i16 != 0;
+        case VAL_I32:       return val.as.i32 != 0;
+        case VAL_I64:       return val.as.i64 != 0;
+        case VAL_OBJECT: {
+            switch (val.as.obj->obj_type)
+            {
+                case OBJ_STRING: return true;
+                default: return false; // TODO: Other obj type resolution might be needed
+            }
+        }
+        break;
+        default:            return false;
+    }
 }
 
 #if DEBUG
@@ -58,6 +90,7 @@ static char* op_label[] = {
 #define PC                          vm->threads[0].ip
 #define PUSH(X)                     do { push_stack(&vm->threads[0].stack, X); vm->threads[0].sp++; } while (false)
 #define POP()                       (vm->threads[0].sp--, pop_stack(&vm->threads[0].stack))
+#define PEEK(idx)                   (vm->threads[0].stack.slots[vm->threads[0].stack.count - idx])
 #define POP_TOP                     (vm->threads[0].sp--, pop_top_stack(&vm->threads[0].stack))
 #define DISPATCH()                  do { if(PC >= vm->module->code_size) ERROR("Invalid address"); goto *jump_table[vm->module->code[PC].op]; } while (false)
 #define CODE()                      vm->module->code[PC]
@@ -537,6 +570,33 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
     OP_HLT:
         PRINT_DEBUG(CURRENT_CODE);
         return VM_SUCCESS;
+    OP_NEG:
+        code = CODE();
+        {
+            value_t val = POP();
+            PUSH(BOOL_VAL(!is_turthy(val)));
+        }
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_JMP_IF_FALSE:
+        code = CODE();
+        PRINT_DEBUG_WIDE(CURRENT_CODE, code.opnd1);
+        if (!is_turthy(PEEK(1)))
+        {
+            PC = (uint64_t)code.opnd1;
+        }
+        else
+        {
+            PC++;
+        }
+        DISPATCH();
+    OP_JMP:
+        code = CODE();
+        PRINT_DEBUG_WIDE(CURRENT_CODE, code.opnd1);
+        PC = (uint64_t)code.opnd1;
+        DISPATCH();
+
 
     /* We shouldn't reach here, so better abort now. */
     printf("We shouldn't reach this point. Aborting...\n");

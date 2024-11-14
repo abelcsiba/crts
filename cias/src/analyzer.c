@@ -19,41 +19,7 @@
 #define     XOR          '^'
 #define     BANG         '!'
 #define     TILDE        '~'
-
-#define PROMOTE_TO(exp, type, data)                                         \
-    do {                                                                    \
-        type val = 0;                                                       \
-        switch (exp->kind)                                                  \
-        {                                                                   \
-            case CHAR:                                                      \
-                val += exp->as_char.CHAR;                                   \
-                break;                                                      \
-            case BOOL:                                                      \
-                val += exp->as_bool.BOOL;                                   \
-                break;                                                      \
-            case I8:                                                        \
-                val += exp->as_num.I8;                                      \
-                break;                                                      \
-            case I16:                                                       \
-                val += exp->as_num.I16;                                     \
-                break;                                                      \
-            case I32:                                                       \
-                val += exp->as_num.I32;                                     \
-                break;                                                      \
-            case I64:                                                       \
-                val += exp->as_num.I64;                                     \
-                break;                                                      \
-            case FLOAT:                                                     \
-                val += exp->as_num.FLOAT;                                   \
-                break;                                                      \
-            default:                                                        \
-                fprintf(stderr, "Error promoting int, invalid type\n");     \
-                exit(EXIT_FAILURE);                                         \
-                break;                                                      \
-        }                                                                   \
-        exp->kind = data;                                                   \
-        exp->as_num.##data = val;                                           \
-    } while (false)                                                         \
+#define     EQUAL        '='
 
 static inline int max(int a, int b)
 {
@@ -78,21 +44,27 @@ static inline expr_type_t arith(expr_type_t left, expr_type_t right)
     return max(left, right) < I32 ? I32 : max(left, right);
 }
 
+static inline expr_type_t modulo(expr_type_t left, expr_type_t right)
+{
+    if (!is_integral_type(left) || !is_integral_type(right))
+        return ERROR;
+    else
+        return (max(left, right) < I32 ? I32 : max(left, right));
+}
+
 static expr_type_t resolve_bin_type(analyzer_t* /*analyzer*/, const char* op, expr_type_t lht, expr_type_t rht)
 {
     if (op[0] == PLUS  || 
         op[0] == MINUS || 
         op[0] == STAR  || 
-        op[0] == SLASH )
-    {
-        return arith(lht, rht);
-    }
-    else if ( op[0] == MODULO  ) {}
+        op[0] == SLASH )         return arith(lht, rht);
+    else if ( op[0] == MODULO  ) return modulo(lht, rht);
     else if ( op[0] == BIT_AND ) {} // TODO: check for op[1] for &&
     else if ( op[0] == BIT_OR  ) {} // TODO: check for op[1] for ||
-    else if ( op[0] == LT      ) {}
-    else if ( op[0] == GT      ) {}
+    else if ( op[0] == LT      ) return BOOL; // TODO: proper check here, mate
+    else if ( op[0] == GT      ) return BOOL; // TODO: proper check here, mate
     else if ( op[0] == XOR     ) {}
+    else if ( op[0] == EQUAL   ) return ((rht <= lht) ? lht : ERROR);
     else 
     {
         fprintf(stderr, "Unknown operator '%s'\n", op);
@@ -290,8 +262,8 @@ bool check_stmt(analyzer_t* analyzer, ast_stmt_t* stmt)
             }
             else 
             {
-                fprintf(stderr, "Invlid type conversion on declaration\n");
-                return false; // TODO: check to possibility if implicit cast
+                fprintf(stderr, "Invalid type conversion on declaration\n");
+                return false; // TODO: check the possibility if implicit cast with truncating value
             }
             break;
         case IF_STMT:

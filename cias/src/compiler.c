@@ -17,7 +17,7 @@ static void exit_scope(compiler_t* compiler)
     compiler->scope_depth--;
 
     code_t code = {0};
-    while (compiler->local_count > 0 && compiler->locals[compiler->local_count - 1].depth > compiler->scope_depth)
+    while (compiler->local_count > 0 && compiler->locals[compiler->local_count - 1].depth > compiler->scope_depth) // TODO: change pop to take operands and do this in one step
     {
         compiler->local_count--;
         code.op = POP_TOP;
@@ -78,6 +78,17 @@ static int64_t resolve_local(compiler_t* compiler, char* const name)
     }
 
     return -1;
+}
+
+static opcode_t get_unary_opcode(const char op_c)
+{
+    if ( op_c == '!' ) return NEG;
+    else
+    {
+        fprintf(stderr, "Unary operator not yet supported\n");
+        exit(EXIT_FAILURE);
+    }
+    return HLT; // TODO: Remove this when all unary ops are supported
 }
 
 static opcode_t get_binary_opcode(const char op_c, ast_exp_t* exp)
@@ -187,22 +198,13 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
             compile_expr(compiler, exp->as_bin.right);
             code.op = get_binary_opcode(*exp->as_bin.op, exp);
             break;
-        case CALLABLE:
-            if (strcmp(exp->as_call.callee_name->as_str.STRING, "print") == 0)
-            {
-                arg_list_t* head = exp->as_call.args;
-                int64_t arg_num = 0;
-                while (head != NULL)
-                {
-                    compile_expr(compiler, head->exp);
-                    head = head->next;
-                    arg_num++;
-                }
-                compile_expr(compiler, exp->as_call.callee_name);
-                code.op = CALL;
-                code.opnd1 = arg_num | ((uint64_t)0xF << 60);
-            }
-            if (strcmp(exp->as_call.callee_name->as_str.STRING, "read") == 0)
+        case UNARY_OP:
+            compile_expr(compiler, exp->as_un.expr);
+            code.op = get_unary_opcode(*exp->as_un.op);
+            break;
+        case CALLABLE: // TODO: differentiate between call types like natve, core, bc, foreign etc.
+            if (strcmp(exp->as_call.callee_name->as_str.STRING, "print") == 0 ||
+                strcmp(exp->as_call.callee_name->as_str.STRING, "read")  == 0)
             {
                 arg_list_t* head = exp->as_call.args;
                 int64_t arg_num = 0;
@@ -237,7 +239,25 @@ static void compile_stmt(compiler_t* compiler, ast_stmt_t* stmt)
             compile_expr(compiler, stmt->as_decl.exp);
             break;
         case IF_STMT:
-            // TODO: IF compile
+            compile_expr(compiler, stmt->as_if.cond);
+            add_to_code_da(compiler->code_da, (code_t){ .op = JMP_IF_FALSE, .opnd1 = 0x00 });
+            code_t* else_ptr = &compiler->code_da->data[compiler->code_da->count - 1];
+            compile_stmt(compiler, stmt->as_if.then_b);
+            if (NULL == stmt->as_if.else_b)
+            {
+                
+                else_ptr->opnd1 = compiler->code_da->count - 1;
+            }
+            else
+            {
+                add_to_code_da(compiler->code_da, (code_t){ .op = JMP, .opnd1 = 0x00 });
+                else_ptr->opnd1 = compiler->code_da->count;
+                code_t* end_ptr = &compiler->code_da->data[compiler->code_da->count - 1];
+                compile_stmt(compiler, stmt->as_if.else_b);
+                end_ptr->opnd1 = compiler->code_da->count;
+                
+            }
+            add_to_code_da(compiler->code_da, (code_t){ .op = POP_TOP, .opnd1 = 0x00 }); // Get rid of the if condition expression result
             break;
         case LOOP_STMT:
             // TODO: loop compile
