@@ -242,6 +242,7 @@ static void compile_stmt(compiler_t* compiler, ast_stmt_t* stmt)
             compile_expr(compiler, stmt->as_if.cond);
             add_to_code_da(compiler->code_da, (code_t){ .op = JMP_IF_FALSE, .opnd1 = 0x00 });
             code_t* else_ptr = &compiler->code_da->data[compiler->code_da->count - 1];
+            add_to_code_da(compiler->code_da, (code_t){ .op = POP_TOP, .opnd1 = 0x00 }); // Get rid of the if condition expression result
             compile_stmt(compiler, stmt->as_if.then_b);
             if (NULL == stmt->as_if.else_b)
             {
@@ -250,14 +251,14 @@ static void compile_stmt(compiler_t* compiler, ast_stmt_t* stmt)
             }
             else
             {
-                add_to_code_da(compiler->code_da, (code_t){ .op = JMP, .opnd1 = 0x00 });
+                add_to_code_da(compiler->code_da, (code_t){ .op = JMP, .opnd1 = 0x00 }); // Get rid of the if condition expression result
                 else_ptr->opnd1 = compiler->code_da->count;
                 code_t* end_ptr = &compiler->code_da->data[compiler->code_da->count - 1];
+                add_to_code_da(compiler->code_da, (code_t){ .op = POP_TOP, .opnd1 = 0x00 });
                 compile_stmt(compiler, stmt->as_if.else_b);
                 end_ptr->opnd1 = compiler->code_da->count;
                 
             }
-            add_to_code_da(compiler->code_da, (code_t){ .op = POP_TOP, .opnd1 = 0x00 }); // Get rid of the if condition expression result
             break;
         case LOOP_STMT: {
             uint64_t start_addr = compiler->code_da->count;

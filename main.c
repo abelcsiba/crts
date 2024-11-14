@@ -26,9 +26,11 @@ char default_source[] = "./test/expr3.isl";
 int main(int argc, char** argv)
 {
   char *src;
-  if (argc < 2)
+  if (argc < 2) // TODO: This should be removed when the driver is implemented
   {
+#if DEBUG
     fprintf(stderr, "Missing input file, using default '%s'\n", default_source);
+#endif
     src = default_source;
   }
   else src = argv[1];

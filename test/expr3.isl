@@ -2,17 +2,20 @@
 entry {
     var iter : i64 = 3;
     loop (iter) {
-        print("Iteration", iter);
+        var hmm : string = "Iteration";
+        print(hmm, iter);
         iter = iter - 1;
     }
 
     if (!0)
     {
-	    print("Then");
+        var then_s : string = "Then clause";
+	    print("We are in: ", then_s);
     }
     else
     {
-        print("Else");
+        var else_s : string = "Else clause";
+        print("We are in: ", else_s);
     }
 
     var tmp : string = read("How old are you?");
