@@ -193,7 +193,7 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
             code.opnd1 = (opnd_t)const_str_index;
             compiler->compiled_m->pool.strings.strings[const_str_index++] = emit_string_exp(exp);
             break;
-        case BINARY_OP:
+        case BINARY_OP: // TODO: Differentiate between groups of binops e.g.: arith, logic, bitwise, assign, invoke...
             compile_expr(compiler, exp->as_bin.left);
             compile_expr(compiler, exp->as_bin.right);
             code.op = get_binary_opcode(*exp->as_bin.op, exp);

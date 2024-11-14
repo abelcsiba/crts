@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-typedef enum {
+typedef enum { // TODO: Add invocation as well
     NULL_LITERAL,
     NUM_LITERAL,
     STRING_LITERAL,
