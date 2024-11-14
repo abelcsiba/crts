@@ -279,7 +279,7 @@ static void compile_stmt(compiler_t* compiler, ast_stmt_t* stmt)
                 compile_stmt(compiler, element->data);
             exit_scope(compiler);
             break;
-        case RETURN_STMT:
+        case RETURN_STMT: // TODO: expression result should be saved so that after the return, it is on stack top
             compile_expr(compiler, stmt->as_expr.exp);
             break;
         case ENTRY_STMT:
