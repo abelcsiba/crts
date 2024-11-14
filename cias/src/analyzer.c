@@ -266,16 +266,21 @@ bool check_stmt(analyzer_t* analyzer, ast_stmt_t* stmt)
                 return false; // TODO: check the possibility if implicit cast with truncating value
             }
             break;
-        case IF_STMT:
+        case IF_STMT: {
             expr_type_t cond_type = resolve_exp_type(analyzer, stmt->as_if.cond);
-            if (cond_type != BOOL) // TODO: consider implicit cast to bool
+            if (cond_type == ERROR) // TODO: consider implicit cast to bool
                 return false;
             bool verdict = check_stmt(analyzer, stmt->as_if.then_b);
             if (stmt->as_if.then_b != NULL)
                 verdict = verdict && check_stmt(analyzer, stmt->as_if.then_b);
             return verdict;
-        case LOOP_STMT:
-            return false; // TODO: implement
+        }
+        case LOOP_STMT: {
+            expr_type_t cond_type = resolve_exp_type(analyzer, stmt->as_loop.cond);
+            if (cond_type == ERROR) // TODO: consider implicit cast to bool
+                return false;
+            return check_stmt(analyzer, stmt->as_loop.block);
+        }
         case BLOCK_STMT:
             enter_scope(analyzer);
             stmt_list_t* entry = stmt->as_block.stmts;

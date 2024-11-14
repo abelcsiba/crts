@@ -259,9 +259,18 @@ static void compile_stmt(compiler_t* compiler, ast_stmt_t* stmt)
             }
             add_to_code_da(compiler->code_da, (code_t){ .op = POP_TOP, .opnd1 = 0x00 }); // Get rid of the if condition expression result
             break;
-        case LOOP_STMT:
-            // TODO: loop compile
-            break;
+        case LOOP_STMT: {
+            uint64_t start_addr = compiler->code_da->count;
+            compile_expr(compiler, stmt->as_loop.cond);
+            add_to_code_da(compiler->code_da, (code_t){ .op = JMP_IF_FALSE, .opnd1 = 0x00 });
+            code_t* jmp_target = &compiler->code_da->data[compiler->code_da->count - 1];
+            add_to_code_da(compiler->code_da, (code_t){ .op = POP_TOP, .opnd1 = 0x00 });
+            compile_stmt(compiler, stmt->as_loop.block);
+            add_to_code_da(compiler->code_da, (code_t){ .op = JMP, .opnd1 = (int64_t)start_addr });
+            add_to_code_da(compiler->code_da, (code_t){ .op = POP_TOP, .opnd1 = 0x00 });
+            jmp_target->opnd1 = compiler->code_da->count - 1;
+        }
+        break;
         case BLOCK_STMT:
             stmt_list_t* element = stmt->as_block.stmts;
             enter_scope(compiler);

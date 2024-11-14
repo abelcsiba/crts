@@ -1,5 +1,10 @@
 
 entry {
+    var iter : i64 = 3;
+    loop (iter) {
+        print("Iteration", iter);
+        iter = iter - 1;
+    }
 
     if (!0)
     {
