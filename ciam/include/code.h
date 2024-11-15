@@ -20,8 +20,8 @@ typedef struct {
 
 typedef struct {
     code_t*             data;
-    size_t              count;
-    size_t              capacity;
+    int32_t             count;
+    int32_t             capacity;
 } code_da;
 
 typedef struct {

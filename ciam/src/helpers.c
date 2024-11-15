@@ -8,8 +8,8 @@
 void print_value(value_t val) {
     switch (val.type) 
     {
-        case VAL_I8: // Assuming all integer types use %d
-            printf("%d", val.as.i8); // For simplicity, using i32 for demo
+        case VAL_I8:
+            printf("%d", val.as.i8);
             break;
         case VAL_I16:
             printf("%d", val.as.i16);
@@ -33,7 +33,7 @@ void print_value(value_t val) {
             printf("%c", val.as.chr);
             break;
         case VAL_OBJECT:
-            if (OBJ_STRING != val.as.obj->obj_type) printf("OBJ");
+            if (OBJ_STRING != val.as.obj->obj_type) printf("OBJ"); // TODO: Support other obj types
             obj_string_t* str = (obj_string_t*)val.as.obj;
             printf("%.*s", (int)str->length, str->chars);
             break;

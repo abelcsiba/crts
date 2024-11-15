@@ -66,7 +66,7 @@ struct ast_exp_t {
     expr_type_t             target_type;
 
     union {
-        struct ast_number {
+        union ast_number {
             int8_t          I8;
             int16_t         I16;
             int32_t         I32;
@@ -143,6 +143,7 @@ typedef enum {
 
 typedef struct {
     cu_type_t               type;
+    char*                   module_name;
     stmt_list_t*            pures;
     ast_stmt_t*             entry;
 } cu_t;

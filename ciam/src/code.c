@@ -19,7 +19,7 @@ void add_to_code_da(code_da* da, code_t val)
 {
     if (da->count == da->capacity)
     {
-        size_t new_cap = (0 == da->capacity ? 8 : da->capacity * 2);
+        int32_t new_cap = (0 == da->capacity ? 8 : da->capacity * 2);
         da->data = (code_t*)realloc(da->data, sizeof(code_t) * new_cap);
         da->capacity = new_cap;
     }

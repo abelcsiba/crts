@@ -59,8 +59,8 @@ static expr_type_t resolve_bin_type(analyzer_t* /*analyzer*/, const char* op, ex
         op[0] == STAR  || 
         op[0] == SLASH )         return arith(lht, rht);
     else if ( op[0] == MODULO  ) return modulo(lht, rht);
-    else if ( op[0] == BIT_AND ) {} // TODO: check for op[1] for &&
-    else if ( op[0] == BIT_OR  ) {} // TODO: check for op[1] for ||
+    else if ( op[0] == BIT_AND ) return (strlen(op) == 2 && op[1] == BIT_AND) ? BOOL : I64; // TODO: check for op[1] for &&
+    else if ( op[0] == BIT_OR  ) return (strlen(op) == 2 && op[1] == BIT_OR) ? BOOL : I64; // TODO: check for op[1] for ||
     else if ( op[0] == LT      ) return BOOL; // TODO: proper check here, mate
     else if ( op[0] == GT      ) return BOOL; // TODO: proper check here, mate
     else if ( op[0] == XOR     ) {}

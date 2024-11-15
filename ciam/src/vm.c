@@ -53,7 +53,7 @@ static inline bool is_turthy(value_t val)
             switch (val.as.obj->obj_type)
             {
                 case OBJ_STRING: return true;
-                default: return false; // TODO: Other obj type resolution might be needed
+                default:         return false; // TODO: Other obj type resolution might be needed
             }
         }
         break;
@@ -62,7 +62,7 @@ static inline bool is_turthy(value_t val)
 }
 
 #if DEBUG
-static void dump_stack(ciam_vm_t* vm)
+static inline void dump_stack(ciam_vm_t* vm)
 {
     int64_t index = vm->threads[0].stack.count - 1;
     printf("        _________________  \n");
@@ -244,7 +244,7 @@ ciam_vm_t* ciam_vm_new()
 
 void ciam_destroy_vm(ciam_vm_t* vm)
 {
-    destroy_thread(vm, 0);
+    destroy_thread(vm, 0); // TODO: When multi/thread is introduced, this needs to clean them too
     free(vm);
 }
 
@@ -514,8 +514,7 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
             obj_string_t* obj_str = ALLOCATE(obj_string_t, 1);
             obj_str->chars = ALLOCATE(char, str.length); 
             obj_str->length = str.length;
-            memcpy(obj_str->chars, str.chars, str.length);
-            obj_str->chars[str.length] = '\0';
+            sprintf(obj_str->chars, "%.*s", (int)str.length, str.chars);
             ADD2HEAP(obj_str, OBJ_STRING, true);            
         }
         PRINT_DEBUG(CURRENT_CODE);
@@ -591,13 +590,37 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         code = CODE();
         PRINT_DEBUG_WIDE(CURRENT_CODE, code.opnd1);
         if (!is_turthy(PEEK(1)))
-        {
             PC = (uint64_t)code.opnd1;
-        }
         else
-        {
             PC++;
+        DISPATCH();
+    OP_JMP_IF_TRUE:
+        code = CODE();
+        PRINT_DEBUG_WIDE(CURRENT_CODE, code.opnd1);
+        if (is_turthy(PEEK(1)))
+            PC = (uint64_t)code.opnd1;
+        else
+            PC++;
+        DISPATCH();
+    OP_AND:
+        code = CODE();
+        {
+            value_t a = POP();
+            value_t b = POP();
+            PUSH(BOOL_VAL(is_turthy(a) && is_turthy(b)));
         }
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_OR:
+        code = CODE();
+        {
+            value_t a = POP();
+            value_t b = POP();
+            PUSH(BOOL_VAL(is_turthy(a) || is_turthy(b)));
+        }
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
         DISPATCH();
     OP_JMP:
         code = CODE();

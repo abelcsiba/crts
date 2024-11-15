@@ -1,13 +1,19 @@
+module main;
 
 entry {
     var iter : i32 = 3;
-    var ch_t : char = 'c';
+    var ch_t : i32 = 4;
 
-    loop (iter) {
+    loop (iter && ch_t) {
         var hmm : string = "Iteration";
         print(hmm, iter);
         iter = (iter as i64 - 1) as i32;
     }
+
+    if (!false)
+	    print("Second T");
+    else
+        print("Second F");
 
     if (!false)
     {
@@ -20,7 +26,7 @@ entry {
         print("We are in: ", else_s);
     }
 
-    var tmp : string = read("Give me a number, please!");
+    var tmp : i64 = read("Give me a number, please!") as i64;
 
     var asd : i64 = 3;
     {
@@ -28,5 +34,5 @@ entry {
         asd = asd + 15;
         print("Result:", asd);
     }
-    print("You typed", tmp, "\t That's an impressive number!");
+    print("You typed", tmp, "\nThat's an impressive number!");
 }

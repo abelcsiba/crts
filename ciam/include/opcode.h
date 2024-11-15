@@ -45,6 +45,9 @@
     X(NEG,             37, 0,   "NEG"           )   \
     X(JMP_IF_FALSE,    38, 1,   "JMP_IF_FALSE"  )   \
     X(JMP,             39, 1,   "JMP"           )   \
+    X(JMP_IF_TRUE,     40, 1,   "JUMP_IF_TRUE"  )   \
+    X(AND,             41, 0,   "AND"           )   \
+    X(OR,              42, 0,   "OR"            )   \
 
 
 typedef enum {

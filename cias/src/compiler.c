@@ -7,6 +7,8 @@
 static int const_num_index = 0;
 static int const_str_index = 0;
 
+static void compile_expr(compiler_t* compiler, ast_exp_t* exp);
+
 static void enter_scope(compiler_t* compiler)
 {
     compiler->scope_depth++;
@@ -117,6 +119,19 @@ static opcode_t get_binary_opcode(const char op_c, ast_exp_t* exp)
 #undef BINARY
 }
 
+static inline int num_const_exist(compiler_t* compiler,ast_exp_t* exp)
+{
+    for (int i = 0; i < const_num_index; i++)
+    {
+        if (compiler->compiled_m->pool.numbers.nums[i].type == exp->type_info && memcmp(&compiler->compiled_m->pool.numbers.nums[i].value, &exp->as_num, sizeof(uint64_t)) == 0)
+        {
+            fprintf(stderr, "Match: %d %s\n", i, (memcmp(&compiler->compiled_m->pool.numbers.nums[i].value, &exp->as_num, sizeof(uint64_t)) == 0) ? "true" : "false");
+            return i;
+        }
+    }
+    return -1;
+}
+
 static num_const_t emit_num_const(ast_exp_t* exp)
 {
     num_const_t num = {0};
@@ -140,6 +155,37 @@ static string_const_t emit_string_exp(ast_exp_t* exp)
     str.length = strlen(exp->as_str.STRING);
     str.chars = exp->as_str.STRING; // This comes from an arena in case of vars
     return str;
+}
+
+static opcode_t compile_logic_op(compiler_t* compiler, ast_exp_t* exp)
+{
+    switch (exp->as_bin.op[1])
+    {
+        case '&': {
+            compile_expr(compiler, exp->as_bin.left);
+            add_to_code_da(compiler->code_da, (code_t){ .op = JMP_IF_FALSE, .opnd1 = 0x00 });
+            code_t* end_ptr = &compiler->code_da->data[compiler->code_da->count - 1];
+            compile_expr(compiler, exp->as_bin.right);
+            add_to_code_da(compiler->code_da, (code_t){ .op = AND, .opnd1 = 0x00 });
+            end_ptr->opnd1 = compiler->code_da->count;
+            return AND;
+        }
+        case '|': {
+            compile_expr(compiler, exp->as_bin.left);
+            add_to_code_da(compiler->code_da, (code_t){ .op = JMP_IF_TRUE, .opnd1 = 0x00 });
+            code_t* end_ptr = &compiler->code_da->data[compiler->code_da->count - 1];
+            compile_expr(compiler, exp->as_bin.right);
+            add_to_code_da(compiler->code_da, (code_t){ .op = OR, .opnd1 = 0x00 });
+            end_ptr->opnd1 = compiler->code_da->count;
+            return AND;
+        }
+        default:
+            fprintf(stderr, "Unrecognized logic operator");
+            exit(EXIT_FAILURE);
+    }
+
+    // We shouldn't reach here, better HLT
+    return HLT;
 }
 
 static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
@@ -195,9 +241,17 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
             compiler->compiled_m->pool.strings.strings[const_str_index++] = emit_string_exp(exp);
             break;
         case BINARY_OP: // TODO: Differentiate between groups of binops e.g.: arith, logic, bitwise, assign, invoke...
-            compile_expr(compiler, exp->as_bin.left);
-            compile_expr(compiler, exp->as_bin.right);
-            code.op = get_binary_opcode(*exp->as_bin.op, exp);
+            if (strlen(exp->as_bin.op) == 2)
+            {
+                compile_logic_op(compiler, exp);
+                skip = true;
+            }
+            else
+            {
+                compile_expr(compiler, exp->as_bin.left);
+                compile_expr(compiler, exp->as_bin.right);
+                code.op = get_binary_opcode(*exp->as_bin.op, exp);
+            }
             break;
         case UNARY_OP:
             compile_expr(compiler, exp->as_un.expr);
@@ -331,8 +385,8 @@ void compile_ast(compiler_t* compiler, cu_t* cu)
 void init_module(compiler_t* compiler)
 {
     compiler->compiled_m = (module_t*)calloc(1, sizeof(module_t));
-    compiler->compiled_m->pool.numbers.nums = (num_const_t*)calloc(15, sizeof(num_const_t)); // TODO: hardcoded. fix it!
-    compiler->compiled_m->pool.strings.strings = (string_const_t*)calloc(15, sizeof(string_const_t)); // TODO: hardcoded. fix it!
+    compiler->compiled_m->pool.numbers.nums = (num_const_t*)calloc(30, sizeof(num_const_t)); // TODO: hardcoded. fix it!
+    compiler->compiled_m->pool.strings.strings = (string_const_t*)calloc(30, sizeof(string_const_t)); // TODO: hardcoded. fix it!
     compiler->local_count = 0;
     compiler->scope_depth = 0;
     compiler->code_da = (code_da*)calloc(1, sizeof(code_da));

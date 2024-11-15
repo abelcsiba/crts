@@ -230,7 +230,7 @@ static inline num_val_t parse_float(const char *str) {
 
 ast_exp_t* number(arena_t* arena, parser_t* /*parser*/, token_t token)
 {
-#define NUM_VAL(value, type) new_exp(arena, (ast_exp_t){ .kind = NUM_LITERAL, .type_info = type, .as_num = (struct ast_number){ .type = value }})
+#define NUM_VAL(value, type) new_exp(arena, (ast_exp_t){ .kind = NUM_LITERAL, .type_info = type, .as_num = { .type = value }})
     char temp[token.length + 1];
     sprintf(temp, "%.*s", (int)token.length, token.start);
     bool is_float = false;
@@ -927,6 +927,23 @@ cu_t* parse(arena_t* arena, parser_t* parser)
                     next->next = NULL;
                     element->next = next;
                 }
+                break;
+            case TOKEN_MODULE:
+                advance(parser);
+                token_t token = advance(parser);
+                if (TOKEN_IDENTIFIER != token.type)
+                {
+                    fprintf(stderr, "Missing module name\n");
+                    exit(EXIT_FAILURE);
+                }
+                cu->module_name = (char*)arena_alloc(arena, token.length + 1);
+                sprintf(cu->module_name, "%.*s", (int)token.length, token.start);
+                if (TOKEN_SEMI != peek(parser).type)
+                {
+                    fprintf(stderr, "Missing ';' symbol\n");
+                    exit(EXIT_FAILURE);
+                }
+                advance(parser);
                 break;
             default:
 

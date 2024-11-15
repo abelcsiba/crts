@@ -15,13 +15,13 @@ static const char* token_ty2label(token_ty_t type)
 
 void print_header()
 {
-  printf("================ Launching CIAM Compiler ==================\n");
-  printf("|                                                         |\n");
-  printf("|                      LEXER OUTPUT                       |\n");
-  printf("|                                                         |\n");
-  printf("|---------------------------------------------------------|\n");
-  printf("| LineNo |  ID  | TokenName            | Token Lit. Value |\n");
-  printf("|---------------------------------------------------------|\n");
+  printf("================ Launching CIAM Compiler ==========================\n");
+  printf("|                                                                 |\n");
+  printf("|                      LEXER OUTPUT                               |\n");
+  printf("|                                                                 |\n");
+  printf("|-----------------------------------------------------------------|\n");
+  printf("| LineNo |  ID  | TokenName            | Token Lit. Value         |\n");
+  printf("|-----------------------------------------------------------------|\n");
 }
 
 void print_tokens(token_list_t* tokens)
@@ -41,13 +41,16 @@ void print_tokens(token_list_t* tokens)
         }
 
         printf(" 0x%02d | %-20.20s |", token.type, token_ty2label(token.type));
-        printf(" %-17.*s|\n", (int)token.length, token.start);
+        if (token.length < 17)
+            printf(" %-25.*s|\n", (int)token.length, token.start);
+        else
+            printf(" %-25.25s|\n", token.start);
     }
 }
 
 void print_footer()
 {
-  printf("|---------------------------------------------------------|\n");
+  printf("|-----------------------------------------------------------------|\n");
 }
 
 static char* type2string(expr_type_t type)
@@ -163,9 +166,7 @@ static void print_ast_stmt(FILE* out, ast_stmt_t *stmt)
     case LOOP_STMT:
         fprintf(out, "LOOP ");
         print_ast_exp(out, stmt->as_loop.cond);
-        fprintf(out, "\n[\n");
         print_ast_stmt(out, stmt->as_loop.block);
-        fprintf(out, "]\n");
         break;
     case VAR_DECL:
         fprintf(out, "VAR ");
@@ -181,15 +182,11 @@ static void print_ast_stmt(FILE* out, ast_stmt_t *stmt)
     case IF_STMT:
         fprintf(out, "IF ");
         print_ast_exp(out, stmt->as_if.cond);
-        fprintf(out, "\n[\n");
         print_ast_stmt(out, stmt->as_if.then_b);
-        fprintf(out, "]\n");
         if (NULL != stmt->as_if.else_b)
         {
             fprintf(out, "ELSE\n");
-            fprintf(out, "[\n");
             print_ast_stmt(out, stmt->as_if.else_b);
-            fprintf(out, "]\n");
         }
         break;
     case RETURN_STMT:
@@ -222,7 +219,8 @@ static void print_ast_stmt(FILE* out, ast_stmt_t *stmt)
 
 void print_cu(FILE* out, cu_t* cu)
 {
-    printf("\n\nCompiled statements:\n");
+    fprintf(out, "Module: %s\n", cu->module_name);
+    fprintf(out, "\n\nCompiled statements:\n");
     fprintf(out, "\n");
     if (NULL != cu->pures)
     {
@@ -238,5 +236,5 @@ void print_cu(FILE* out, cu_t* cu)
     {
         print_ast_stmt(out, cu->entry);
     }
-    printf("\n");
+    fprintf(out, "\n");
 }
