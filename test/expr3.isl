@@ -18,7 +18,7 @@ entry {
         print("We are in: ", else_s);
     }
 
-    var tmp : string = read("How old are you?");
+    var tmp : string = read("Give me a number, please!");
 
     var asd : i64 = 3;
     {
@@ -26,5 +26,5 @@ entry {
         asd = asd + 15;
 	    print("Result:", asd);
     }
-    print(tmp, "years old?! Wow, that's old!");
+    print("You typed", tmp, "\t That's an impressive number!");
 }

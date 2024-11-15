@@ -99,6 +99,60 @@ ast_exp_t* variable(arena_t* arena, parser_t* /*parser*/, token_t token)
     return new_exp(arena, (ast_exp_t){ .kind = VARIABLE, .type_info = UNKNOWN, .as_var = (struct ast_var){ .name = tmp }});
 }
 
+static void process_escape_sequences(char *str) {
+    char *src = str;
+    char *dst = str;  
+
+    while (*src != '\0') 
+    {
+        if (*src == '\\') 
+        {
+            src++;
+            switch (*src) 
+            {
+                case 'n':
+                    *dst = '\n';
+                    break;
+                case 't':
+                    *dst = '\t';
+                    break;
+                case 'r':
+                    *dst = '\r';
+                    break;
+                case 'b':
+                    *dst = '\b';
+                    break;
+                case 'f':
+                    *dst = '\f';
+                    break;
+                case 'v':
+                    *dst = '\v';
+                    break;
+                case '\\':
+                    *dst = '\\';
+                    break;
+                case '\"':
+                    *dst = '\"';
+                    break;
+                case '\'':
+                    *dst = '\'';
+                    break;
+                default:
+                    dst++;
+                    *dst = *src;
+                    break;
+            }
+        } 
+        else 
+        {
+            *dst = *src;
+        }
+        dst++;
+        src++;
+    }
+    *dst = '\0';
+}
+
 ast_exp_t* str_(arena_t* arena, parser_t* /*parser*/, token_t token)
 {
     size_t length = (token.length > 2) ? token.length : 1;
@@ -106,6 +160,8 @@ ast_exp_t* str_(arena_t* arena, parser_t* /*parser*/, token_t token)
 
     if (length > 2) sprintf(tmp, "%.*s", (int)length - 2, &token.start[1]);
     else            sprintf(tmp, "%s", "");
+
+    process_escape_sequences(tmp);
 
     ast_exp_t* expr = new_exp(arena, (ast_exp_t){ .kind = STRING_LITERAL, .type_info = STRING, .as_str = (struct ast_string){ .STRING = tmp }});
     return expr;
