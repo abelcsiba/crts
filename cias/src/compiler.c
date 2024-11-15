@@ -217,7 +217,7 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
                 }
                 compile_expr(compiler, exp->as_call.callee_name);
                 code.op = CALL;
-                code.opnd1 = arg_num | ((uint64_t)0xF << 60);
+                code.opnd1 = arg_num | ((uint64_t)0x01 << 56);
             }
             break;
         case CAST_BIN:

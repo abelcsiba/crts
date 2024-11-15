@@ -4,6 +4,7 @@
 #include "macros.h"
 #include "helpers.h"
 #include "native.h"
+#include "allocator.h"
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -159,9 +160,20 @@ static char* op_label[] = {
         default:                                                    \
             ERROR("Invalid number type");                           \
     }                                                               \
-} while (false)                                                     
-
-#define CALL_MASK   0x0FFFFFFFFFFFFFFF
+} while (false)
+#define ADD2HEAP(heap_elem, obj_ty, stack_store) do {               \
+    obj_t* obj = NULL;                                              \
+    obj = (obj_t*)heap_elem;                                        \
+    obj->obj_type = obj_ty;                                         \
+    obj->marked = false;                                            \
+    obj->next = NULL;                                               \
+    if (NULL != vm->heap)                                           \
+        obj->next = vm->heap;                                       \
+    vm->heap = obj;                                                 \
+    if (stack_store) PUSH(OBJ_VAL(obj));                            \
+} while (false)
+#define SLOT_FROM_BP(idx) vm->threads[0].stack.slots[vm->threads[0].bp + idx]
+#define CALL_MASK   0x00FFFFFFFFFFFFFF
 
 static void init_main_thread(ciam_vm_t* vm)
 {
@@ -495,27 +507,23 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
-    OP_LOAD_STRING: // This needs refactoring to compose allocation and make obj handling more generic
+    OP_LOAD_STRING:
         code = CODE();
-        string_const_t str = vm->module->pool.strings.strings[code.opnd1];
-        obj_string_t* obj_str = (obj_string_t*)calloc(1, sizeof(obj_string_t)); // TODO: move to a centralized allocator for GC
-        obj_str->chars = (char*)calloc(str.length, sizeof(char)); // TODO: move to a centralized allocator for GC
-        obj_str->length = str.length;
-        memcpy(obj_str->chars, str.chars, str.length);
-        obj_t* obj = (obj_t*)obj_str;
-        obj->obj_type = OBJ_STRING;
-        obj->marked = false;
-        obj->next = NULL;
-        if (NULL != vm->heap)
-            obj->next = vm->heap;
-        vm->heap = obj;
-        PUSH(OBJ_VAL(obj));
+        {
+            string_const_t str = vm->module->pool.strings.strings[code.opnd1];
+            obj_string_t* obj_str = ALLOCATE(obj_string_t, 1);
+            obj_str->chars = ALLOCATE(char, str.length); 
+            obj_str->length = str.length;
+            memcpy(obj_str->chars, str.chars, str.length);
+            obj_str->chars[str.length] = '\0';
+            ADD2HEAP(obj_str, OBJ_STRING, true);            
+        }
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
     OP_CALL: // This needs a refactoring to support generic call mechanism (and not just for native/core calls)
         code = CODE();
-        // int8_t const_idx = (int8_t)(code.opnd1 & ((~CALL_MASK) >> 60)); Will be used to index the cont pool
+        // int8_t const_idx = (int8_t)(((uint64_t)code.opnd1 & (~CALL_MASK)) >> 56); // Will be used to index the cont pool
         int64_t arg_count = code.opnd1 & CALL_MASK;
         value_t val = POP();
         if (VAL_OBJECT == val.type && OBJ_STRING == val.as.obj->obj_type)
@@ -549,7 +557,7 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         code = CODE();
         {
             int64_t rel_idx = code.opnd1;
-            vm->threads[0].stack.slots[vm->threads[0].bp + rel_idx] = POP();
+            SLOT_FROM_BP(rel_idx) = POP();
         }
         PRINT_DEBUG_WIDE(CURRENT_CODE, code.opnd1);
         PC++;
@@ -558,7 +566,7 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         code = CODE();
         {
             int64_t rel_idx = code.opnd1;
-            PUSH(vm->threads[0].stack.slots[vm->threads[0].bp + rel_idx]);
+            PUSH(SLOT_FROM_BP(rel_idx));
         }
         PRINT_DEBUG_WIDE(CURRENT_CODE, code.opnd1);
         PC++;
@@ -599,7 +607,7 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
 
 
     /* We shouldn't reach here, so better abort now. */
-    printf("We shouldn't reach this point. Aborting...\n");
+    printf("We shouldn't reach this point. Exit with error...\n");
     return VM_ERROR;
 }
 
@@ -638,6 +646,8 @@ void display_init_message(ciam_vm_t* vm)
 }
 
 #undef CALL_MASK
+#undef SLOT_FROM_BP
+#undef ADD2HEAP
 #undef BINARY_I
 #undef LOAD
 #undef CURRENT_CODE
