@@ -172,7 +172,7 @@ expr_type_t resolve_exp_type(analyzer_t* analyzer, ast_exp_t* exp)
             }
             return BOOL; // TODO: Change this to the exact return type
         case CAST_BIN:
-
+            resolve_exp_type(analyzer, exp->as_cast.exp);
             return exp->as_cast.target; // TODO: check if cast is even possible
         default:
             fprintf(stderr, "Unknown expression kind\n");

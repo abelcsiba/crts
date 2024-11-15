@@ -1,10 +1,10 @@
 
 entry {
-    var iter : i64 = 3;
+    var iter : i32 = 3;
     loop (iter) {
         var hmm : string = "Iteration";
         print(hmm, iter);
-        iter = iter as i64 - 1;
+        iter = (iter as i64 - 1) as i32;
     }
 
     if (!0)
