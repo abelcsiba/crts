@@ -50,6 +50,25 @@ void print_footer()
   printf("|---------------------------------------------------------|\n");
 }
 
+static char* type2string(expr_type_t type)
+{
+    switch (type)
+    {
+        case I8:      return "i8";
+        case I16:     return "i16";
+        case I32:     return "i32";
+        case I64:     return "i64";
+        case FLOAT:   return "float";
+        case DOUBLE:  return "double";
+        case CHAR:    return "char";
+        case STRING:  return "string";
+        case BOOL:    return "bool";
+        case VOID:    return "void";
+        default:      return "unknown";
+    }
+    return "unknown";
+}
+
 void print_ast_exp(FILE* out, ast_exp_t *exp)
 {
     switch (exp->kind)
@@ -87,6 +106,13 @@ void print_ast_exp(FILE* out, ast_exp_t *exp)
             print_ast_exp(out, exp->as_bin.right);
             fprintf(out, ")");
             break;
+        case CAST_BIN:
+            fprintf(out, "(");
+            print_ast_exp(out, exp->as_cast.exp);
+            fprintf(out, " as ");
+            fprintf(out, "%s", type2string(exp->as_cast.target));
+            fprintf(out, ")");
+            break;
         case CALLABLE:
             print_ast_exp(out, exp->as_call.callee_name);
             fprintf(out, "(");
@@ -117,25 +143,6 @@ void print_ast_exp(FILE* out, ast_exp_t *exp)
             fprintf(out, "UNKNOWN");
             break;
     }
-}
-
-static char* type2string(expr_type_t type)
-{
-    switch (type)
-    {
-        case I8:      return "i8";
-        case I16:     return "i16";
-        case I32:     return "i32";
-        case I64:     return "i64";
-        case FLOAT:   return "float";
-        case DOUBLE:  return "double";
-        case CHAR:    return "char";
-        case STRING:  return "string";
-        case BOOL:    return "bool";
-        case VOID:    return "void";
-        default:      return "unknown";
-    }
-    return "unknown";
 }
 
 static void print_ast_stmt(FILE* out, ast_stmt_t *stmt)

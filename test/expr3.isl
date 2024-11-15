@@ -4,7 +4,7 @@ entry {
     loop (iter) {
         var hmm : string = "Iteration";
         print(hmm, iter);
-        iter = iter - 1;
+        iter = iter as i64 - 1;
     }
 
     if (!0)

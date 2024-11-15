@@ -16,6 +16,7 @@ typedef enum { // TODO: Add invocation as well
     BOOL_LITERAL,
     VARIABLE,
     BINARY_OP,
+    CAST_BIN,
     ASSIGNMENT,
     UNARY_OP,
     CALLABLE
@@ -95,6 +96,11 @@ struct ast_exp_t {
             ast_exp_t*      right;
             const char*     op;
         } as_bin;
+
+        struct ast_cast {
+            ast_exp_t*      exp;
+            expr_type_t     target;
+        } as_cast;
 
         struct ast_ternary {
             ast_exp_t*      cond;

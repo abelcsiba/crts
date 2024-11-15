@@ -9,6 +9,7 @@
 static parse_rule_t parse_table[] = {
     [TOKEN_ASTERISK]        = { .prec = PREC_FACTOR,        .prefix = unary,    .infix = binary     },
     [TOKEN_AND]             = { .prec = PREC_AND,           .prefix = NULL,     .infix = binary     },
+    [TOKEN_AS]              = { .prec = PREC_CAST,          .prefix = NULL,     .infix = cast       },
     [TOKEN_BANG]            = { .prec = PREC_NONE,          .prefix = unary,    .infix = NULL       },
     [TOKEN_BANG_EQUAL]      = { .prec = PREC_EQUALITY,      .prefix = NULL,     .infix = binary     },
     [TOKEN_BIT_AND]         = { .prec = PREC_BIT_AND,       .prefix = unary,    .infix = binary     },
@@ -346,6 +347,20 @@ ast_exp_t* invoke(arena_t* /*arena*/, parser_t* /*parser*/, ast_exp_t* /*left*/,
 {
     // TODO
     return NULL;
+}
+
+ast_exp_t* cast(arena_t* arena, parser_t* parser, ast_exp_t* left, bool /*can_assign*/)
+{
+    return new_exp(arena, (ast_exp_t) 
+            { 
+              .kind = CAST_BIN, 
+              .type_info = UNKNOWN, 
+              .as_cast = (struct ast_cast)
+                            { 
+                              .exp = left, 
+                              .target = parse_var_type(parser)
+                            }
+            });
 }
 
 ast_exp_t* binary(arena_t* arena, parser_t* parser, ast_exp_t* left, bool /*can_assign*/)

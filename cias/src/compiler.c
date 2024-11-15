@@ -145,6 +145,7 @@ static string_const_t emit_string_exp(ast_exp_t* exp)
 static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
 {
     code_t code = {0};
+    bool skip = false;
     switch (exp->kind)
     {
         case NUM_LITERAL:
@@ -219,12 +220,17 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
                 code.opnd1 = arg_num | ((uint64_t)0xF << 60);
             }
             break;
+        case CAST_BIN:
+            compile_expr(compiler, exp->as_cast.exp);
+            skip = true;
+            break;
         default:
             fprintf(stderr, "Unrecognized expression\n");
             exit(EXIT_FAILURE);
             break;
     }
-    add_to_code_da(compiler->code_da, code);
+    if (!skip)
+        add_to_code_da(compiler->code_da, code);
 }
 
 static void compile_stmt(compiler_t* compiler, ast_stmt_t* stmt)

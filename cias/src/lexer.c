@@ -118,6 +118,7 @@ static token_ty_t identifier_type(lexer_t* lexer)
 {
     switch(lexer->start[0]) // TODO: add the rest of the keywords
     {
+        case 'a': return check_keyword(lexer, 1, 1, "s", TOKEN_AS);
         case 'b': return check_keyword(lexer, 1, 3, "ool", TOKEN_BOOL);
         case 'c': return check_keyword(lexer, 1, 3, "har", TOKEN_CHAR);
         case 'd': return check_keyword(lexer, 1, 5, "ouble", TOKEN_DOUBLE);
