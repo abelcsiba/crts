@@ -1,13 +1,15 @@
 
 entry {
     var iter : i32 = 3;
+    var ch_t : char = 'c';
+
     loop (iter) {
         var hmm : string = "Iteration";
         print(hmm, iter);
         iter = (iter as i64 - 1) as i32;
     }
 
-    if (!0)
+    if (!false)
     {
         var then_s : string = "Then clause";
 	    print("We are in: ", then_s);
@@ -24,7 +26,7 @@ entry {
     {
         var tmp3 : i32 = 14 + 42;
         asd = asd + 15;
-	    print("Result:", asd);
+        print("Result:", asd);
     }
     print("You typed", tmp, "\t That's an impressive number!");
 }
