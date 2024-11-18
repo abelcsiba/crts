@@ -444,10 +444,27 @@ ast_exp_t* binary(arena_t* arena, parser_t* parser, ast_exp_t* left, bool /*can_
             });
 }
 
-ast_exp_t* ternary(arena_t* /*arena*/, parser_t* /*parser*/, ast_exp_t* /*left*/, bool /*can_assign*/)
+ast_exp_t* ternary(arena_t* arena, parser_t* parser, ast_exp_t* left, bool /*can_assign*/)
 {
-    // TODO: ternary implementation here
-    return NULL;
+    ast_exp_t* then_b = parse_expression(arena, parser, PREC_NONE);
+    if (TOKEN_COLON != peek(parser).type)
+    {
+        error_exp(parser, "Invalid ternary expression");
+        return NULL;
+    }
+    advance(parser);
+    ast_exp_t* else_b = parse_expression(arena, parser, PREC_NONE);
+    return new_exp(arena, (ast_exp_t) 
+            { 
+              .kind = TERNARY_OP, 
+              .type_info = UNKNOWN, 
+              .as_ter = (struct ast_ternary)
+                            { 
+                              .cond = left,
+                              .op1 = then_b,
+                              .op2 = else_b
+                            }
+            });
 }
 
 static token_t advance(parser_t* parser)

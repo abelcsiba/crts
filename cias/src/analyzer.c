@@ -59,12 +59,13 @@ static expr_type_t resolve_bin_type(analyzer_t* /*analyzer*/, const char* op, ex
         op[0] == STAR  || 
         op[0] == SLASH )         return arith(lht, rht);
     else if ( op[0] == MODULO  ) return modulo(lht, rht);
-    else if ( op[0] == BIT_AND ) return (strlen(op) == 2 && op[1] == BIT_AND) ? BOOL : I64; // TODO: check for op[1] for &&
-    else if ( op[0] == BIT_OR  ) return (strlen(op) == 2 && op[1] == BIT_OR) ? BOOL : I64; // TODO: check for op[1] for ||
-    else if ( op[0] == LT      ) return BOOL; // TODO: proper check here, mate
-    else if ( op[0] == GT      ) return BOOL; // TODO: proper check here, mate
+    else if ( op[0] == BIT_AND ) return (strlen(op) == 2 && op[1] == BIT_AND) ? BOOL : I64;
+    else if ( op[0] == BIT_OR  ) return (strlen(op) == 2 && op[1] == BIT_OR) ? BOOL : I64;
+    else if ( op[0] == LT      ) return BOOL;
+    else if ( op[0] == GT      ) return BOOL;
     else if ( op[0] == XOR     ) {}
-    else if ( op[0] == EQUAL   ) return ((rht <= lht) ? lht : ERROR);
+    else if ( op[0] == EQUAL   ) return (strlen(op) == 2 && op[1] == EQUAL) ? ((rht == lht) ? lht : ERROR) : ((rht <= lht) ? lht : ERROR);
+    else if ( op[0] == BANG    ) return (strlen(op) == 2 && op[1] == EQUAL) ? ((rht == lht) ? lht : ERROR) : ERROR;
     else 
     {
         fprintf(stderr, "Unknown operator '%s'\n", op);
@@ -175,6 +176,23 @@ expr_type_t resolve_exp_type(analyzer_t* analyzer, ast_exp_t* exp)
         case CAST_BIN:
             resolve_exp_type(analyzer, exp->as_cast.exp);
             return exp->as_cast.target; // TODO: check if cast is even possible
+        case TERNARY_OP: {
+            expr_type_t cond_type = resolve_exp_type(analyzer, exp->as_ter.cond);
+            ERROR_CHECK(cond_type);
+            expr_type_t then_ty = resolve_exp_type(analyzer, exp->as_ter.op1);
+            expr_type_t else_ty = resolve_exp_type(analyzer, exp->as_ter.op2);
+            if (then_ty != else_ty)
+            {
+                fprintf(stderr, "Incompatible result type in ternary expression\n");
+                fprintf(stderr, "Operand 1.: ");
+                print_ast_exp(stderr, exp->as_ter.op1);
+                fprintf(stderr, "\nOperand 2.: ");
+                print_ast_exp(stderr, exp->as_ter.op2);
+                fprintf(stderr, "\n");
+                exit(EXIT_FAILURE);
+            }
+            return then_ty;
+        }
         default:
             fprintf(stderr, "Unknown expression kind\n");
             exit(EXIT_FAILURE);

@@ -20,6 +20,7 @@ typedef enum { // TODO: Add invocation as well
     ASSIGNMENT      =    8,
     UNARY_OP        =    9,
     CALLABLE        =   10,
+    TERNARY_OP      =   11,
 } expr_kind_t;
 
 typedef enum {

@@ -142,6 +142,14 @@ void print_ast_exp(FILE* out, ast_exp_t *exp)
             fprintf(out, " = ");
             print_ast_exp(out, exp->as_bin.right);
             break;
+        case TERNARY_OP:
+            fprintf(out, "(");
+            print_ast_exp(out, exp->as_ter.cond);
+            fprintf(out, ") ? ");
+            print_ast_exp(out, exp->as_ter.op1);
+            fprintf(out, " : ");
+            print_ast_exp(out, exp->as_ter.op2);
+            break;
         default:
             fprintf(out, "UNKNOWN");
             break;

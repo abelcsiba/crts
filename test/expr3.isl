@@ -4,7 +4,7 @@ entry {
     var iter : i32 = 3;
     var ch_t : i32 = 4;
 
-    var verdict : bool = (iter || ch_t) as bool;
+    var verdict : bool = (6 < 6) ? true : false;
     print("Bool result2", verdict);
 
     loop (iter && ch_t) {

@@ -627,7 +627,78 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         PRINT_DEBUG_WIDE(CURRENT_CODE, code.opnd1);
         PC = (uint64_t)code.opnd1;
         DISPATCH();
-
+    OP_EQUALS:
+        code = CODE();
+        {
+            int64_t a_val = 0;
+            int64_t b_val = 0;
+            BINARY(a, a_val, +);
+            BINARY(b, b_val, +);
+            PUSH(BOOL_VAL(a_val == b_val));
+        }
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_NEQUALS:
+        code = CODE();
+        {
+            int64_t a_val = 0;
+            int64_t b_val = 0;
+            BINARY(a, a_val, +);
+            BINARY(b, b_val, +);
+            PUSH(BOOL_VAL(a_val != b_val));
+        }
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_LESS_THAN:
+        code = CODE();
+        {
+            int64_t a_val = 0;
+            int64_t b_val = 0;
+            BINARY(a, a_val, +);
+            BINARY(b, b_val, +);
+            PUSH(BOOL_VAL(b_val < a_val));
+        }
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_GREATER_THAN:
+        code = CODE();
+        {
+            int64_t a_val = 0;
+            int64_t b_val = 0;
+            BINARY(a, a_val, +);
+            BINARY(b, b_val, +);
+            PUSH(BOOL_VAL(b_val > a_val));
+        }
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_GT_EQ:
+        code = CODE();
+        {
+            int64_t a_val = 0;
+            int64_t b_val = 0;
+            BINARY(a, a_val, +);
+            BINARY(b, b_val, +);
+            PUSH(BOOL_VAL(b_val >= a_val));
+        }
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_LT_EQ:
+        code = CODE();
+        {
+            int64_t a_val = 0;
+            int64_t b_val = 0;
+            BINARY(a, a_val, +);
+            BINARY(b, b_val, +);
+            PUSH(BOOL_VAL(b_val <= a_val));
+        }
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
 
     /* We shouldn't reach here, so better abort now. */
     printf("We shouldn't reach this point. Exit with error...\n");

@@ -149,6 +149,12 @@ void print_code(FILE* out, code_t* code, int count)
             case OR:
                 fprintf(out, "OR\n");
                 break;
+            case EQUALS:
+                fprintf(out, "EQUALS\n");
+                break;
+            case NEQUALS:
+                fprintf(out, "NEQUALS\n");
+                break;
             default:
                 fprintf(out, "UNKNOWN_OP %d\n", code[i].op);
                 break;

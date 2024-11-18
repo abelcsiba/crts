@@ -44,10 +44,16 @@
     X(TRAP,            36, 0,   "TRAP"          )   \
     X(NEG,             37, 0,   "NEG"           )   \
     X(JMP_IF_FALSE,    38, 1,   "JMP_IF_FALSE"  )   \
-    X(JMP,             39, 1,   "JMP"           )   \
-    X(JMP_IF_TRUE,     40, 1,   "JUMP_IF_TRUE"  )   \
+    X(JMP_IF_TRUE,     39, 1,   "JUMP_IF_TRUE"  )   \
+    X(JMP,             40, 1,   "JMP"           )   \
     X(AND,             41, 0,   "AND"           )   \
     X(OR,              42, 0,   "OR"            )   \
+    X(EQUALS,          43, 0,   "EQUALS"        )   \
+    X(NEQUALS,         44, 0,   "NEQUALS"       )   \
+    X(LESS_THAN,       45, 0,   "LESS_THAN"     )   \
+    X(GREATER_THAN,    46, 0,   "GREATER_THAN"  )   \
+    X(LT_EQ,           47, 0,   "LT_EQ"         )   \
+    X(GT_EQ,           48, 0,   "GT_EQ"         )   \
 
 
 typedef enum {

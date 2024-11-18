@@ -159,29 +159,60 @@ static string_const_t emit_string_exp(ast_exp_t* exp)
 
 static opcode_t compile_logic_op(compiler_t* compiler, ast_exp_t* exp)
 {
-    switch (exp->as_bin.op[1])
+    char op0 = exp->as_bin.op[0];
+    char op1 = exp->as_bin.op[1];
+    if ( op0 == '&' && op1 == '&' )
     {
-        case '&': {
-            compile_expr(compiler, exp->as_bin.left);
-            add_to_code_da(compiler->code_da, (code_t){ .op = JMP_IF_FALSE, .opnd1 = 0x00 });
-            code_t* end_ptr = &compiler->code_da->data[compiler->code_da->count - 1];
-            compile_expr(compiler, exp->as_bin.right);
-            add_to_code_da(compiler->code_da, (code_t){ .op = AND, .opnd1 = 0x00 });
-            end_ptr->opnd1 = compiler->code_da->count;
-            return AND;
-        }
-        case '|': {
-            compile_expr(compiler, exp->as_bin.left);
-            add_to_code_da(compiler->code_da, (code_t){ .op = JMP_IF_TRUE, .opnd1 = 0x00 });
-            code_t* end_ptr = &compiler->code_da->data[compiler->code_da->count - 1];
-            compile_expr(compiler, exp->as_bin.right);
-            add_to_code_da(compiler->code_da, (code_t){ .op = OR, .opnd1 = 0x00 });
-            end_ptr->opnd1 = compiler->code_da->count;
-            return AND;
-        }
-        default:
-            fprintf(stderr, "Unrecognized logic operator");
-            exit(EXIT_FAILURE);
+        compile_expr(compiler, exp->as_bin.left);
+        add_to_code_da(compiler->code_da, (code_t){ .op = JMP_IF_FALSE, .opnd1 = 0x00 });
+        code_t* end_ptr = &compiler->code_da->data[compiler->code_da->count - 1];
+        compile_expr(compiler, exp->as_bin.right);
+        add_to_code_da(compiler->code_da, (code_t){ .op = AND, .opnd1 = 0x00 });
+        end_ptr->opnd1 = compiler->code_da->count;
+        return AND;
+    }
+    else if ( op0 == '|' && op1 == '|')
+    {
+        compile_expr(compiler, exp->as_bin.left);
+        add_to_code_da(compiler->code_da, (code_t){ .op = JMP_IF_TRUE, .opnd1 = 0x00 });
+        code_t* end_ptr = &compiler->code_da->data[compiler->code_da->count - 1];
+        compile_expr(compiler, exp->as_bin.right);
+        add_to_code_da(compiler->code_da, (code_t){ .op = OR, .opnd1 = 0x00 });
+        end_ptr->opnd1 = compiler->code_da->count;
+        return AND;
+    }
+    else if (op0 == '=' && op1 == '=')
+    {
+        compile_expr(compiler, exp->as_bin.left);
+        compile_expr(compiler, exp->as_bin.right);
+        add_to_code_da(compiler->code_da, (code_t){ .op = EQUALS, .opnd1 = 0x00 });
+        return EQUALS;
+    }
+    else if ( op0 == '!' && op1 == '=')
+    {
+        compile_expr(compiler, exp->as_bin.left);
+        compile_expr(compiler, exp->as_bin.right);
+        add_to_code_da(compiler->code_da, (code_t){ .op = NEQUALS, .opnd1 = 0x00 });
+        return NEQUALS;
+    }
+    else if ( op0 == '>' && op1 == '=')
+    {
+        compile_expr(compiler, exp->as_bin.left);
+        compile_expr(compiler, exp->as_bin.right);
+        add_to_code_da(compiler->code_da, (code_t){ .op = GT_EQ, .opnd1 = 0x00 });
+        return GT_EQ;
+    }
+    else if ( op0 == '<' && op1 == '=')
+    {
+        compile_expr(compiler, exp->as_bin.left);
+        compile_expr(compiler, exp->as_bin.right);
+        add_to_code_da(compiler->code_da, (code_t){ .op = LT_EQ, .opnd1 = 0x00 });
+        return GT_EQ;
+    }
+    else
+    {
+        fprintf(stderr, "Unrecognized logic operator %s\n", exp->as_bin.op);
+        exit(EXIT_FAILURE);
     }
 
     // We shouldn't reach here, better HLT
@@ -250,7 +281,10 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
             {
                 compile_expr(compiler, exp->as_bin.left);
                 compile_expr(compiler, exp->as_bin.right);
-                code.op = get_binary_opcode(*exp->as_bin.op, exp);
+                if ( exp->as_bin.op[0] != '<' && exp->as_bin.op[0] != '>')
+                    code.op = get_binary_opcode(*exp->as_bin.op, exp);
+                else
+                    code.op = (exp->as_bin.op[0] == '>') ? GREATER_THAN : LESS_THAN;
             }
             break;
         case UNARY_OP:
@@ -276,6 +310,20 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
             break;
         case CAST_BIN:
             compile_expr(compiler, exp->as_cast.exp);
+            skip = true;
+            break;
+        case TERNARY_OP:
+            compile_expr(compiler, exp->as_ter.cond);
+            add_to_code_da(compiler->code_da, (code_t){ .op = JMP_IF_FALSE, .opnd1 = 0x00 });
+            code_t* else_ptr = &compiler->code_da->data[compiler->code_da->count - 1];
+            add_to_code_da(compiler->code_da, (code_t){ .op = POP_TOP, .opnd1 = 0x01 });
+            compile_expr(compiler, exp->as_ter.op1);
+            add_to_code_da(compiler->code_da, (code_t){ .op = JMP, .opnd1 = 0x00 });
+            else_ptr->opnd1 = compiler->code_da->count; // Backpatch first address
+            code_t* end_ptr = &compiler->code_da->data[compiler->code_da->count - 1];
+            add_to_code_da(compiler->code_da, (code_t){ .op = POP_TOP, .opnd1 = 0x01 });
+            compile_expr(compiler, exp->as_ter.op2);
+            end_ptr->opnd1 = compiler->code_da->count;
             skip = true;
             break;
         default:
