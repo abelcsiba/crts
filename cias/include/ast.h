@@ -9,17 +9,17 @@
 #include <stddef.h>
 
 typedef enum { // TODO: Add invocation as well
-    NULL_LITERAL,
-    NUM_LITERAL,
-    STRING_LITERAL,
-    CHAR_LITERAL,
-    BOOL_LITERAL,
-    VARIABLE,
-    BINARY_OP,
-    CAST_BIN,
-    ASSIGNMENT,
-    UNARY_OP,
-    CALLABLE
+    NULL_LITERAL    =    0,
+    NUM_LITERAL     =    1,
+    STRING_LITERAL  =    2,
+    CHAR_LITERAL    =    3,
+    BOOL_LITERAL    =    4,
+    VARIABLE        =    5,
+    BINARY_OP       =    6,
+    CAST_BIN        =    7,
+    ASSIGNMENT      =    8,
+    UNARY_OP        =    9,
+    CALLABLE        =   10,
 } expr_kind_t;
 
 typedef enum {
@@ -35,18 +35,18 @@ typedef enum {
 } stmt_kind_t;
 
 typedef enum {
-    BOOL,
-    CHAR,
-    I8,
-    I16,
-    I32,
-    I64,
-    FLOAT,
-    DOUBLE,
-    STRING,
-    VOID,
-    UNKNOWN,
-    ERROR
+    BOOL            =  0,
+    CHAR            =  1,
+    I8              =  2,
+    I16             =  3,
+    I32             =  4,
+    I64             =  5,
+    FLOAT           =  6,
+    DOUBLE          =  7,
+    STRING          =  8,
+    VOID            =  9,
+    UNKNOWN         = 10,
+    ERROR           = 11
 } expr_type_t;
 
 typedef struct ast_exp_t    ast_exp_t;

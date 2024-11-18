@@ -107,29 +107,29 @@ static char* op_label[] = {
     num_const_t c = vm->module->pool.numbers.nums[code.opnd1];      \
     switch (c.type)                                                 \
     {                                                               \
-        case 0:                                                     \
-            PUSH(I8_VAL((int8_t)c.value));                          \
-            break;                                                  \
-        case 1:                                                     \
-            PUSH(I16_VAL((int16_t)c.value));                        \
-            break;                                                  \
-        case 2:                                                     \
-            PUSH(I32_VAL((int32_t)c.value));                        \
-            break;                                                  \
-        case 3:                                                     \
-            PUSH(I64_VAL((int64_t)c.value));                        \
-            break;                                                  \
-        case 4:                                                     \
-            PUSH(FLOAT_VAL((float)c.value));                        \
-            break;                                                  \
-        case 5:                                                     \
-            PUSH(DOUBLE_VAL((double)c.value));                      \
-            break;                                                  \
-        case 6:                                                     \
+        case 0:   /* BOOL */                                        \
             PUSH(BOOL_VAL((bool)c.value));                          \
             break;                                                  \
-        case 7:                                                     \
+        case 1:   /* CHAR */                                        \
             PUSH(CHAR_VAL((char)c.value));                          \
+            break;                                                  \
+        case 2:   /* I8 */                                          \
+            PUSH(I8_VAL((int8_t)c.value));                          \
+            break;                                                  \
+        case 3:   /* I16 */                                         \
+            PUSH(I16_VAL((int16_t)c.value));                        \
+            break;                                                  \
+        case 4:   /* I32 */                                         \
+            PUSH(I32_VAL((int32_t)c.value));                        \
+            break;                                                  \
+        case 5:   /* I64 */                                         \
+            PUSH(I64_VAL((int64_t)c.value));                        \
+            break;                                                  \
+        case 6:   /* FLOAT */                                       \
+            PUSH(FLOAT_VAL((float)c.value));                        \
+            break;                                                  \
+        case 7:   /* DOUBLE */                                      \
+            PUSH(DOUBLE_VAL((double)c.value));                      \
             break;                                                  \
         default:                                                    \
             ERROR("Invalid number type");                           \

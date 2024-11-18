@@ -138,7 +138,16 @@ void print_code(FILE* out, code_t* code, int count)
                 fprintf(out, "JMP_IF_FALSE\n");
                 break;
             case JMP:
-                fprintf(out, "JMP");
+                fprintf(out, "JMP\n");
+                break;
+            case JMP_IF_TRUE:
+                fprintf(out, "JMP_IF_TRUE\n");
+                break;
+            case AND:
+                fprintf(out, "AND\n");
+                break;
+            case OR:
+                fprintf(out, "OR\n");
                 break;
             default:
                 fprintf(out, "UNKNOWN_OP %d\n", code[i].op);

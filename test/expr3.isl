@@ -1,8 +1,11 @@
 module main;
 
-entry {
+entry {  
     var iter : i32 = 3;
     var ch_t : i32 = 4;
+
+    var verdict : bool = (iter || ch_t) as bool;
+    print("Bool result2", verdict);
 
     loop (iter && ch_t) {
         var hmm : string = "Iteration";
@@ -28,9 +31,9 @@ entry {
 
     var tmp : i64 = read("Give me a number, please!") as i64;
 
-    var asd : i64 = 3;
+    var asd : i64 = 3 as i32;
     {
-        var tmp3 : i32 = 14 + 42;
+        var tmp3 : i32 = (14 + 42) as i32;
         asd = asd + 15;
         print("Result:", asd);
     }

@@ -12,6 +12,7 @@
 #include "ast.h"
 #include "codec.h"
 #include "debug.h"
+#include "driver.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -21,32 +22,12 @@
 #include <float.h>
 
 
-char default_source[] = "./test/expr3.isl";
-
 int main(int argc, char** argv)
 {
-  char *src;
-  if (argc < 2) // TODO: This should be removed when the driver is implemented
-  {
-#if DEBUG
-    fprintf(stderr, "Missing input file, using default '%s'\n", default_source);
-#endif
-    src = default_source;
-  }
-  else src = argv[1];
-  
-  FILE* fp = fopen(src, "rb");
-  if (NULL == fp)
-  {
-    fprintf(stderr, "Failed to open file '%s'", src);
-    return EXIT_FAILURE;
-  }
+  driver_t driver;
+  init_driver(&driver);
 
-  fseek(fp, 0, SEEK_END);
-  size_t length = ftell(fp);
-  fseek(fp, 0, SEEK_SET);
-  char* buff = (char*)calloc(length + 1, sizeof(char));
-  fread(buff, sizeof(char), length, fp);
+  char* buff = parse_args(&driver, argc, argv);
 
   lexer_t lexer;
 #if DEBUG
@@ -105,7 +86,7 @@ int main(int argc, char** argv)
   print_code(stdout, module->code, module->code_size);
 #endif
 
-  module->file_name = src;
+  module->file_name = "<HARDCODED>";
   time_t current_time;
   current_time = time(NULL);
   struct tm *tm_local = localtime(&current_time);
@@ -127,9 +108,6 @@ int main(int argc, char** argv)
 closure:
   destroy_arena(&arena);
   free(lexer.tokens.data);
-  
-  fclose(fp);
-  free(buff);
   
   return rc;
 }

@@ -100,7 +100,8 @@ expr_type_t resolve_un_type(analyzer_t* /*analyzer*/, const char* op, expr_type_
 
 void init_global_scope(analyzer_t* analyzer)
 {
-    analyzer->scope = (scope_t*)malloc(sizeof(scope_t));
+    analyzer->scope = (scope_t*)calloc(1, sizeof(scope_t));
+    analyzer->scope->symtable = NULL;
     analyzer->scope->parent = NULL;
 }
 
@@ -308,7 +309,7 @@ bool check_stmt(analyzer_t* analyzer, ast_stmt_t* stmt)
         case PROC_STMT:
             return false; // TODO: implement
         default:
-
+            fprintf(stderr, "Unrecognized statement\n");
             break;
     }
     return false;
