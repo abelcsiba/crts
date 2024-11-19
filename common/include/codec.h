@@ -47,7 +47,7 @@ typedef struct ciam_header_t ciam_header_t;
 
 #define NUM_CONST_SIZE 9
 
-void    encode(char* buff, module_t* module);
+size_t    encode(char* buff, module_t* module);
 void    decode(char* buff, module_t* module);
 
 #endif // COMMON_CODEC_H_

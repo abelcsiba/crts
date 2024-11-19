@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 typedef struct {
-    const char*     input;
+    char*           input;
     int             log_level;
     bool            compile_only;
     char*           full_path;

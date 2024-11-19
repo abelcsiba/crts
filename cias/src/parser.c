@@ -812,6 +812,9 @@ static ast_stmt_t* parse_pure_stmt(arena_t* arena, parser_t* parser)
     ast_stmt_t* body = parse_block_stmt(arena, parser);
     if (NULL == body) defer_error("Invalid pure definition");
     stmt->as_callable.body = body;
+    f_arg_list_t* head = stmt->as_callable.args;
+    for (;head != NULL; head = head->next)
+        stmt->as_callable.arity += 1;
 
     return stmt;
 #undef defer_error

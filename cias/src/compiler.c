@@ -1,6 +1,7 @@
 
 #include "compiler.h"
 #include "opcode.h"
+#include "allocator.h"
 
 #include <string.h>
 
@@ -19,13 +20,15 @@ static void exit_scope(compiler_t* compiler)
     compiler->scope_depth--;
 
     code_t code = {0};
+    int64_t elem_count = 0;
     while (compiler->local_count > 0 && compiler->locals[compiler->local_count - 1].depth > compiler->scope_depth) // TODO: change pop to take operands and do this in one step
     {
         compiler->local_count--;
-        code.op = POP_TOP;
-        code.opnd1 = 0x00;
-        add_to_code_da(compiler->code_da, code);
+        elem_count++;
     }
+    code.op = POP_TOP;
+    code.opnd1 = elem_count;
+    add_to_code_da(compiler->code_da, code);
 }
 
 static void add_local(compiler_t* compiler, char* const name)
@@ -79,6 +82,16 @@ static int64_t resolve_local(compiler_t* compiler, char* const name)
             return i;
     }
 
+    return -1;
+}
+
+static int8_t resolve_pure_idx(compiler_t* compiler, const char* name) // TODO: Check for arity, type etc.
+{
+    for (uint64_t i = 0; i < compiler->compiled_m->pool.pures.count; i++)
+    {
+        if (strcmp(compiler->compiled_m->pool.pures.pure_defs[i].name, name) == 0)
+            return (int8_t)i;
+    }
     return -1;
 }
 
@@ -307,6 +320,21 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
                 code.op = CALL;
                 code.opnd1 = arg_num | ((uint64_t)0x01 << 56);
             }
+            else
+            {
+                arg_list_t* head = exp->as_call.args;
+                int64_t arg_num = 0;
+                while (head != NULL)
+                {
+                    compile_expr(compiler, head->exp);
+                    head = head->next;
+                    arg_num++;
+                }
+                compile_expr(compiler, exp->as_call.callee_name);
+                code.op = CALL;
+                int8_t idx = resolve_pure_idx(compiler, exp->as_call.callee_name->as_str.STRING);
+                code.opnd1 = arg_num | ((uint64_t)(idx + 0b10) << 56);
+            }
             break;
         case CAST_BIN:
             compile_expr(compiler, exp->as_cast.exp);
@@ -335,12 +363,30 @@ static void compile_expr(compiler_t* compiler, ast_exp_t* exp)
         add_to_code_da(compiler->code_da, code);
 }
 
+static void define_pure(compiler_t* compiler, char* name, int arity) // TODO: Check for duplicates!
+{
+    if (NULL == compiler->compiled_m->pool.pures.pure_defs)
+    {
+        int new_capacity = GROW_CAPACITY(compiler->compiled_m->pool.pures.capacity);
+        compiler->compiled_m->pool.pures.pure_defs = ALLOCATE(pure_const_t, new_capacity);
+    }
+    if (compiler->compiled_m->pool.pures.count + 1 >= compiler->compiled_m->pool.pures.capacity )
+    {
+        int new_capacity = GROW_CAPACITY(compiler->compiled_m->pool.pures.capacity);
+        compiler->compiled_m->pool.pures.pure_defs = GROW_ARRAY(pure_const_t, compiler->compiled_m->pool.pures.pure_defs, compiler->compiled_m->pool.pures.capacity, new_capacity);
+    }
+    char* pure_name = (char*)calloc(strlen(name) + 1, sizeof(char));
+    memcpy(pure_name, name, strlen(name));
+    compiler->compiled_m->pool.pures.pure_defs[compiler->compiled_m->pool.pures.count++] = (pure_const_t){ .addr = compiler->code_da->count, .arity = arity, .name = pure_name };
+}
+
 static void compile_stmt(compiler_t* compiler, ast_stmt_t* stmt)
 {
     switch (stmt->kind)
     {
         case EXPR_STMT:
             compile_expr(compiler, stmt->as_expr.exp);
+            add_to_code_da(compiler->code_da, (code_t){ .op = POP_TOP, .opnd1 = 0x01 }); // What if this expression does not produce a value, e.g. a native call?
             break;
         case VAR_DECL:
             decl_var(compiler, stmt->as_decl.name);
@@ -350,7 +396,7 @@ static void compile_stmt(compiler_t* compiler, ast_stmt_t* stmt)
             compile_expr(compiler, stmt->as_if.cond);
             add_to_code_da(compiler->code_da, (code_t){ .op = JMP_IF_FALSE, .opnd1 = 0x00 });
             code_t* else_ptr = &compiler->code_da->data[compiler->code_da->count - 1];
-            add_to_code_da(compiler->code_da, (code_t){ .op = POP_TOP, .opnd1 = 0x00 }); // Get rid of the if condition expression result
+            add_to_code_da(compiler->code_da, (code_t){ .op = POP_TOP, .opnd1 = 0x01 }); // Get rid of the if condition expression result
             compile_stmt(compiler, stmt->as_if.then_b);
             if (NULL == stmt->as_if.else_b)
             {
@@ -362,7 +408,7 @@ static void compile_stmt(compiler_t* compiler, ast_stmt_t* stmt)
                 add_to_code_da(compiler->code_da, (code_t){ .op = JMP, .opnd1 = 0x00 }); // Get rid of the if condition expression result
                 else_ptr->opnd1 = compiler->code_da->count;
                 code_t* end_ptr = &compiler->code_da->data[compiler->code_da->count - 1];
-                add_to_code_da(compiler->code_da, (code_t){ .op = POP_TOP, .opnd1 = 0x00 });
+                add_to_code_da(compiler->code_da, (code_t){ .op = POP_TOP, .opnd1 = 0x01 });
                 compile_stmt(compiler, stmt->as_if.else_b);
                 end_ptr->opnd1 = compiler->code_da->count;
                 
@@ -373,10 +419,10 @@ static void compile_stmt(compiler_t* compiler, ast_stmt_t* stmt)
             compile_expr(compiler, stmt->as_loop.cond);
             add_to_code_da(compiler->code_da, (code_t){ .op = JMP_IF_FALSE, .opnd1 = 0x00 });
             code_t* jmp_target = &compiler->code_da->data[compiler->code_da->count - 1];
-            add_to_code_da(compiler->code_da, (code_t){ .op = POP_TOP, .opnd1 = 0x00 });
+            add_to_code_da(compiler->code_da, (code_t){ .op = POP_TOP, .opnd1 = 0x01 });
             compile_stmt(compiler, stmt->as_loop.block);
             add_to_code_da(compiler->code_da, (code_t){ .op = JMP, .opnd1 = (int64_t)start_addr });
-            add_to_code_da(compiler->code_da, (code_t){ .op = POP_TOP, .opnd1 = 0x00 });
+            add_to_code_da(compiler->code_da, (code_t){ .op = POP_TOP, .opnd1 = 0x01 });
             jmp_target->opnd1 = compiler->code_da->count - 1;
         }
         break;
@@ -389,15 +435,18 @@ static void compile_stmt(compiler_t* compiler, ast_stmt_t* stmt)
             break;
         case RETURN_STMT: // TODO: expression result should be saved so that after the return, it is on stack top
             compile_expr(compiler, stmt->as_expr.exp);
+            add_to_code_da(compiler->code_da, (code_t){ .op = RETURN, .opnd1 = 0x00 });
             break;
         case ENTRY_STMT:
             compile_stmt(compiler, stmt->as_callable.body);
             break;
         case PURE_STMT:
+            define_pure(compiler, stmt->as_callable.name, stmt->as_callable.arity);
             enter_scope(compiler);
             f_arg_list_t* arg = stmt->as_callable.args;
             for (;arg != NULL; arg = arg->next)
                 decl_var(compiler, arg->name);
+            //add_to_code_da(compiler->code_da, (code_t){ .op = LOAD_PARAMS, .opnd1 = stmt->as_callable.arity });
             compile_stmt(compiler, stmt->as_callable.body);
             exit_scope(compiler);
             break;
@@ -420,7 +469,10 @@ void compile_ast(compiler_t* compiler, cu_t* cu)
     }
 
     if (NULL != cu->entry)
+    {
+        compiler->compiled_m->start = compiler->code_da->count;
         compile_stmt(compiler,  cu->entry->as_callable.body);
+    }
     
     add_to_code_da(compiler->code_da, (code_t){ .op = HLT, .opnd1 = 0x00 });
     compiler->compiled_m->code_size = compiler->code_da->count;

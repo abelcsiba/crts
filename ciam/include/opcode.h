@@ -8,7 +8,7 @@
     X(LOAD_CONST,       0, 1,   "LOAD_CONST"    )   \
     X(NOP,              1, 0,   "OP_NOP"        )   \
     X(PUSH,             2, 0,   "OP_PUSH"       )   \
-    X(POP_TOP,          3, 0,   "OP_POP_TOP"    )   \
+    X(POP_TOP,          3, 1,   "OP_POP_TOP"    )   \
     X(TOS,              4, 0,   "OP_TOS"        )   \
     X(ADD_I8,           5, 0,   "OP_ADD_I8"     )   \
     X(ADD_I16,          6, 0,   "OP_ADD_I16"    )   \
@@ -54,6 +54,8 @@
     X(GREATER_THAN,    46, 0,   "GREATER_THAN"  )   \
     X(LT_EQ,           47, 0,   "LT_EQ"         )   \
     X(GT_EQ,           48, 0,   "GT_EQ"         )   \
+    X(LOAD_PARAMS,     49, 1,   "LOAD_PARAMS"   )   \
+    X(RETURN,          50, 0,   "RETURN"        )   \
 
 
 typedef enum {

@@ -16,6 +16,15 @@
 
 static int thread_counter = 1;
 
+static inline uint32_t hash_string(const char* key, int length) {
+  uint32_t hash = 2166136261u;
+  for (int i = 0; i < length; i++) {
+    hash ^= (uint8_t)key[i];
+    hash *= 16777619;
+  }
+  return hash;
+}
+
 struct ciam_vm_t {
     ciam_thread_t*      threads;
     ciam_thread_t*      last_thread;
@@ -91,7 +100,8 @@ static char* op_label[] = {
 #define PC                          vm->threads[0].ip
 #define PUSH(X)                     do { push_stack(&vm->threads[0].stack, X); vm->threads[0].sp++; } while (false)
 #define POP()                       (vm->threads[0].sp--, pop_stack(&vm->threads[0].stack))
-#define PEEK(idx)                   (vm->threads[0].stack.slots[vm->threads[0].stack.count - idx])
+#define PEEK(idx)                   (vm->threads[0].stack.slots[vm->threads[0].sp - idx])
+#define BELOW_BP(idx)               (vm->threads[0].stack.slots[vm->threads[0].bp - idx])
 #define POP_TOP                     (vm->threads[0].sp--, pop_top_stack(&vm->threads[0].stack))
 #define DISPATCH()                  do { if(PC >= vm->module->code_size) ERROR("Invalid address"); goto *jump_table[vm->module->code[PC].op]; } while (false)
 #define CODE()                      vm->module->code[PC]
@@ -261,6 +271,8 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
     #undef X
     };
 
+    PC = vm->module->start;
+
     if (DEBUG)
         display_init_message(vm);
     
@@ -284,13 +296,16 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         DISPATCH();
     OP_POP_TOP:
         code = CODE();
-        PRINT_DEBUG(CURRENT_CODE);
-        POP();
+        PRINT_DEBUG_WIDE(CURRENT_CODE, code.opnd1);
+        {
+            for (int64_t i = 0; i < code.opnd1; i++)
+                POP();
+        }
         PC++;
         DISPATCH();
     OP_TOS: // Is this necessary? Prob not.
         code = CODE();
-        PRINT_DEBUG(CURRENT_CODE);
+        
         PC++;
         DISPATCH();
     OP_ADD_I8:
@@ -504,6 +519,7 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         DISPATCH();
     OP_LOAD_NULL:
         code = CODE();
+        PUSH(NULL_VAL(0x00));
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
@@ -515,6 +531,7 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
             obj_str->chars = ALLOCATE(char, str.length); 
             obj_str->length = str.length;
             sprintf(obj_str->chars, "%.*s", (int)str.length, str.chars);
+            obj_str->hash = hash_string(str.chars, str.length);
             ADD2HEAP(obj_str, OBJ_STRING, true);            
         }
         PRINT_DEBUG(CURRENT_CODE);
@@ -522,13 +539,26 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         DISPATCH();
     OP_CALL: // This needs a refactoring to support generic call mechanism (and not just for native/core calls)
         code = CODE();
-        // int8_t const_idx = (int8_t)(((uint64_t)code.opnd1 & (~CALL_MASK)) >> 56); // Will be used to index the cont pool
+        int8_t call_idx = (int8_t)(((uint64_t)code.opnd1 & (~CALL_MASK)) >> 56); // Will be used to index the cont pool
         int64_t arg_count = code.opnd1 & CALL_MASK;
+        if (call_idx >= 2)
+        {
+            pure_const_t pure = vm->module->pool.pures.pure_defs[call_idx - 2];
+            value_t args[arg_count + 1];
+            for (int64_t i = arg_count; i >= 0; i--)
+                args[i] = POP();
+            PUSH(I64_VAL(PC + 1));
+            PUSH(I64_VAL(vm->threads[0].bp));
+            vm->threads[0].bp = vm->threads[0].sp;
+            for (int64_t i = arg_count - 1; i >= 0; i--)
+                PUSH(args[i]);
+            PC = pure.addr;
+            DISPATCH();
+        }
         value_t val = POP();
         if (VAL_OBJECT == val.type && OBJ_STRING == val.as.obj->obj_type)
         {
             obj_string_t* obj_str = (obj_string_t*)val.as.obj;
-
             native_ptr_t nat_ptr = get_native(obj_str->chars);
             if (!nat_ptr) ERROR("Unknown native! Aborting...");
 
@@ -546,8 +576,8 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
                     ret.as.obj->next = vm->heap;
                     vm->heap = ret.as.obj;
                 }
-                PUSH(ret);
             }
+            PUSH(ret);
         }
         PRINT_DEBUG_WIDE(CURRENT_CODE, arg_count);
         PC++;
@@ -556,7 +586,7 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         code = CODE();
         {
             int64_t rel_idx = code.opnd1;
-            SLOT_FROM_BP(rel_idx) = POP();
+            SLOT_FROM_BP(rel_idx) = PEEK(1);
         }
         PRINT_DEBUG_WIDE(CURRENT_CODE, code.opnd1);
         PC++;
@@ -699,6 +729,37 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
+    OP_LOAD_PARAMS:
+        code = CODE();
+        {
+            int64_t arity = code.opnd1;
+            printf("ARITY: %ld\n", arity);
+            for (int64_t idx = 4; idx < 4 + arity; idx++)
+            {
+                value_t val = BELOW_BP(idx);
+                printf("VAL: ");
+                print_value(val);
+                printf("\n");
+                PUSH(BELOW_BP(idx));
+            }
+        }
+        PRINT_DEBUG(CURRENT_CODE);
+        PC++;
+        DISPATCH();
+    OP_RETURN:
+        code = CODE();
+        PRINT_DEBUG(CURRENT_CODE);
+        {
+            value_t ret_val = POP();
+            vm->threads[0].stack.count -= (vm->threads[0].sp - vm->threads[0].bp);
+            vm->threads[0].sp = vm->threads[0].bp;
+            value_t bp = POP();
+            vm->threads[0].bp = bp.as.i64;
+            value_t ret_addr = POP();
+            PC = ret_addr.as.i64;
+            PUSH(ret_val); 
+        }
+        DISPATCH();
 
     /* We shouldn't reach here, so better abort now. */
     printf("We shouldn't reach this point. Exit with error...\n");
@@ -712,6 +773,7 @@ opcode_t ciam_trap(ciam_vm_t* vm, u64 bp_addr)
     return orig_op;
 }
 
+#if DEBUG
 void display_init_message(ciam_vm_t* vm)
 {
     printf("\n\n");
@@ -738,6 +800,7 @@ void display_init_message(ciam_vm_t* vm)
     printf("  Addr | CIAM Instruct. | Operand\n");
     printf("---------------------------------\n");
 }
+#endif
 
 #undef CALL_MASK
 #undef SLOT_FROM_BP

@@ -155,6 +155,12 @@ void print_code(FILE* out, code_t* code, int count)
             case NEQUALS:
                 fprintf(out, "NEQUALS\n");
                 break;
+            case LOAD_PARAMS:
+                fprintf(out, "LOAD_PARAMS\n");
+                break;
+            case RETURN:
+                fprintf(out, "RETURN\n");
+                break;
             default:
                 fprintf(out, "UNKNOWN_OP %d\n", code[i].op);
                 break;

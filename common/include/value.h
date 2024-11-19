@@ -6,17 +6,18 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define VALUE_TYPE_LIST         \
-    X(VAL_I8,       "I8")       \
-    X(VAL_I16,      "I16")      \
-    X(VAL_I32,      "I32")      \
-    X(VAL_I64,      "I64")      \
-    X(VAL_FLOAT,    "FLOAT")    \
-    X(VAL_DOUBLE,   "DOUBLE")   \
-    X(VAL_BOOL,     "BOOL")     \
-    X(VAL_CHAR,     "CHAR")     \
-    X(VAL_OBJECT,   "OBJECT")   \
-    X(VAL_VOID,     "VOID")     \
+#define VALUE_TYPE_LIST             \
+    X(VAL_I8,       "I8"        )   \
+    X(VAL_I16,      "I16"       )   \
+    X(VAL_I32,      "I32"       )   \
+    X(VAL_I64,      "I64"       )   \
+    X(VAL_FLOAT,    "FLOAT"     )   \
+    X(VAL_DOUBLE,   "DOUBLE"    )   \
+    X(VAL_BOOL,     "BOOL"      )   \
+    X(VAL_CHAR,     "CHAR"      )   \
+    X(VAL_OBJECT,   "OBJECT"    )   \
+    X(VAL_VOID,     "VOID"      )   \
+    X(VAL_NULL,     "NULL"      )   \
     
 
 typedef enum {
@@ -24,6 +25,8 @@ typedef enum {
     VALUE_TYPE_LIST
     #undef X
 } valuetype_t;
+
+#define IS_NULL(value)      ((value).type == VAL_NULL)
 
 #define AS_I8(value)        ((value).as.i8      )
 #define AS_I16(value)       ((value).as.i8      )
@@ -44,6 +47,7 @@ typedef enum {
 #define BOOL_VAL(value)     ((value_t){ VAL_BOOL,   { .boolean  = value }})
 #define CHAR_VAL(value)     ((value_t){ VAL_CHAR,   { .chr      = value }})
 #define OBJ_VAL(value)      ((value_t){ VAL_OBJECT, { .obj      = value }})
+#define NULL_VAL(value)     ((value_t){ VAL_NULL,   { .i8       = value }})
 
 #define OBJ_TYPE(value)     (AS_OBJ(value)->obj_type)
 
@@ -64,6 +68,7 @@ struct obj_string_t {
     obj_t               obj;
     uint32_t            length;
     char*               chars;
+    uint32_t            hash;
 };
 
 typedef struct {

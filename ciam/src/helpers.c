@@ -37,6 +37,9 @@ void print_value(value_t val) {
             obj_string_t* str = (obj_string_t*)val.as.obj;
             printf("%.*s", (int)str->length, str->chars);
             break;
+        case VAL_VOID:
+            printf("VOID");
+            break;
         default:
             printf("Unsupported format type");
             break;

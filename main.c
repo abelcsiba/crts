@@ -86,7 +86,7 @@ int main(int argc, char** argv)
   print_code(stdout, module->code, module->code_size);
 #endif
 
-  module->file_name = "<HARDCODED>";
+  module->file_name = driver.input;
   time_t current_time;
   current_time = time(NULL);
   struct tm *tm_local = localtime(&current_time);

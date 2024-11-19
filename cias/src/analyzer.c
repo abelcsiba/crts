@@ -172,7 +172,7 @@ expr_type_t resolve_exp_type(analyzer_t* analyzer, ast_exp_t* exp)
                 if (ERROR == res) return res;
                 args = args->next;
             }
-            return BOOL; // TODO: Change this to the exact return type
+            return I8; // TODO: Change this to the exact return type
         case CAST_BIN:
             resolve_exp_type(analyzer, exp->as_cast.exp);
             return exp->as_cast.target; // TODO: check if cast is even possible
@@ -201,7 +201,7 @@ expr_type_t resolve_exp_type(analyzer_t* analyzer, ast_exp_t* exp)
 #undef ERROR_CHECK
 }
 
-void add_to_scope(scope_t* scope, char* name, expr_type_t type)
+static void add_to_scope(scope_t* scope, char* name, expr_type_t type)
 {
     int index = 0;
     typeinfo_t tinfo = { .type = type, .mem_type = LVALUE, .is_const = false, .is_ptr = false };
@@ -229,7 +229,7 @@ void add_to_scope(scope_t* scope, char* name, expr_type_t type)
     sym->next->next = NULL;
 }
 
-void free_symtable(symtable_t* symtable)
+static void free_symtable(symtable_t* symtable)
 {
     symtable_t* current = symtable;
     symtable_t* next;
@@ -242,7 +242,7 @@ void free_symtable(symtable_t* symtable)
     }
 }
 
-void enter_scope(analyzer_t* analyzer)
+static void enter_scope(analyzer_t* analyzer)
 {
     scope_t* scope = (scope_t*)malloc(sizeof(scope_t));
     memset(scope, '\0', sizeof(scope_t));
@@ -250,7 +250,7 @@ void enter_scope(analyzer_t* analyzer)
     analyzer->scope = scope;
 }
 
-void exit_scope(analyzer_t* analyzer)
+static void exit_scope(analyzer_t* analyzer)
 {
     scope_t* scope = analyzer->scope->parent;
     free_symtable(analyzer->scope->symtable);

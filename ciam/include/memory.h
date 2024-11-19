@@ -28,6 +28,7 @@ typedef struct {
 
   code_t*                     code;
   u64                         code_size;
+  u64                         start;
   const_pool_t                pool;
 } module_t;
 

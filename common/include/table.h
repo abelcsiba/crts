@@ -4,6 +4,9 @@
 
 #include "value.h"
 
+#include <stdbool.h>
+
+// HashTable implementation stolen from https://github.com/munificent/craftinginterpreters
 typedef struct {
     obj_string_t*   key;
     value_t         value;
@@ -17,6 +20,10 @@ typedef struct {
 
 void table_init(table_t* table);
 void table_free(table_t* table);
+
+bool table_get(table_t* table, obj_string_t* key, value_t* value);
+bool table_set(table_t* table, obj_string_t* key, value_t value);
+bool table_delete(table_t* table, obj_string_t* key);
 
 
 #endif // COMMON_TABLE_H_

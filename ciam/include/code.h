@@ -45,8 +45,21 @@ typedef struct {
 } const_num_table_t;
 
 typedef struct {
+    uint64_t            addr;
+    char*               name;
+    uint16_t            arity; // TODO: Include param type info as well
+} pure_const_t;
+
+typedef struct {
+    pure_const_t*       pure_defs;
+    uint16_t            count;
+    uint16_t            capacity;
+} const_pure_table_t;
+
+typedef struct {
     const_num_table_t   numbers;
     const_str_table_t   strings;
+    const_pure_table_t  pures;
 } const_pool_t;
 
 void init_code(code_t* code, size_t length);
