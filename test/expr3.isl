@@ -1,5 +1,7 @@
 module main;
 
+
+
 pure sum(a : i8, b : i8) -> i8 {
     print("The sum pure call was invoked!");
     return a + b;
@@ -10,13 +12,15 @@ pure sub(c : i8, d : i8) -> i8 {
     return c - d;
 }
 
+
+
 entry {  
     var iter : i32 = 3;
     var ch_t : i32 = 4;
 
-    var verdict : i64 = (6 < 6) ? 0 : sum(3, 7);
+    var verdict : i64 = (6 < 6) ? 0 : sub(3, 7);
 
-    print("Sum result", verdict);
+    print("Call result", verdict);
 
     loop (iter && ch_t) {
         var hmm : string = "Iteration";
@@ -45,7 +49,7 @@ entry {
     var asd : i64 = 3 as i32;
     {
         var tmp3 : i32 = (14 + 42) as i32;
-        asd = asd + 15;
+        asd = asd + (15 as i64) + tmp3;
         print("Result:", asd);
     }
     print("You typed", tmp, "\nThat's an impressive number!");
