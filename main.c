@@ -80,7 +80,11 @@ int main(int argc, char** argv)
   translator_t* translator = init_translator();
   int32_t num_intsr = 0;
   da_func_t* func_defs = translate_ast(translator, cu, &num_intsr);
+  if (NULL == func_defs)
+    fprintf(stderr, "This is a warning to be removed\n");
+#if DEBUG
   print_tac(stdout, func_defs);
+#endif
 
   compiler_t compiler;
   init_module(&compiler);

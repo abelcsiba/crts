@@ -180,6 +180,7 @@ da_func_t* translate_ast(translator_t* translator, cu_t* cu, int32_t* size)
     return &translator->func_defs;
 }
 
+#if DEBUG
 static void print_tac_val(FILE* out, tac_val_t val)
 {
     switch (val.kind)
@@ -234,3 +235,4 @@ void print_tac(FILE* out, da_func_t* func_defs)
         print_func(out, func_defs->funcs);
     }
 }
+#endif

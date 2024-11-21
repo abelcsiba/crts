@@ -12,6 +12,8 @@ typedef struct da_func_t da_func_t;
 da_func_t* translate_ast(translator_t* translator, cu_t* cu, int32_t* size);
 translator_t* init_translator();
 
+#if DEBUG
 void print_tac(FILE* out, da_func_t* func_defs);
+#endif
 
 #endif // CIAS_TRANSLATOR_H_
