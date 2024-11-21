@@ -79,8 +79,8 @@ int main(int argc, char** argv)
 
   translator_t* translator = init_translator();
   int32_t num_intsr = 0;
-  tac_inst_t* instr = translate_ast(translator, cu, &num_intsr);
-  print_tac(stdout, instr, num_intsr);
+  da_func_t* func_defs = translate_ast(translator, cu, &num_intsr);
+  print_tac(stdout, func_defs);
 
   compiler_t compiler;
   init_module(&compiler);
