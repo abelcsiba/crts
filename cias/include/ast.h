@@ -185,6 +185,7 @@ struct ast_stmt_t {
 
         struct {
             stmt_list_t*    stmts;
+            bool            is_callable_def;
         } as_block;
     };
 };

@@ -52,7 +52,7 @@ static token_t          previous(parser_t* parser);
 static token_t          peek(parser_t* parser);
 static token_t          advance(parser_t* parser);
 
-static ast_stmt_t*      parse_block_stmt(arena_t* arena, parser_t* parser);
+static ast_stmt_t*      parse_block_stmt(arena_t* arena, parser_t* parser, bool is_callable_def);
 static ast_stmt_t*      parse_exp_stmt(arena_t* arena, parser_t* parser);
 static ast_stmt_t*      parse_if_stmt(arena_t* arena, parser_t* parser);
 static ast_stmt_t*      parse_loop_stmt(arena_t* arena, parser_t* parser);
@@ -701,7 +701,7 @@ static ast_stmt_t* parse_entry_stmt(arena_t* arena, parser_t* parser)
     ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(arena, sizeof(ast_stmt_t));
     stmt->kind = ENTRY_STMT;
 
-    ast_stmt_t* body = parse_block_stmt(arena, parser);
+    ast_stmt_t* body = parse_block_stmt(arena, parser, true);
     if (NULL == body) defer_error("Invalid entry block");
 
     stmt->as_callable.body = body;
@@ -809,7 +809,7 @@ static ast_stmt_t* parse_pure_stmt(arena_t* arena, parser_t* parser)
 
     if (TOKEN_LBRACE != peek(parser).type) defer_error("missing pure body");
 
-    ast_stmt_t* body = parse_block_stmt(arena, parser);
+    ast_stmt_t* body = parse_block_stmt(arena, parser, true);
     if (NULL == body) defer_error("Invalid pure definition");
     stmt->as_callable.body = body;
     f_arg_list_t* head = stmt->as_callable.args;
@@ -842,13 +842,14 @@ static ast_stmt_t* parse_return_stmt(arena_t* arena, parser_t* parser)
 #undef defer_error
 }
 
-static ast_stmt_t* parse_block_stmt(arena_t* arena, parser_t* parser)
+static ast_stmt_t* parse_block_stmt(arena_t* arena, parser_t* parser, bool is_callable_def)
 {
 #define defer_error(X) do { error_at(parser, token, X); exit(EXIT_FAILURE); } while (false)
     ast_stmt_t* stmt = (ast_stmt_t*)arena_alloc(arena, sizeof(ast_stmt_t));
     stmt->as_block.stmts = (stmt_list_t*)arena_alloc(arena, sizeof(stmt_list_t));
     stmt->as_block.stmts->data = NULL;
     stmt->as_block.stmts->next = NULL;
+    stmt->as_block.is_callable_def = is_callable_def;
     stmt->kind = BLOCK_STMT;
     advance(parser); // Eat the '{' symbol
     token_t token = peek(parser); // And check the one after
@@ -903,7 +904,7 @@ ast_stmt_t* parse_statement(arena_t* arena, parser_t* parser)
             stmt = parse_return_stmt(arena, parser);
             break;
         case TOKEN_LBRACE:
-            stmt = parse_block_stmt(arena, parser);
+            stmt = parse_block_stmt(arena, parser, false);
             break;
         default:
             stmt = parse_exp_stmt(arena, parser);

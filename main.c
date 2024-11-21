@@ -8,6 +8,7 @@
 
 #include "parser.h"
 #include "data.h"
+#include "translator.h"
 
 #include "ast.h"
 #include "codec.h"
@@ -75,6 +76,11 @@ int main(int argc, char** argv)
   }
 
   free(analyzer.scope); // This should be dealt with later. Right now, free shit manually.
+
+  translator_t* translator = init_translator();
+  int32_t num_intsr = 0;
+  tac_inst_t* instr = translate_ast(translator, cu, &num_intsr);
+  print_tac(stdout, instr, num_intsr);
 
   compiler_t compiler;
   init_module(&compiler);
