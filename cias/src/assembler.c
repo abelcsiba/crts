@@ -231,6 +231,7 @@ struct assembler_t {
 };
 
 void fix_tmps(assembler_t* assembler);
+void fix_stack_access(arena_t* arena, assembler_t* assembler);
 
 static asm_routine_t* add_routine(arena_t* arena, assembler_t* assembler, char* name)
 {    
@@ -356,6 +357,7 @@ void translate_tac(arena_t* arena, assembler_t* assembler, da_func_t* funcs)
         }
     }
     fix_tmps(assembler);
+    fix_stack_access(arena, assembler);
 }
 
 #if DEBUG
@@ -399,6 +401,40 @@ void print_asm_inst(FILE* out, asm_inst_t* instr)
         else if (instr->kind == ASM_RET)
         {
             fprintf(out, "\tRet");
+        } else if (instr->kind == ASM_ALLOCATE_STACK)
+        {
+            fprintf(out, "\tAllocateStack(%d)", instr->offset);
+        }
+    }
+}
+
+void fix_stack_access(arena_t* arena, assembler_t* assembler)
+{
+    asm_routine_t* routine = assembler->routines;
+    for (;routine != NULL; routine = routine->next)
+    {
+        asm_inst_t* asm_inst = routine->instructions;
+        for (; asm_inst != NULL; asm_inst = asm_inst->next)
+        {
+            switch (asm_inst->kind)
+            {
+                case ASM_MOV:
+                    if (asm_inst->src.kind == STACK && asm_inst->dst.kind == STACK)
+                    {
+                        asm_oper_t dst = asm_inst->dst;
+                        asm_inst->dst = (asm_oper_t){ .kind = REG, .reg = R10 };
+                        asm_inst_t* tmp = (asm_inst_t*)arena_alloc(arena, sizeof(asm_inst_t));
+                        tmp->kind = ASM_MOV;
+                        tmp->src = (asm_oper_t){ .kind = REG, .reg = R10 };
+                        tmp->dst = dst; 
+                        tmp->next = asm_inst->next;
+                        asm_inst->next = tmp;
+                    }
+                    break;
+                default:
+
+                    break;
+            }
         }
     }
 }
@@ -415,7 +451,7 @@ void fix_tmps(assembler_t* assembler)
             switch (asm_inst->kind)
             {
             case ASM_UNARY:
-                if (asm_inst->dst.kind == PSEUDO)
+                if (asm_inst->dst.kind == PSEUDO) // TODO: Move this to a separate func
                 {
                     int32_t* addr = table_get(assembler->tmp_offsets, asm_inst->dst.ident);
                     if (!addr)
@@ -449,7 +485,7 @@ void fix_tmps(assembler_t* assembler)
                         asm_inst->src = (asm_oper_t){ .kind = STACK, .int_val = *addr };
                     }
                 }
-                if (asm_inst->dst.kind == PSEUDO)
+                if (asm_inst->dst.kind == PSEUDO) 
                 {
                     int32_t* addr = table_get(assembler->tmp_offsets, asm_inst->dst.ident);
                     if (!addr)
