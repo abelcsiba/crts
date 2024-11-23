@@ -446,7 +446,6 @@ static void compile_stmt(compiler_t* compiler, ast_stmt_t* stmt)
             f_arg_list_t* arg = stmt->as_callable.args;
             for (;arg != NULL; arg = arg->next)
                 decl_var(compiler, arg->name);
-            //add_to_code_da(compiler->code_da, (code_t){ .op = LOAD_PARAMS, .opnd1 = stmt->as_callable.arity });
             compile_stmt(compiler, stmt->as_callable.body);
             exit_scope(compiler);
             break;

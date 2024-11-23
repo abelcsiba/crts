@@ -729,23 +729,6 @@ ciam_result_t ciam_vm_run(ciam_vm_t *vm)
         PRINT_DEBUG(CURRENT_CODE);
         PC++;
         DISPATCH();
-    OP_LOAD_PARAMS:
-        code = CODE();
-        {
-            int64_t arity = code.opnd1;
-            printf("ARITY: %ld\n", arity);
-            for (int64_t idx = 4; idx < 4 + arity; idx++)
-            {
-                value_t val = BELOW_BP(idx);
-                printf("VAL: ");
-                print_value(val);
-                printf("\n");
-                PUSH(BELOW_BP(idx));
-            }
-        }
-        PRINT_DEBUG(CURRENT_CODE);
-        PC++;
-        DISPATCH();
     OP_RETURN:
         code = CODE();
         PRINT_DEBUG(CURRENT_CODE);
