@@ -9,6 +9,7 @@
 #include "parser.h"
 #include "data.h"
 #include "translator.h"
+#include "assembler.h"
 
 #include "ast.h"
 #include "codec.h"
@@ -83,8 +84,19 @@ int main(int argc, char** argv)
   if (NULL == func_defs)
     fprintf(stderr, "This is a warning to be removed\n");
 #if DEBUG
+  fprintf(stdout, "TAC Representation of code:\n");
   print_tac(stdout, func_defs);
+  fprintf(stdout, "\n");
 #endif
+  arena_t asm_arena = {0};
+  init_arena(&asm_arena, ARENA_DEFAULT_BLOCK_SIZE);
+  assembler_t *assembler = init_assembler(&arena);
+  translate_tac(&asm_arena, assembler, func_defs);
+  fprintf(stdout, "Assembly representation of code:\n");
+  print_asm(stdout, assembler);
+  fprintf(stdout, "\n");
+  destroy_arena(&asm_arena);
+  destroy_assembler(assembler);
 
   compiler_t compiler;
   init_module(&compiler);

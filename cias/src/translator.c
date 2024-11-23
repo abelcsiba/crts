@@ -10,56 +10,6 @@
 
 static int32_t tac_id_idx = 0;
 
-typedef enum {
-    TAC_RETURN          = 0,
-    TAC_UNARY           = 1,
-} tac_inst_kind_t;
-
-typedef struct {
-    enum { CONST, VAR } kind;
-    union {
-        int32_t         int_val;
-        char*           var_name;  
-    };
-} tac_val_t;
-
-typedef enum {
-    NEGATE          = 0,
-    COMPLEMENT      = 1, 
-} unary_kind_t;
-
-struct tac_inst_t {
-    tac_inst_kind_t     kind;
-
-    union {
-        tac_val_t       ret;
-
-        struct {
-            unary_kind_t op;
-            tac_val_t   src;
-            tac_val_t   dst;
-        } unary;
-    };
-
-};
-
-typedef struct {
-    tac_inst_t*         instr;
-    int32_t             count;
-    int32_t             capacity;
-} da_inst_t;
-
-typedef struct {
-    char*               label;
-    da_inst_t           instr;
-} func_t;
-
-struct da_func_t {
-    func_t*             funcs;
-    int32_t             count;
-    int32_t             capacity;
-};
-
 struct translator_t {
     da_func_t          func_defs;
 };
@@ -232,7 +182,7 @@ void print_tac(FILE* out, da_func_t* func_defs)
     for (int32_t i = 0; i < func_defs->count; i++)
     {
         fprintf(out, "%s:\n", func_defs->funcs[i].label);
-        print_func(out, func_defs->funcs);
+        print_func(out, &func_defs->funcs[i]);
     }
 }
 #endif
